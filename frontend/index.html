@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FullFragrance — comparador de precios de tu barrio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">₱</span>
+    <span class="name">FullFragrance</span>
+    <span class="tag">precios de tu barrio</span>
+  </div>
+  <div class="topbar-right">
+    <div class="city-pill" id="cityPill">
+      <span id="cityPillText">—</span>
+      <button id="changeCityBtn" type="button">cambiar</button>
+    </div>
+    <button class="link-btn" id="logoutBtn" style="display:none;">cerrar sesión</button>
+  </div>
+</div>
+
+<!-- SCREEN: AUTH (registro / login) -->
+<section class="screen active" id="screen-auth">
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="tab active" data-tab="register" type="button">Crear cuenta</button>
+      <button class="tab" data-tab="login" type="button">Ya tengo cuenta</button>
+    </div>
+
+    <form id="registerForm" class="auth-form active">
+      <h1>Crea tu cuenta</h1>
+      <p class="sub">Compara precios de supermercados cerca de ti.</p>
+      <div class="field">
+        <label for="regName">Nombre</label>
+        <input id="regName" type="text" placeholder="Tu nombre" required>
+      </div>
+      <div class="field">
+        <label for="regEmail">Correo electrónico</label>
+        <input id="regEmail" type="email" placeholder="tucorreo@ejemplo.com" required>
+      </div>
+      <div class="field">
+        <label for="regPass">Contraseña</label>
+        <input id="regPass" type="password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+      </div>
+      <button class="btn-primary" type="submit">Crear cuenta</button>
+      <p class="error-msg" id="registerError"></p>
+    </form>
+
+    <form id="loginForm" class="auth-form">
+      <h1>Inicia sesión</h1>
+      <p class="sub">Vuelve a ver tu comparador de precios.</p>
+      <div class="field">
+        <label for="loginEmail">Correo electrónico</label>
+        <input id="loginEmail" type="email" placeholder="tucorreo@ejemplo.com" required>
+      </div>
+      <div class="field">
+        <label for="loginPass">Contraseña</label>
+        <input id="loginPass" type="password" placeholder="Tu contraseña" required>
+      </div>
+      <button class="btn-primary" type="submit">Entrar</button>
+      <p class="error-msg" id="loginError"></p>
+    </form>
+  </div>
+</section>
+
+<!-- SCREEN: DASHBOARD -->
+<section class="screen" id="screen-dashboard">
+  <div class="dash-head">
+    <div class="eyebrow">Comparador</div>
+    <h1>Precios en <span id="dashCityName">tu ciudad</span></h1>
+    <p>Precios simulados para probar el flujo completo. El mapa y las tiendas sí se generan de verdad desde el backend según la ciudad que elegiste.</p>
+  </div>
+
+  <div class="layout">
+    <div class="col-map">
+      <h3>Tiendas cerca de ti</h3>
+      <div id="storesMap" class="stores-map"></div>
+      <ul id="storesList" class="stores-list"></ul>
+    </div>
+
+    <div class="col-tickets">
+      <div class="search-row">
+        <input id="productSearch" type="text" placeholder="Busca un producto: leche, arroz, aceite...">
+      </div>
+      <div id="ticketsGrid" class="tickets"></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: CIUDAD -->
+<div class="modal-overlay" id="cityModal">
+  <div class="city-modal">
+    <div class="eyebrow">Paso 2 de 2</div>
+    <h2>¿Desde qué ciudad comparamos precios?</h2>
+    <p>Escribe el nombre de tu ciudad y elige la opción correcta en el mapa.</p>
+    <div class="city-search">
+      <input id="cityInput" type="text" placeholder="Ej: Temuco, Chile" autocomplete="off">
+      <ul class="city-results" id="cityResults"></ul>
+    </div>
+    <div class="city-preview" id="cityPreview">
+      <div id="cityPickMap" class="pick-map"></div>
+      <div class="chosen">
+        <div>
+          <div class="name" id="chosenCityName">—</div>
+          <div class="country" id="chosenCityCountry">—</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="confirmCityBtn" type="button">Confirmar ciudad</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note" id="footerNote" style="display:none;">
+  Prototipo: el registro, login y ciudad se guardan en un backend real (Node/Express) en un archivo JSON.
+  Los precios y tiendas son datos simulados pero deterministas, generados por el servidor.
+  La búsqueda de ciudad usa el servicio público de OpenStreetMap (Nominatim) y el mapa usa Leaflet + tiles de OpenStreetMap.
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/api.js"></script>
+<script src="js/map.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
