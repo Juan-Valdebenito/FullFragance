@@ -1,12 +1,13 @@
 const API_BASE = "/api";
 
 function getToken() {
-  return localStorage.getItem("ferio_token");
+  return localStorage.getItem("fullfragrance_token") || localStorage.getItem("ferio_token");
 }
 function setToken(token) {
-  localStorage.setItem("ferio_token", token);
+  localStorage.setItem("fullfragrance_token", token);
 }
 function clearToken() {
+  localStorage.removeItem("fullfragrance_token");
   localStorage.removeItem("ferio_token");
 }
 
@@ -41,4 +42,10 @@ const Api = {
     apiRequest(`/stores?cityName=${encodeURIComponent(cityName)}&lat=${lat}&lon=${lon}`),
   getPrices: (cityName, lat, lon, q = "") =>
     apiRequest(`/prices?cityName=${encodeURIComponent(cityName)}&lat=${lat}&lon=${lon}&q=${encodeURIComponent(q)}`),
+  getNotes: () => apiRequest("/catalog/notes"),
+  getRecommendations: () => apiRequest("/users/me/recommendations"),
+  toggleFavorite: (productId) =>
+    apiRequest(`/users/me/favorites/${productId}`, { method: "POST" }),
+  saveScentQuiz: (scores) =>
+    apiRequest("/users/me/scent-quiz", { method: "POST", body: { scores } }),
 };

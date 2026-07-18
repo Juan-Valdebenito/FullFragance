@@ -14,9 +14,15 @@ function priceFor(cityName, storeId, product) {
 
 function getComparisonForCity({ cityName, lat, lon }, productFilter) {
   const stores = getStoresForCity({ cityName, lat, lon });
-  const products = getProducts().filter((p) =>
-    productFilter ? p.name.toLowerCase().includes(productFilter.toLowerCase()) : true
-  );
+  const products = getProducts().filter((p) => {
+    if (!productFilter) return true;
+    const q = productFilter.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.brand && p.brand.toLowerCase().includes(q)) ||
+      (p.category && p.category.toLowerCase().includes(q))
+    );
+  });
 
   return products.map((product) => {
     const prices = stores

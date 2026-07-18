@@ -52,7 +52,9 @@ function afterAuthSuccess(user) {
   document.getElementById("logoutBtn").style.display = "inline";
   if (user.city) {
     selectedCity = { cityName: user.city.name, country: user.city.country, lat: user.city.lat, lon: user.city.lon };
-    goToDashboard();
+    goToDashboard().then(() => {
+      if (!user.scentPreferences) maybeOpenQuiz(user);
+    });
   } else {
     openCityModal();
   }
@@ -135,7 +137,9 @@ document.getElementById("confirmCityBtn").addEventListener("click", async () => 
     currentUser = user;
     selectedCity = { cityName: pendingCity.cityName, country: pendingCity.country, lat: pendingCity.lat, lon: pendingCity.lon };
     document.getElementById("cityModal").classList.remove("active");
-    goToDashboard();
+    goToDashboard().then(() => {
+      if (!user.scentPreferences) maybeOpenQuiz(user);
+    });
   } catch (err) {
     alert(err.message);
   }

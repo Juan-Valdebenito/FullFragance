@@ -18,7 +18,9 @@ function create({ name, email, passwordHash }) {
     name,
     email,
     passwordHash,
-    city: null, // { name, country, lat, lon }
+    city: null,
+    favorites: [],
+    scentPreferences: null,
     createdAt: new Date().toISOString(),
   };
   db.users.push(user);
@@ -35,10 +37,51 @@ function updateCity(userId, city) {
   return user;
 }
 
+function toggleFavorite(userId, productId) {
+  const db = readDb();
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return null;
+
+  user.favorites = user.favorites || [];
+  const idx = user.favorites.indexOf(productId);
+  if (idx >= 0) {
+    user.favorites.splice(idx, 1);
+  } else {
+    user.favorites.push(productId);
+  }
+  writeDb(db);
+  return user;
+}
+
+function saveScentPreferences(userId, scores) {
+  const db = readDb();
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return null;
+
+  user.scentPreferences = {
+    scores,
+    completedAt: new Date().toISOString(),
+  };
+  writeDb(db);
+  return user;
+}
+
 function toPublic(user) {
   if (!user) return null;
   const { passwordHash, ...publicUser } = user;
-  return publicUser;
+  return {
+    ...publicUser,
+    favorites: publicUser.favorites || [],
+    scentPreferences: publicUser.scentPreferences ?? null,
+  };
 }
 
-module.exports = { findByEmail, findById, create, updateCity, toPublic };
+module.exports = {
+  findByEmail,
+  findById,
+  create,
+  updateCity,
+  toggleFavorite,
+  saveScentPreferences,
+  toPublic,
+};

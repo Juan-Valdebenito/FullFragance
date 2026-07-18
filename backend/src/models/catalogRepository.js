@@ -12,4 +12,18 @@ function getChains() {
   return readDb().chains;
 }
 
-module.exports = { getProducts, getProductById, getChains };
+function getOlfactoryNotes() {
+  return readDb().olfactoryNotes || [];
+}
+
+function getNoteById(id) {
+  return getOlfactoryNotes().find((n) => n.id === id) || null;
+}
+
+module.exports = {
+  getProducts,
+  getProductById,
+  getChains,
+  getOlfactoryNotes,
+  getNoteById,
+};
