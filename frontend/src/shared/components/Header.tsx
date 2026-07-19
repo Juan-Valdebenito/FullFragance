@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "./Brand";
 import { Icon } from "./Icon";
+import { LogoutButton } from "./LogoutButton";
 import styles from "./shared.module.css";
 
 export function Header({ active }: { active?: "catalog" | "test" }) {
@@ -10,6 +11,6 @@ export function Header({ active }: { active?: "catalog" | "test" }) {
       <Link className={active === "test" ? styles.active : ""} href="/test">Test Olfativo</Link>
       <Link href="/recomendaciones">Para ti</Link><Link href="/dashboard">Tiendas</Link>
     </nav></div>
-    <div className={styles.actions}><span><Icon name="pin" /> Santiago, CL</span><Link aria-label="Perfil" href="/"><Icon name="user" /></Link><Link aria-label="Salir" href="/"><Icon name="logout" /></Link></div>
+    <div className={styles.actions}><span><Icon name="pin" /> Santiago, CL</span><Link aria-label="Perfil" href="/dashboard"><Icon name="user" /></Link><LogoutButton /></div>
   </div></header>;
 }

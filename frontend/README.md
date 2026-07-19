@@ -8,11 +8,13 @@ Aplicación web modular construida con Next.js, React y TypeScript.
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:3000`.
+La aplicación estará disponible en `http://localhost:3001`. El backend debe estar iniciado en `http://localhost:3000`.
 
 ## Rutas
 
-- `/`: registro e inicio de sesión.
+- `/`: redirección al inicio de sesión.
+- `/login`: inicio de sesión.
+- `/registro`: creación de una cuenta nueva.
 - `/dashboard`: comparación de precios y búsqueda.
 - `/test`: test olfativo interactivo.
 - `/recomendaciones`: resultados personalizados.
@@ -32,6 +34,10 @@ Dentro de cada funcionalidad se separan:
 - `components`: presentación e interacción.
 
 Los Server Components son el valor por defecto. Solo los componentes con estado o eventos (`AuthPanel`, `CatalogExplorer` y `OlfactoryQuiz`) usan `"use client"`.
+
+## Conexión con el backend
+
+Copia `.env.example` como `.env.local` si necesitas cambiar la URL de la API. Por defecto se usa `http://localhost:3000/api`. La sesión JWT se conserva en el navegador y se envía como `Bearer token` a las rutas protegidas.
 
 ## Comandos
 
