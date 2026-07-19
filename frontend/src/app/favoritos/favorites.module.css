@@ -1,0 +1,1 @@
+.main { min-height: 65vh; padding-top: 56px; }.main > header { margin-bottom: 34px; }.main h1 { margin: 9px 0; }.main header > p:last-child { color: var(--on-surface-muted); }.grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.grid{grid-template-columns:1fr}}

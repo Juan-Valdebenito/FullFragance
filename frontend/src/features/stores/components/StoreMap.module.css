@@ -1,0 +1,5 @@
+.map { width: 100%; height: 100%; min-height: 470px; background: var(--surface-container); }
+.markerShell { background: transparent; border: 0; }
+.markerShell :global(.map-pin) { position: relative; display: block; width: 32px; height: 32px; transform: rotate(45deg); border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: var(--primary); box-shadow: 0 4px 12px rgb(0 0 0 / 28%); }
+.markerShell :global(.map-pin i) { position: absolute; width: 8px; height: 8px; top: 9px; left: 9px; border-radius: 50%; background: var(--gold); }
+@media(max-width:600px){.map{min-height:340px}}

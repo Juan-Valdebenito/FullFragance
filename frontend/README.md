@@ -18,6 +18,9 @@ La aplicación estará disponible en `http://localhost:3001`. El backend debe es
 - `/dashboard`: comparación de precios y búsqueda.
 - `/test`: test olfativo interactivo.
 - `/recomendaciones`: resultados personalizados.
+- `/favoritos`: perfumes guardados por el usuario.
+- `/perfil`: cuenta y selección de ciudad.
+- `/perfumes/[id]`: ficha y comparación de precios de un perfume.
 
 ## Arquitectura
 

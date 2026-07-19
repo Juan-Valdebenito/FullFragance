@@ -1,0 +1,1 @@
+.main { min-height: 65vh; padding-top: 48px; }.settings { margin-top: 38px; border-radius: var(--radius-lg); background: var(--surface-low); padding: 30px; }.settings h2 { margin: 7px 0; font: 600 1.6rem "Space Grotesk",sans-serif; }.settings > p:last-of-type { color: var(--on-surface-muted); line-height: 1.5; }
