@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FullFragance",
-  description: "Descubre tu próxima fragancia favorita.",
+  description: "Compara precios y descubre tu próxima fragancia favorita.",
 };
 
 export default function RootLayout({
