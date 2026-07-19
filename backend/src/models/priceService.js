@@ -12,8 +12,8 @@ function priceFor(cityName, storeId, product) {
   return Math.max(300, Math.round(product.basePrice * (1 + variation)));
 }
 
-function getComparisonForCity({ cityName, lat, lon }, productFilter) {
-  const stores = getStoresForCity({ cityName, lat, lon });
+async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
+  const stores = await getStoresForCity({ cityName, lat, lon });
   const products = getProducts().filter((p) => {
     if (!productFilter) return true;
     const q = productFilter.toLowerCase();
@@ -42,10 +42,10 @@ function getComparisonForCity({ cityName, lat, lon }, productFilter) {
   });
 }
 
-function getComparisonForProduct({ cityName, lat, lon }, productId) {
+async function getComparisonForProduct({ cityName, lat, lon }, productId) {
   const product = getProductById(productId);
   if (!product) return null;
-  const stores = getStoresForCity({ cityName, lat, lon });
+  const stores = await getStoresForCity({ cityName, lat, lon });
   const prices = stores
     .map((store) => ({
       storeId: store.id,

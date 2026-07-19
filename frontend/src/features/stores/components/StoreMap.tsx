@@ -19,7 +19,7 @@ export function StoreMap({ stores, city }: { stores: Store[]; city: City }) {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
       const icon = L.divIcon({ className: styles.markerShell, html: '<span class="map-pin"><i></i></span>', iconSize: [34, 42], iconAnchor: [17, 40], popupAnchor: [0, -38] });
       const bounds: [number, number][] = [];
-      stores.forEach(store => { bounds.push([store.lat, store.lon]); L.marker([store.lat, store.lon], { icon }).addTo(map).bindPopup(`<strong>${escapeHtml(store.name)}</strong><br><span>${escapeHtml(store.address)}</span><br><a href="https://www.google.com/maps/search/?api=1&query=${store.lat},${store.lon}" target="_blank" rel="noopener noreferrer">Abrir indicaciones</a>`); });
+      stores.forEach(store => { bounds.push([store.lat, store.lon]); const details = [store.openingHours ? `<br><small>${escapeHtml(store.openingHours)}</small>` : "", store.distanceKm !== undefined ? `<br><small>A ${store.distanceKm.toFixed(1)} km del centro</small>` : ""].join(""); const destination = store.website || `https://www.google.com/maps/search/?api=1&query=${store.lat},${store.lon}`; L.marker([store.lat, store.lon], { icon }).addTo(map).bindPopup(`<strong>${escapeHtml(store.name)}</strong><br><span>${escapeHtml(store.address)}</span>${details}<br><a href="${escapeHtml(destination)}" target="_blank" rel="noopener noreferrer">${store.website ? "Visitar tienda" : "Abrir indicaciones"}</a>`); });
       if (bounds.length > 1) map.fitBounds(bounds, { padding: [42, 42], maxZoom: 14 });
       window.setTimeout(() => map.invalidateSize(), 50);
     });
