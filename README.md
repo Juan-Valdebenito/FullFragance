@@ -81,5 +81,25 @@ scraper o una API de cada cadena).
 - Reemplazar `database.js` (JSON) por una base real (Postgres/SQLite) sin
   tocar controllers ni rutas.
 - Cargar sucursales y precios reales por ciudad.
+
+## Catálogo de Falabella
+
+El backend incorpora productos desde URLs públicas de Falabella Chile. Extrae el bloque `Product` JSON-LD de cada página y persiste SKU, marca, nombre, precio, presentación, disponibilidad, URL y fechas de observación en SQLite.
+
+Configura las variables nuevas de `backend/.env.example`, usando un `FALABELLA_USER_AGENT` con contacto real y, en producción, un `SCRAPER_API_KEY`. La sincronización es secuencial, espera un intervalo aleatorio configurable entre solicitudes y respeta `Retry-After` ante HTTP 429. No intenta evitar CAPTCHA ni otros controles del sitio.
+
+```http
+POST /api/scrapers/falabella/sync
+Authorization: Bearer <token>
+X-Scraper-Key: <SCRAPER_API_KEY>  # sólo si se configuró
+Content-Type: application/json
+
+{ "productUrls": ["https://www.falabella.com/falabella-cl/product/..." ] }
+
+GET /api/scrapers/falabella/products
+Authorization: Bearer <token>
+```
+
+SQLite es apropiado para desarrollo o una sola instancia. Para producción con varios procesos, migra la tabla a PostgreSQL y ejecuta la sincronización desde un job/cola; la persistencia está centralizada en `backend/src/data/catalogDatabase.js` para facilitarlo.
 - Refresh token / expiración más corta de sesión.
 - Favoritos de productos y notificación de bajadas de precio.
