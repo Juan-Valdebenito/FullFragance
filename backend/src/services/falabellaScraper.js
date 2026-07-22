@@ -6,6 +6,7 @@ const {
   falabellaMaxDelayMs,
   falabellaRequestTimeoutMs,
   falabellaFixtureDir,
+  falabellaPerfumesUrl,
 } = require("../config/env");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -30,8 +31,7 @@ function assertFalabellaUrl(value) {
 async function fetchPage(url) {
   if (falabellaFixtureDir) {
     const productId = new URL(url).pathname.match(/\/product\/(\d+)/)?.[1];
-    if (!productId) throw new Error("No se pudo obtener el ID del producto desde la URL.");
-    const fixturePath = path.resolve(falabellaFixtureDir, `${productId}.html`);
+    const fixturePath = path.resolve(falabellaFixtureDir, productId ? `${productId}.html` : "catalog.html");
     return { html: await fs.readFile(fixturePath, "utf8"), finalUrl: url };
   }
 
@@ -67,6 +67,30 @@ async function fetchPage(url) {
   }
   if (!response.ok) throw new Error(`Falabella respondió HTTP ${response.status}.`);
   return { html: await response.text(), finalUrl: response.url };
+}
+
+function findProductUrls(html, baseUrl, limit) {
+  const urls = new Set();
+  const addUrl = (candidate) => {
+    const href = candidate.replace(/\\u002F/gi, "/").replace(/\\\//g, "/").replace(/&amp;/g, "&");
+    if (!/\/product\/\d+/i.test(href) || urls.size >= limit) return;
+    try {
+      const url = new URL(href, baseUrl);
+      if (!/(^|\.)falabella\.com$/i.test(url.hostname)) return;
+      url.search = "";
+      url.hash = "";
+      urls.add(url.toString());
+    } catch {
+      // Se ignora un enlace malformado y se continúa con el siguiente.
+    }
+  };
+
+  // SSR tradicional y los resultados actuales de Falabella (incluidos en __NEXT_DATA__).
+  for (const match of html.matchAll(/href=["']([^"']+)["']/gi)) addUrl(match[1]);
+  for (const match of html.matchAll(/https?:\\?\/\\?\/[^"'<>\s]+?\\?\/product\\?\/\d+[^"'<>\s]*/gi)) {
+    addUrl(match[0]);
+  }
+  return [...urls];
 }
 
 function findProductJsonLd(html) {
@@ -116,4 +140,23 @@ async function scrapeProduct(productUrl) {
   return normalizeProduct(jsonLd, finalUrl);
 }
 
-module.exports = { scrapeProduct };
+async function scrapePerfumeCatalog(maxProducts = 12) {
+  const limit = Math.min(Math.max(Number(maxProducts) || 12, 1), 24);
+  const catalogUrl = assertFalabellaUrl(falabellaPerfumesUrl);
+  const { html, finalUrl } = await fetchPage(catalogUrl);
+  const productUrls = findProductUrls(html, finalUrl, limit);
+  if (!productUrls.length) {
+    throw new Error("No se encontraron enlaces de productos en la colección de perfumes de Falabella.");
+  }
+  const results = [];
+  for (const url of productUrls) {
+    try {
+      results.push({ url, ok: true, product: await scrapeProduct(url) });
+    } catch (error) {
+      results.push({ url, ok: false, error: error.message });
+    }
+  }
+  return results;
+}
+
+module.exports = { scrapeProduct, scrapePerfumeCatalog, findProductUrls, normalizeProduct };
