@@ -1,8 +1,10 @@
 const OVERPASS_URLS = (process.env.OVERPASS_URLS || process.env.OVERPASS_URL || "https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter").split(",").map(url => url.trim()).filter(Boolean);
 const SEARCH_RADIUS_METERS = Number(process.env.STORE_SEARCH_RADIUS_METERS || 15000);
 const CACHE_TTL_MS = Number(process.env.STORE_CACHE_TTL_MS || 6 * 60 * 60 * 1000);
+const REQUEST_TIMEOUT_MS = Number(process.env.OVERPASS_REQUEST_TIMEOUT_MS || 15000);
 const MAX_STORES = Number(process.env.MAX_STORES_PER_CITY || 30);
 const cache = new Map();
+const inFlight = new Map();
 
 function buildQuery(lat, lon) {
   const latitude = Number(lat);
@@ -53,16 +55,13 @@ function distanceKm(fromLat, fromLon, toLat, toLon) {
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function getStoresForCity({ cityName, lat, lon }) {
-  const cacheKey = `${Number(lat).toFixed(3)}|${Number(lon).toFixed(3)}`;
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.stores;
+async function fetchStores({ cityName, lat, lon }, cacheKey, cached) {
   try {
     let data;
     let lastError;
     for (const url of OVERPASS_URLS) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 25000);
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       try {
         const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "User-Agent": "FullFragrance/1.0" }, body: new URLSearchParams({ data: buildQuery(lat, lon) }), signal: controller.signal });
         if (!response.ok) throw new Error(`Overpass respondió ${response.status}`);
@@ -85,6 +84,23 @@ async function getStoresForCity({ cityName, lat, lon }) {
     wrapped.cause = error;
     throw wrapped;
   }
+}
+
+async function getStoresForCity({ cityName, lat, lon }) {
+  const cacheKey = `${Number(lat).toFixed(3)}|${Number(lon).toFixed(3)}`;
+  const cached = cache.get(cacheKey);
+  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.stores;
+
+  // /stores y /prices suelen pedir la misma ubicación al mismo tiempo. Ambas
+  // deben compartir la consulta a Overpass en vez de duplicarla.
+  const pending = inFlight.get(cacheKey);
+  if (pending) return pending;
+
+  const request = fetchStores({ cityName, lat, lon }, cacheKey, cached).finally(() => {
+    if (inFlight.get(cacheKey) === request) inFlight.delete(cacheKey);
+  });
+  inFlight.set(cacheKey, request);
+  return request;
 }
 
 module.exports = { getStoresForCity, buildQuery, normalizeElement };

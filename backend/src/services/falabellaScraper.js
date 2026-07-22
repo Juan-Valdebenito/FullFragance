@@ -1,4 +1,12 @@
-const { falabellaUserAgent, falabellaMinDelayMs, falabellaMaxDelayMs } = require("../config/env");
+const fs = require("fs/promises");
+const path = require("path");
+const {
+  falabellaUserAgent,
+  falabellaMinDelayMs,
+  falabellaMaxDelayMs,
+  falabellaRequestTimeoutMs,
+  falabellaFixtureDir,
+} = require("../config/env");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let lastRequestAt = 0;
@@ -20,16 +28,31 @@ function assertFalabellaUrl(value) {
 }
 
 async function fetchPage(url) {
+  if (falabellaFixtureDir) {
+    const productId = new URL(url).pathname.match(/\/product\/(\d+)/)?.[1];
+    if (!productId) throw new Error("No se pudo obtener el ID del producto desde la URL.");
+    const fixturePath = path.resolve(falabellaFixtureDir, `${productId}.html`);
+    return { html: await fs.readFile(fixturePath, "utf8"), finalUrl: url };
+  }
+
   await waitForRateLimit();
   lastRequestAt = Date.now();
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": falabellaUserAgent,
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "es-CL,es;q=0.9",
-    },
-    redirect: "follow",
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), falabellaRequestTimeoutMs);
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        "User-Agent": falabellaUserAgent,
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "es-CL,es;q=0.9",
+      },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (response.status === 429) {
     const retryAfter = Number(response.headers.get("retry-after") || 0);
@@ -38,6 +61,9 @@ async function fetchPage(url) {
       return fetchPage(url);
     }
     throw new Error("Falabella limitó temporalmente las solicitudes (HTTP 429).");
+  }
+  if (response.status === 403) {
+    throw new Error("Falabella bloqueó la consulta automática (HTTP 403 / Cloudflare).");
   }
   if (!response.ok) throw new Error(`Falabella respondió HTTP ${response.status}.`);
   return { html: await response.text(), finalUrl: response.url };

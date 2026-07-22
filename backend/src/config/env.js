@@ -11,4 +11,6 @@ module.exports = {
     "FullFraganceCatalogBot/1.0 (+contacto@ejemplo.cl)",
   falabellaMinDelayMs: Number(process.env.FALABELLA_MIN_DELAY_MS || 1500),
   falabellaMaxDelayMs: Number(process.env.FALABELLA_MAX_DELAY_MS || 3000),
+  falabellaRequestTimeoutMs: Number(process.env.FALABELLA_REQUEST_TIMEOUT_MS || 20000),
+  falabellaFixtureDir: process.env.FALABELLA_FIXTURE_DIR || "",
 };
