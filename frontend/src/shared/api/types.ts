@@ -1,6 +1,6 @@
 export type City = { name: string; country: string; lat: number; lon: number };
 export type User = { id: string; name: string; email: string; city: City | null; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
-export type ApiProduct = { id: string; name: string; brand: string; unit: string; basePrice: number; category: string; gender: string; notes: string[]; source?: string; sourceUrl?: string; available?: boolean };
+export type ApiProduct = { id: string; name: string; brand: string; unit: string; basePrice: number; category: string; gender: string; notes: string[]; source?: string; sourceUrl?: string | null; imageUrl?: string | null; available?: boolean };
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
 export type Comparison = { product: ApiProduct; prices: ApiPrice[]; minPrice: number | null; maxPrice: number | null };
 export type Store = { id: string; chainId: string; name: string; address: string; lat: number; lon: number; website?: string | null; phone?: string | null; openingHours?: string | null; category?: string; osmUrl?: string; distanceKm?: number };

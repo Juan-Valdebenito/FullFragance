@@ -20,6 +20,7 @@ function toCatalogProduct(product) {
     notes: [],
     source: product.source,
     sourceUrl: product.url,
+    imageUrl: product.imageUrl || null,
     available: product.available,
   };
 }

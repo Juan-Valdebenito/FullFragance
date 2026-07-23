@@ -9,6 +9,8 @@ const scraperRoutes = require("./scraperRoutes");
 
 const router = Router();
 
+router.get("/", (_req, res) => res.json({ name: "FullFragrance API", status: "ok" }));
+
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/stores", storeRoutes);

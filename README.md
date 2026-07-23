@@ -149,6 +149,7 @@ Las tiendas son obtenidas automáticamente mediante consultas a Overpass API. Ad
 * `bcrypt` para protección de contraseñas.
 * Persistencia local mediante archivos JSON.
 * Overpass API para obtener tiendas físicas reales.
+* Swagger UI disponible en `http://localhost:3000/api/docs`.
 
 ## Arquitectura del proyecto
 
@@ -191,6 +192,18 @@ La arquitectura separa claramente:
 ├── /favoritos
 └── /perfil
 ```
+
+## Documentación de la API
+
+El backend expone la interfaz Swagger en:
+
+`http://localhost:3000/api/docs`
+
+La especificación OpenAPI también está disponible como JSON en:
+
+`http://localhost:3000/api/openapi.json`
+
+Para probar rutas protegidas desde Swagger, inicia sesión en `/api/auth/login`, copia el token JWT de la respuesta y pégalo en el botón `Authorize` como Bearer token.
 
 ## Resumen del avance
 

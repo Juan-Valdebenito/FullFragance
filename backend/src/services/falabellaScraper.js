@@ -176,6 +176,68 @@ function extractPresentation(name, description) {
   return match ? match[0] : null;
 }
 
+function titleCase(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/(^|\s)([a-záéíóúñ])/g, (_match, space, letter) => `${space}${letter.toUpperCase()}`);
+}
+
+function cleanProductSlug(slug) {
+  return titleCase(
+    decodeURIComponent(String(slug || ""))
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+function inferBrandFromName(name) {
+  const tokens = String(name || "").split(" ").filter(Boolean);
+  if (!tokens.length) return null;
+  const ignore = new Set(["Perfume", "Mujer", "Hombre", "Unisex", "Edp", "Edt", "Parfum", "Ml", "De"]);
+  for (let i = tokens.length - 1; i >= 0; i -= 1) {
+    if (!ignore.has(tokens[i]) && !/^\d+$/.test(tokens[i])) return tokens[i];
+  }
+  return null;
+}
+
+function productFromUrl(productUrl, reason = "Detalle bloqueado por Falabella.") {
+  const url = new URL(assertFalabellaUrl(productUrl));
+  const parts = url.pathname.split("/").filter(Boolean);
+  const productIndex = parts.findIndex((part) => part === "product");
+  const sku = parts[productIndex + 1];
+  const slug = parts[productIndex + 2] || `Producto Falabella ${sku}`;
+  if (!sku || !/^\d+$/.test(sku)) {
+    throw new Error("No se pudo inferir el SKU desde la URL de Falabella.");
+  }
+
+  const name = cleanProductSlug(slug);
+  return {
+    source: "falabella-cl",
+    sku,
+    brand: inferBrandFromName(name),
+    name,
+    price: null,
+    currency: "CLP",
+    presentation: extractPresentation(name, ""),
+    imageUrl: null,
+    available: false,
+    url: url.toString(),
+    raw: { fallback: true, reason },
+  };
+}
+
+function isCloudflareBlockError(error) {
+  return /HTTP 403|Cloudflare/i.test(error?.message || "");
+}
+
+function extractImage(image) {
+  const candidate = Array.isArray(image) ? image[0] : image;
+  if (typeof candidate === "string") return candidate;
+  if (candidate && typeof candidate === "object") return candidate.url || candidate.contentUrl || null;
+  return null;
+}
+
 function normalizeProduct(jsonLd, url) {
   const offer = Array.isArray(jsonLd.offers) ? jsonLd.offers[0] : jsonLd.offers || {};
   const sku = String(jsonLd.sku || jsonLd.mpn || jsonLd.productID || "").trim();
@@ -189,6 +251,7 @@ function normalizeProduct(jsonLd, url) {
     price: offer.price === undefined ? null : Math.round(Number(offer.price)),
     currency: offer.priceCurrency || "CLP",
     presentation: extractPresentation(jsonLd.name, jsonLd.description),
+    imageUrl: extractImage(jsonLd.image),
     available: /instock|in stock|limitedavailability/.test(availability),
     url,
     raw: jsonLd,
@@ -201,6 +264,18 @@ async function scrapeProduct(productUrl) {
   const jsonLd = findProductJsonLd(html);
   if (!jsonLd) throw new Error("No se encontró el bloque Product JSON-LD en la página.");
   return normalizeProduct(jsonLd, finalUrl);
+}
+
+async function scrapeProductOrFallback(productUrl) {
+  try {
+    return { product: await scrapeProduct(productUrl), warning: null };
+  } catch (error) {
+    if (!isCloudflareBlockError(error)) throw error;
+    return {
+      product: productFromUrl(productUrl, error.message),
+      warning: "Falabella bloqueó el detalle; se guardó un producto parcial desde la URL.",
+    };
+  }
 }
 
 async function scrapePerfumeCatalog(maxProducts = 12) {
@@ -227,7 +302,8 @@ async function scrapePerfumeCatalog(maxProducts = 12) {
   const results = [];
   for (const url of productUrls) {
     try {
-      results.push({ url, ok: true, product: await scrapeProduct(url) });
+      const { product, warning } = await scrapeProductOrFallback(url);
+      results.push({ url, ok: true, product, ...(warning ? { warning } : {}) });
     } catch (error) {
       results.push({ url, ok: false, error: error.message });
     }
@@ -235,4 +311,12 @@ async function scrapePerfumeCatalog(maxProducts = 12) {
   return results;
 }
 
-module.exports = { scrapeProduct, scrapePerfumeCatalog, findProductUrls, normalizeProduct, isPerfumeProductUrl };
+module.exports = {
+  scrapeProduct,
+  scrapeProductOrFallback,
+  scrapePerfumeCatalog,
+  findProductUrls,
+  normalizeProduct,
+  productFromUrl,
+  isPerfumeProductUrl,
+};

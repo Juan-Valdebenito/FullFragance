@@ -17,6 +17,7 @@ db.exec(`
     price INTEGER,
     currency TEXT NOT NULL DEFAULT 'CLP',
     presentation TEXT,
+    image_url TEXT,
     available INTEGER NOT NULL DEFAULT 0,
     product_url TEXT NOT NULL,
     raw_json TEXT,
@@ -28,16 +29,22 @@ db.exec(`
     ON scraped_products(source, last_seen_at DESC);
 `);
 
+const columns = db.prepare("PRAGMA table_info(scraped_products)").all();
+if (!columns.some((column) => column.name === "image_url")) {
+  db.exec("ALTER TABLE scraped_products ADD COLUMN image_url TEXT");
+}
+
 function upsertProduct(product) {
   const now = new Date().toISOString();
   db.prepare(`
     INSERT INTO scraped_products (
-      source, sku, brand, name, price, currency, presentation, available,
-      product_url, raw_json, first_seen_at, last_seen_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      source, sku, brand, name, price, currency, presentation, image_url,
+      available, product_url, raw_json, first_seen_at, last_seen_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(source, sku) DO UPDATE SET
       brand = excluded.brand, name = excluded.name, price = excluded.price,
       currency = excluded.currency, presentation = excluded.presentation,
+      image_url = excluded.image_url,
       available = excluded.available, product_url = excluded.product_url,
       raw_json = excluded.raw_json, last_seen_at = excluded.last_seen_at
   `).run(
@@ -48,6 +55,7 @@ function upsertProduct(product) {
     product.price ?? null,
     product.currency || "CLP",
     product.presentation || null,
+    product.imageUrl || null,
     product.available ? 1 : 0,
     product.url,
     JSON.stringify(product.raw || {}),
@@ -59,6 +67,7 @@ function upsertProduct(product) {
 function listProducts(source, limit = 100) {
   return db
     .prepare(`SELECT source, sku, brand, name, price, currency, presentation,
+      image_url AS imageUrl,
       available, product_url AS url, first_seen_at AS firstSeenAt,
       last_seen_at AS lastSeenAt
       FROM scraped_products WHERE source = ? ORDER BY last_seen_at DESC LIMIT ?`)
