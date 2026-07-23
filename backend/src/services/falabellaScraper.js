@@ -9,6 +9,7 @@ const {
   falabellaPerfumesUrl,
   falabellaPdpSitemapIndexUrl,
   falabellaSitemapFilesToScan,
+  scraperMockPrices,
 } = require("../config/env");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -201,6 +202,13 @@ function inferBrandFromName(name) {
   return null;
 }
 
+function demoPriceForSku(sku) {
+  const seed = String(sku || "")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return 29990 + (seed % 18) * 5000;
+}
+
 function productFromUrl(productUrl, reason = "Detalle bloqueado por Falabella.") {
   const url = new URL(assertFalabellaUrl(productUrl));
   const parts = url.pathname.split("/").filter(Boolean);
@@ -217,13 +225,13 @@ function productFromUrl(productUrl, reason = "Detalle bloqueado por Falabella.")
     sku,
     brand: inferBrandFromName(name),
     name,
-    price: null,
+    price: scraperMockPrices ? demoPriceForSku(sku) : null,
     currency: "CLP",
     presentation: extractPresentation(name, ""),
     imageUrl: null,
-    available: false,
+    available: Boolean(scraperMockPrices),
     url: url.toString(),
-    raw: { fallback: true, reason },
+    raw: { fallback: true, mockPrice: Boolean(scraperMockPrices), reason },
   };
 }
 

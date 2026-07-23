@@ -15,7 +15,8 @@ export function toProduct(item: Comparison): Product {
     .sort((a, b) => a.price - b.price)
     .filter((price, priceIndex, prices) => prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex)
     .slice(0, 2);
-  return { id: item.product.id, brand: item.product.brand, name: item.product.name, size: item.product.unit, notes: [item.product.category], image: item.product.imageUrl, prices: cheapestByChain.map((price, priceIndex) => ({ id: price.storeId, store: price.storeName, price: money.format(price.price), offer: priceIndex === 0 })), badge: item.product.source === "falabella-cl" ? cheapestByChain.length ? "Falabella" : "Dato scraper" : undefined };
+  const badge = item.product.priceIsMock ? "Precio demo" : item.product.source === "falabella-cl" ? cheapestByChain.length ? "Falabella" : "Dato scraper" : undefined;
+  return { id: item.product.id, brand: item.product.brand, name: item.product.name, size: item.product.unit, notes: [item.product.category], image: item.product.imageUrl, prices: cheapestByChain.map((price, priceIndex) => ({ id: price.storeId, store: price.storeName, price: money.format(price.price), offer: priceIndex === 0 })), badge };
 }
 
 export function CatalogExplorer() {

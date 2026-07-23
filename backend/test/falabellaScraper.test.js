@@ -65,6 +65,7 @@ test("crea un producto parcial desde la URL cuando el detalle queda bloqueado", 
   assert.equal(product.name, "Perfume Hombre Eros Flame Edp 200ml Versace");
   assert.equal(product.brand, "Versace");
   assert.equal(product.presentation, "200ml");
-  assert.equal(product.price, null);
+  assert.equal(product.price, 104990);
   assert.equal(product.raw.fallback, true);
+  assert.equal(product.raw.mockPrice, true);
 });

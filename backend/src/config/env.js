@@ -24,4 +24,5 @@ module.exports = {
     process.env.FALABELLA_PDP_SITEMAP_INDEX_URL ||
     "https://www.falabella.com/static/site/sitemaps/pdp/pdp_cl_FA_COM-index.xml",
   falabellaSitemapFilesToScan: Number(process.env.FALABELLA_SITEMAP_FILES_TO_SCAN || 8),
+  scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

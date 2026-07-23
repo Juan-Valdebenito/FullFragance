@@ -68,11 +68,20 @@ function listProducts(source, limit = 100) {
   return db
     .prepare(`SELECT source, sku, brand, name, price, currency, presentation,
       image_url AS imageUrl,
-      available, product_url AS url, first_seen_at AS firstSeenAt,
+      available, product_url AS url, raw_json AS rawJson, first_seen_at AS firstSeenAt,
       last_seen_at AS lastSeenAt
       FROM scraped_products WHERE source = ? ORDER BY last_seen_at DESC LIMIT ?`)
     .all(source, limit)
-    .map((product) => ({ ...product, available: Boolean(product.available) }));
+    .map((product) => {
+      let raw = {};
+      try {
+        raw = product.rawJson ? JSON.parse(product.rawJson) : {};
+      } catch {
+        raw = {};
+      }
+      const { rawJson, ...rest } = product;
+      return { ...rest, raw, available: Boolean(product.available) };
+    });
 }
 
 module.exports = { upsertProduct, listProducts, databasePath };

@@ -22,6 +22,7 @@ function toCatalogProduct(product) {
     sourceUrl: product.url,
     imageUrl: product.imageUrl || null,
     available: product.available,
+    priceIsMock: Boolean(product.raw?.mockPrice),
   };
 }
 
