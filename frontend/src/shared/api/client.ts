@@ -26,6 +26,7 @@ export const api = {
   stores: (city: City) => request<{ stores: Store[] }>(`/stores?${cityQuery(city)}`).then(data => data.stores),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
   syncFalabellaPerfumes: (maxProducts = 12) => request<{ results: Array<{ ok: boolean; error?: string }> }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ maxProducts }) }),
+  syncRipleyPerfumes: (maxProducts = 12) => request<{ results: Array<{ ok: boolean; error?: string }> }>("/scrapers/ripley/sync-perfumes", { method: "POST", body: JSON.stringify({ maxProducts }) }),
   saveQuiz: (scores: Record<string, number>) => request<{ recommendations: Recommendation[] }>("/users/me/scent-quiz", { method: "POST", body: JSON.stringify({ scores }) }),
   recommendations: () => request<{ source: string; recommendations: Recommendation[] }>("/users/me/recommendations"),
   toggleFavorite: (productId: string) => request<{ favorites: string[] }>(`/users/me/favorites/${productId}`, { method: "POST" }),

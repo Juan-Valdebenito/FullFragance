@@ -10,7 +10,7 @@ function inferGender(name) {
 
 function toCatalogProduct(product) {
   return {
-    id: `falabella-${product.sku}`,
+    id: `${product.source.replace(/-cl$/, "")}-${product.sku.toLowerCase()}`,
     name: product.name,
     brand: product.brand || "Sin marca",
     unit: product.presentation || "Presentación no informada",
@@ -27,7 +27,7 @@ function toCatalogProduct(product) {
 }
 
 function getProducts() {
-  const scraped = listScrapedProducts("falabella-cl").map(toCatalogProduct);
+  const scraped = ["falabella-cl", "ripley-cl"].flatMap((source) => listScrapedProducts(source).map(toCatalogProduct));
   return [...scraped, ...readDb().products];
 }
 

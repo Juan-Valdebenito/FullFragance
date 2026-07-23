@@ -2,6 +2,11 @@ const { getProducts, getProductById } = require("./catalogRepository");
 const { getStoresForCity } = require("./storeService");
 const { seededRandom, hashSeed } = require("../utils/geo");
 
+const SOURCE_STORES = {
+  "falabella-cl": { storeId: "falabella-online", storeName: "Falabella" },
+  "ripley-cl": { storeId: "ripley-online", storeName: "Ripley" },
+};
+
 function priceFor(cityName, storeId, product) {
   const rng = seededRandom(hashSeed(`${cityName}|${storeId}|${product.id}`));
   const variation = (rng() - 0.5) * 0.35;
@@ -17,10 +22,11 @@ function matchesProduct(product, productFilter) {
 }
 
 function pricesForRealProduct(product) {
+  const sourceStore = SOURCE_STORES[product.source];
   return product.price || product.basePrice
     ? [{
-        storeId: "falabella-online",
-        storeName: "Falabella",
+        storeId: sourceStore?.storeId || `${product.source}-online`,
+        storeName: sourceStore?.storeName || product.source,
         price: product.basePrice,
         available: Boolean(product.available),
         productUrl: product.sourceUrl,
@@ -29,7 +35,7 @@ function pricesForRealProduct(product) {
 }
 
 function pricesForProduct(cityName, stores, product) {
-  if (product.source === "falabella-cl") return pricesForRealProduct(product);
+  if (SOURCE_STORES[product.source]) return pricesForRealProduct(product);
   return stores.map((store) => ({
     storeId: store.id,
     storeName: store.name,
@@ -41,14 +47,14 @@ function pricesForProduct(cityName, stores, product) {
 async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
   const matches = getProducts().filter((product) => matchesProduct(product, productFilter));
   // Al haber datos reales, el catálogo debe priorizarlos frente al demo simulado.
-  const realProducts = matches.filter((product) => product.source === "falabella-cl");
+  const realProducts = matches.filter((product) => SOURCE_STORES[product.source]);
   const products = realProducts.length ? realProducts : matches;
   let stores = [];
-  if (products.some((product) => product.source !== "falabella-cl")) {
+  if (products.some((product) => !SOURCE_STORES[product.source])) {
     try {
       stores = await getStoresForCity({ cityName, lat, lon });
     } catch {
-      // Un producto real de Falabella sigue siendo útil aunque falle la búsqueda de sucursales OSM.
+      // Un producto real de marketplace sigue siendo útil aunque falle la búsqueda de sucursales OSM.
     }
   }
   return products.map((product) => {
@@ -60,7 +66,7 @@ async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
 async function getComparisonForProduct({ cityName, lat, lon }, productId) {
   const product = getProductById(productId);
   if (!product) return null;
-  if (product.source === "falabella-cl") {
+  if (SOURCE_STORES[product.source]) {
     return { product, prices: pricesForRealProduct(product) };
   }
   const stores = await getStoresForCity({ cityName, lat, lon });

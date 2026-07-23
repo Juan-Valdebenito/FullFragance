@@ -457,7 +457,7 @@ const openapi = {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/FalabellaSyncRequest" },
+              schema: { $ref: "#/components/schemas/ProductUrlSyncRequest" },
             },
           },
         },
@@ -478,6 +478,84 @@ const openapi = {
       post: {
         tags: ["Scrapers"],
         summary: "Buscar y sincronizar perfumes desde Falabella",
+        security: bearerAuth,
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/FalabellaPerfumeSyncRequest" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Resultado de sincronizacion",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ScraperSyncResponse" },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/scrapers/ripley/products": {
+      get: {
+        tags: ["Scrapers"],
+        summary: "Listar productos sincronizados desde Ripley",
+        security: bearerAuth,
+        responses: {
+          200: {
+            description: "Productos de Ripley",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    products: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ScrapedProduct" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/scrapers/ripley/sync": {
+      post: {
+        tags: ["Scrapers"],
+        summary: "Sincronizar URLs especificas de Ripley",
+        security: bearerAuth,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ProductUrlSyncRequest" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Resultado de sincronizacion",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ScraperSyncResponse" },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/scrapers/ripley/sync-perfumes": {
+      post: {
+        tags: ["Scrapers"],
+        summary: "Buscar y sincronizar perfumes desde Ripley",
         security: bearerAuth,
         requestBody: {
           required: false,
@@ -620,6 +698,7 @@ const openapi = {
           source: { type: "string" },
           sourceUrl: { type: "string", format: "uri" },
           available: { type: "boolean" },
+          priceIsMock: { type: "boolean" },
           description: { type: "string" },
           notes: {
             type: "array",
@@ -743,7 +822,7 @@ const openapi = {
       ScrapedProduct: {
         type: "object",
         properties: {
-          source: { type: "string", example: "falabella-cl" },
+          source: { type: "string", example: "ripley-cl" },
           sku: { type: "string" },
           name: { type: "string" },
           brand: { type: "string" },
@@ -757,14 +836,14 @@ const openapi = {
           lastSeenAt: { type: "string", format: "date-time" },
         },
       },
-      FalabellaSyncRequest: {
+      ProductUrlSyncRequest: {
         type: "object",
         required: ["productUrls"],
         properties: {
           productUrls: {
             type: "array",
             items: { type: "string", format: "uri" },
-            example: ["https://www.falabella.com/falabella-cl/product/example"],
+            example: ["https://simple.ripley.cl/perfume-dior-homme-hombre-edt-100-ml-2000378702900p"],
           },
         },
       },
