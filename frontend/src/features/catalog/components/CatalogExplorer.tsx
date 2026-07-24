@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, ApiError } from "@/shared/api/client";
+import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { City, Comparison, SyncJob } from "@/shared/api/types";
 import type { Product } from "../domain/product";
 import { ProductCard } from "./ProductCard";
@@ -20,11 +20,11 @@ export function toProduct(item: Comparison): Product {
   const badge = item.product.matchedStores && item.product.matchedStores > 1
     ? "Comparado en 2 tiendas"
     : item.product.priceIsMock ? "Precio demo" : item.product.source ? cheapestByChain.length ? sourceBadges[item.product.source] ?? "Marketplace" : "Dato scraper" : undefined;
-  return { id: item.product.id, brand: item.product.brand, name: item.product.name, size: item.product.unit, notes: [item.product.category], image: item.product.imageUrl, prices: cheapestByChain.map((price, priceIndex) => ({ id: price.storeId, store: price.storeName, price: money.format(price.price), offer: priceIndex === 0 })), badge };
+  return { id: item.product.id, aliases: item.product.aliases, brand: item.product.brand, name: item.product.name, size: item.product.unit, notes: [item.product.category], image: productImageUrl(item.product.imageUrl), prices: cheapestByChain.map((price, priceIndex) => ({ id: price.storeId, store: price.storeName, price: money.format(price.price), offer: priceIndex === 0 })), badge };
 }
 
-export function CatalogExplorer() {
-  const [query, setQuery] = useState("");
+export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery);
   const [items, setItems] = useState<Comparison[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);

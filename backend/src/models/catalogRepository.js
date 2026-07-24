@@ -1,6 +1,6 @@
 const { readDb } = require("../data/database");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { samePerfume } = require("./productMatcher");
+const { normalizeBrand, samePerfume, tokenScore } = require("./productMatcher");
 
 function inferGender(name) {
   const value = String(name || "").toLowerCase();
@@ -9,7 +9,15 @@ function inferGender(name) {
   return "Unisex";
 }
 
-function toCatalogProduct(product) {
+function scentProfileFor(product, profiles) {
+  return profiles.find((profile) =>
+    normalizeBrand(profile.brand) === normalizeBrand(product.brand) &&
+    tokenScore(profile, product) >= 0.6
+  ) || null;
+}
+
+function toCatalogProduct(product, profiles = readDb().products) {
+  const profile = scentProfileFor(product, profiles);
   return {
     id: `${product.source.replace(/-cl$/, "")}-${product.sku.toLowerCase()}`,
     name: product.name,
@@ -18,7 +26,7 @@ function toCatalogProduct(product) {
     basePrice: product.price || 0,
     category: "Perfumes",
     gender: inferGender(product.name),
-    notes: [],
+    notes: profile?.notes || [],
     source: product.source,
     sourceUrl: product.url,
     imageUrl: product.imageUrl || null,
@@ -36,6 +44,7 @@ function toCatalogProduct(product) {
 }
 
 function mergeScrapedProducts(products) {
+  const profiles = readDb().products;
   const groups = [];
   for (const product of products) {
     const group = groups.find((candidate) => candidate.some((item) => samePerfume(item, product)));
@@ -44,7 +53,7 @@ function mergeScrapedProducts(products) {
   }
 
   return groups.map((group) => {
-    const converted = group.map(toCatalogProduct);
+    const converted = group.map((product) => toCatalogProduct(product, profiles));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
     const offers = converted.flatMap((product) => product.offers);
     const positivePrices = offers.filter((offer) => offer.price > 0).map((offer) => offer.price);
@@ -57,6 +66,7 @@ function mergeScrapedProducts(products) {
       priceIsMock: offers.every((offer) => offer.priceIsMock),
       offers,
       matchedStores: offers.length,
+      aliases: converted.map((product) => product.id),
     };
   });
 }
@@ -68,7 +78,7 @@ function getProducts() {
 }
 
 function getProductById(id) {
-  return getProducts().find((product) => product.id === id) || null;
+  return getProducts().find((product) => product.id === id || product.aliases?.includes(id)) || null;
 }
 
 function getChains() {

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { api, ApiError } from "@/shared/api/client";
+import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { ApiPrice, ApiProduct, City } from "@/shared/api/types";
 import { FavoriteButton } from "./FavoriteButton";
 import styles from "./ProductDetail.module.css";
@@ -28,7 +28,15 @@ export function ProductDetail({ productId }: { productId: string }) {
     } finally { setLoading(false); }
   })(); }, [productId]);
 
-  const sortedPrices = useMemo(() => [...prices].sort((a, b) => a.price - b.price), [prices]);
+  const sortedPrices = useMemo(() => {
+    const cheapestByStore = new Map<string, ApiPrice>();
+    for (const price of prices) {
+      const storeKey = price.storeId || price.storeName;
+      const current = cheapestByStore.get(storeKey);
+      if (!current || price.price < current.price) cheapestByStore.set(storeKey, price);
+    }
+    return [...cheapestByStore.values()].sort((a, b) => a.price - b.price);
+  }, [prices]);
   const hasComparison = sortedPrices.length > 1;
   const savings = hasComparison ? sortedPrices[sortedPrices.length - 1].price - sortedPrices[0].price : 0;
 
@@ -43,7 +51,7 @@ export function ProductDetail({ productId }: { productId: string }) {
     <section className={styles.product}>
       <div className={styles.visual}>
         {product.imageUrl
-          ? <Image src={product.imageUrl} alt={`${product.name} de ${product.brand}`} fill priority sizes="(max-width: 900px) 100vw, 34vw" />
+          ? <Image src={productImageUrl(product.imageUrl) || product.imageUrl} unoptimized={Boolean(productImageUrl(product.imageUrl)?.includes("/api/images/ripley/"))} alt={`${product.name} de ${product.brand}`} fill priority sizes="(max-width: 900px) 100vw, 34vw" />
           : <div className={styles.visualPlaceholder}><span>FF</span></div>}
       </div>
 
@@ -66,7 +74,7 @@ export function ProductDetail({ productId }: { productId: string }) {
             ? "Comparamos la misma marca, versión, concentración y tamaño antes de juntar las ofertas."
             : "Sincroniza ambas tiendas para buscar una oferta equivalente."}</p>
         <div className={styles.tags}><span>{product.category}</span>{product.notes.map(note => <span key={note}>{note}</span>)}</div>
-        <div className={styles.favoriteLine}><FavoriteButton productId={product.id} large /></div>
+        <div className={styles.favoriteLine}><FavoriteButton productId={product.id} aliases={product.aliases} large /></div>
       </div>
 
       <aside className={styles.storePanel}>
@@ -76,7 +84,7 @@ export function ProductDetail({ productId }: { productId: string }) {
         </div>
         {sortedPrices.length ? <div className={styles.offerList}>{sortedPrices.map((price, index) => {
           const target = price.productUrl ?? stores[price.storeName] ?? `https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name} ${price.storeName}`)}`;
-          return <article className={`${styles.offerCard} ${index === 0 ? styles.bestOffer : ""}`} key={price.storeId}>
+          return <article className={`${styles.offerCard} ${index === 0 ? styles.bestOffer : ""}`} key={`${price.storeId}-${price.storeName}`}>
             <div className={styles.offerTop}>
               <strong>{price.storeName}</strong>
               {index === 0 && <em>Mejor precio</em>}

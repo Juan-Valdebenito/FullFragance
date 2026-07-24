@@ -16,6 +16,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 function saveSession(data: { token: string; user: User }) { localStorage.setItem(TOKEN_KEY, data.token); return data.user; }
 const cityQuery = (city: City) => new URLSearchParams({ cityName: city.name, lat: String(city.lat), lon: String(city.lon) }).toString();
 export const session = { hasToken: () => Boolean(token()), clear: () => localStorage.removeItem(TOKEN_KEY) };
+export function productImageUrl(imageUrl?: string | null) {
+  if (!imageUrl || !/https:\/\/rimage\.ripley\.cl\//i.test(imageUrl)) return imageUrl;
+  const sku = imageUrl.match(/(?:WOP\/1\/|full_image-)(\d{8,20})/i)?.[1];
+  return sku ? `${API_URL}/images/ripley/${sku}` : imageUrl;
+}
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
   register: (body: { name: string; email: string; password: string }) => request<{ token: string; user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),

@@ -37,15 +37,16 @@ function updateCity(userId, city) {
   return user;
 }
 
-function toggleFavorite(userId, productId) {
+function toggleFavorite(userId, productId, aliases = []) {
   const db = readDb();
   const user = db.users.find((u) => u.id === userId);
   if (!user) return null;
 
   user.favorites = user.favorites || [];
-  const idx = user.favorites.indexOf(productId);
-  if (idx >= 0) {
-    user.favorites.splice(idx, 1);
+  const equivalentIds = new Set([productId, ...aliases]);
+  const alreadyFavorite = user.favorites.some((id) => equivalentIds.has(id));
+  if (alreadyFavorite) {
+    user.favorites = user.favorites.filter((id) => !equivalentIds.has(id));
   } else {
     user.favorites.push(productId);
   }

@@ -6,6 +6,7 @@ const swaggerUi = require("swagger-ui-express");
 const openapi = require("./docs/openapi");
 const apiRoutes = require("./routes");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
+const imageController = require("./controllers/imageController");
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/api/openapi.json", (_req, res) => res.json(openapi));
+app.get("/api/images/ripley/:sku", imageController.ripleyImage);
 app.use(
   "/api/docs",
   swaggerUi.serve,

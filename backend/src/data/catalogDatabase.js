@@ -64,7 +64,7 @@ function upsertProduct(product) {
   );
 }
 
-function listProducts(source, limit = 100) {
+function listProducts(source, limit = 10000) {
   return db
     .prepare(`SELECT source, sku, brand, name, price, currency, presentation,
       image_url AS imageUrl,
