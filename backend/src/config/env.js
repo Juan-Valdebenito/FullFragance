@@ -30,7 +30,10 @@ module.exports = {
   ripleyMinDelayMs: Number(process.env.RIPLEY_MIN_DELAY_MS || 1200),
   ripleyMaxDelayMs: Number(process.env.RIPLEY_MAX_DELAY_MS || 2500),
   ripleyRequestTimeoutMs: Number(process.env.RIPLEY_REQUEST_TIMEOUT_MS || 20000),
+  ripleyCurlFallback: process.env.RIPLEY_CURL_FALLBACK !== "false",
   ripleyFixtureDir: process.env.RIPLEY_FIXTURE_DIR || "",
-  ripleyPerfumesUrl: process.env.RIPLEY_PERFUMES_URL || "https://simple.ripley.cl/search/perfume",
+  ripleyPerfumesUrl:
+    process.env.RIPLEY_PERFUMES_URL ||
+    "https://simple.ripley.cl/belleza/perfumeria?source=menu&s=mdco",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

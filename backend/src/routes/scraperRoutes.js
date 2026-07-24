@@ -9,5 +9,6 @@ router.post("/falabella/sync-perfumes", requireAuth, scraperController.syncPerfu
 router.get("/ripley/products", requireAuth, scraperController.listRipley);
 router.post("/ripley/sync", requireAuth, scraperController.syncRipley);
 router.post("/ripley/sync-perfumes", requireAuth, scraperController.syncRipleyPerfumeCatalog);
+router.get("/sync-jobs/:jobId", requireAuth, scraperController.getSyncJob);
 
 module.exports = router;

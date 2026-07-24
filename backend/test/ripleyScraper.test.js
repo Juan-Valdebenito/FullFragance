@@ -9,6 +9,9 @@ const {
   isPerfumeProductUrl,
   productFromUrl,
   priceFromText,
+  buildRipleyImageUrl,
+  normalizeCollectionProduct,
+  buildRipleyCatalogPageUrl,
 } = require("../src/services/ripleyScraper");
 
 test("descubre y normaliza perfumes de Ripley", async () => {
@@ -48,6 +51,43 @@ test("crea un producto parcial desde la URL de Ripley", () => {
   assert.equal(product.name, "Perfume Tommy Hilfiger Tommy Edt 100 Ml");
   assert.equal(product.brand, "Tommy Hilfiger");
   assert.equal(product.presentation, "100 Ml");
+  assert.equal(product.imageUrl, "https://ripley.scene7.com/is/image/Ripley/2000403434585");
   assert.equal(product.raw.fallback, true);
   assert.equal(product.raw.mockPrice, true);
+});
+
+test("genera imagen de Ripley desde el SKU para fallbacks", () => {
+  assert.equal(
+    buildRipleyImageUrl("2000378702900P"),
+    "https://ripley.scene7.com/is/image/Ripley/2000378702900"
+  );
+});
+
+test("pagina únicamente sobre la categoría de perfumería de Ripley", () => {
+  const url = new URL(buildRipleyCatalogPageUrl(2));
+  assert.equal(url.pathname, "/belleza/perfumeria");
+  assert.equal(url.searchParams.get("source"), "menu");
+  assert.equal(url.searchParams.get("s"), "mdco");
+  assert.equal(url.searchParams.get("page"), "2");
+});
+
+test("normaliza productos directamente desde el listado SSR de Ripley", () => {
+  const product = normalizeCollectionProduct({
+    sku: "2000397524538",
+    parentProductID: "2000397524538P",
+    brand: "VERSACE",
+    name: "PERFUME VERSACE VERSENSE MUJER EDT 100 ML",
+    price: "$57.990",
+    priceNumber: 57990,
+    primaryImage: "https://home.ripley.cl/store/Attachment/producto.jpg",
+    seller: "RIPLEY",
+  }, "https://simple.ripley.cl/search/perfume", [
+    "https://simple.ripley.cl/perfume-versace-versense-mujer-edt-100-ml-2000397524538p",
+  ]);
+
+  assert.equal(product.sku, "2000397524538P");
+  assert.equal(product.brand, "VERSACE");
+  assert.equal(product.price, 57990);
+  assert.equal(product.presentation, "100 ML");
+  assert.equal(product.raw.collectionCard, true);
 });

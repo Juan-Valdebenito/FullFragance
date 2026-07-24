@@ -22,6 +22,21 @@ function matchesProduct(product, productFilter) {
 }
 
 function pricesForRealProduct(product) {
+  if (Array.isArray(product.offers)) {
+    return product.offers
+      .filter((offer) => offer.price > 0)
+      .map((offer) => {
+        const store = SOURCE_STORES[offer.source];
+        return {
+          storeId: store?.storeId || `${offer.source}-online`,
+          storeName: store?.storeName || offer.source,
+          price: offer.price,
+          available: Boolean(offer.available),
+          productUrl: offer.productUrl,
+        };
+      })
+      .sort((a, b) => a.price - b.price);
+  }
   const sourceStore = SOURCE_STORES[product.source];
   return product.price || product.basePrice
     ? [{
@@ -35,7 +50,7 @@ function pricesForRealProduct(product) {
 }
 
 function pricesForProduct(cityName, stores, product) {
-  if (SOURCE_STORES[product.source]) return pricesForRealProduct(product);
+  if (SOURCE_STORES[product.source] || product.source === "multi-store") return pricesForRealProduct(product);
   return stores.map((store) => ({
     storeId: store.id,
     storeName: store.name,
@@ -47,10 +62,10 @@ function pricesForProduct(cityName, stores, product) {
 async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
   const matches = getProducts().filter((product) => matchesProduct(product, productFilter));
   // Al haber datos reales, el catálogo debe priorizarlos frente al demo simulado.
-  const realProducts = matches.filter((product) => SOURCE_STORES[product.source]);
+  const realProducts = matches.filter((product) => SOURCE_STORES[product.source] || product.source === "multi-store");
   const products = realProducts.length ? realProducts : matches;
   let stores = [];
-  if (products.some((product) => !SOURCE_STORES[product.source])) {
+  if (products.some((product) => !SOURCE_STORES[product.source] && product.source !== "multi-store")) {
     try {
       stores = await getStoresForCity({ cityName, lat, lon });
     } catch {
@@ -66,7 +81,7 @@ async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
 async function getComparisonForProduct({ cityName, lat, lon }, productId) {
   const product = getProductById(productId);
   if (!product) return null;
-  if (SOURCE_STORES[product.source]) {
+  if (SOURCE_STORES[product.source] || product.source === "multi-store") {
     return { product, prices: pricesForRealProduct(product) };
   }
   const stores = await getStoresForCity({ cityName, lat, lon });

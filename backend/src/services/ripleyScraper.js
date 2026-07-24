@@ -1,29 +1,21 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { execFile } = require("child_process");
+const { promisify } = require("util");
 const {
   ripleyUserAgent,
   ripleyMinDelayMs,
   ripleyMaxDelayMs,
   ripleyRequestTimeoutMs,
+  ripleyCurlFallback,
   ripleyFixtureDir,
   ripleyPerfumesUrl,
   scraperMockPrices,
 } = require("../config/env");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const execFileAsync = promisify(execFile);
 let lastRequestAt = 0;
-
-const SEED_PERFUME_URLS = [
-  "https://simple.ripley.cl/perfume-dior-homme-hombre-edt-100-ml-2000378702900p",
-  "https://simple.ripley.cl/perfume-dkny-men-hombre-edt-100-ml-2000397748217p",
-  "https://simple.ripley.cl/perfume-hombre-tommy-hilfiger-tommy-edt-100-ml-2000403434585p",
-  "https://simple.ripley.cl/perfume-yves-saint-laurent-l-homme-hombre-edt-100-ml-2000319589355p",
-  "https://simple.ripley.cl/perfume-lacoste-lhomme-hombre-edt-100-ml-2000368344738p",
-  "https://simple.ripley.cl/perfume-calvin-klein-free-edt-100ml-hombre-mpm10003217931",
-  "https://simple.ripley.cl/perfume-guess-dare-hombre-edt-100-ml-mpm10000597635",
-  "https://simple.ripley.cl/perfume-hombre-man-edt-100-ml-hugo-boss-100-ml-mpm10000400543",
-  "https://simple.ripley.cl/tommy-men-edt-100-ml-hombre-caja-formal-sin-celofan-mpm10000144508",
-];
 
 function waitForRateLimit() {
   const min = Math.max(0, ripleyMinDelayMs);
@@ -38,6 +30,18 @@ function assertRipleyUrl(value) {
   if (url.protocol !== "https:" || !/(^|\.)ripley\.cl$/i.test(url.hostname)) {
     throw new Error("La URL debe pertenecer a https://simple.ripley.cl.");
   }
+  return url.toString();
+}
+
+function buildRipleyCatalogPageUrl(page = 1) {
+  const url = new URL(assertRipleyUrl(ripleyPerfumesUrl));
+  if (!/^\/belleza\/perfumeria\/?$/i.test(url.pathname)) {
+    throw new Error("El catálogo de Ripley debe usar exclusivamente /belleza/perfumeria.");
+  }
+  url.searchParams.set("source", "menu");
+  url.searchParams.set("s", "mdco");
+  if (page > 1) url.searchParams.set("page", String(page));
+  else url.searchParams.delete("page");
   return url.toString();
 }
 
@@ -84,7 +88,28 @@ async function fetchPage(url) {
     throw new Error("Ripley limitó temporalmente las solicitudes (HTTP 429).");
   }
   if (response.status === 403) {
-    throw new Error("Ripley bloqueó la consulta automática (HTTP 403).");
+    if (!ripleyCurlFallback) {
+      throw new Error("Ripley bloqueó la consulta automática (HTTP 403).");
+    }
+    try {
+      const { stdout } = await execFileAsync("curl", [
+        "--fail",
+        "--location",
+        "--compressed",
+        "--silent",
+        "--show-error",
+        "--max-time",
+        String(Math.ceil(ripleyRequestTimeoutMs / 1000)),
+        "--user-agent",
+        ripleyUserAgent,
+        "--header",
+        "Accept: text/html,application/xhtml+xml",
+        url,
+      ], { maxBuffer: 8 * 1024 * 1024 });
+      return { html: stdout, finalUrl: url };
+    } catch {
+      throw new Error("Ripley bloqueó la consulta automática (HTTP 403).");
+    }
   }
   if (!response.ok) throw new Error(`Ripley respondió HTTP ${response.status}.`);
   return { html: await response.text(), finalUrl: response.url };
@@ -159,8 +184,74 @@ function findProductJsonLd(html) {
   return null;
 }
 
+function findNextData(html) {
+  const match = String(html || "").match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1].trim());
+  } catch {
+    return null;
+  }
+}
+
+function extractCollectionProducts(html) {
+  const nextData = findNextData(html);
+  const products = nextData?.props?.pageProps?.findabilityProps?.data?.products;
+  return Array.isArray(products) ? products : [];
+}
+
+async function scrapeDirectCatalogPage(page = 1) {
+  const pageUrl = buildRipleyCatalogPageUrl(page);
+  const { html, finalUrl } = await fetchPage(pageUrl);
+  const nextData = findNextData(html);
+  const data = nextData?.props?.pageProps?.findabilityProps?.data || {};
+  const cards = extractCollectionProducts(html);
+  const productUrls = findProductUrls(html, finalUrl, cards.length + 20);
+  const products = cards
+    .filter((card) => String(card.seller || "").toUpperCase() === "RIPLEY")
+    .filter((card, index, all) => all.findIndex((candidate) =>
+      String(candidate.parentProductID || candidate.sku) === String(card.parentProductID || card.sku)
+    ) === index)
+    .map((card) => normalizeCollectionProduct(card, finalUrl, productUrls));
+  const totalPages = Math.max(1, Math.ceil(Number(data.total || cards.length) / Number(data.limit || 48)));
+  const sellerFacet = data.aggregations?.facets?.find((facet) => facet.code === "seller_facet");
+  const directTotal = Number(sellerFacet?.values?.find((value) => String(value.code).toLowerCase() === "ripley")?.count) || null;
+  return { products, page, totalPages, scanned: cards.length, directTotal };
+}
+
+function normalizeCollectionProduct(card, pageUrl, productUrls = []) {
+  const sku = String(card.parentProductID || card.sku || "").trim().toUpperCase();
+  if (!sku) throw new Error("El listado de Ripley no expone un SKU.");
+  const name = String(card.name || card.description || "").trim();
+  const matchedUrl = productUrls.find((candidate) => ripleyProductIdFromUrl(candidate) === sku);
+  const fallbackSlug = normalizeCandidate(name)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return {
+    source: "ripley-cl",
+    sku,
+    brand: card.brand || inferBrandFromName(name),
+    name,
+    price: Number(card.priceNumber) || parsePrice(card.price) || parsePrice(card.ripleyPrice),
+    currency: "CLP",
+    presentation: extractPresentation(name, card.description),
+    imageUrl: card.primaryImage || card.images?.[0] || buildRipleyImageUrl(sku),
+    available: (Number(card.priceNumber) || parsePrice(card.price) || 0) > 0,
+    url: matchedUrl || new URL(`/${fallbackSlug}-${sku.toLowerCase()}`, pageUrl).toString(),
+    raw: { collectionCard: true, seller: card.seller || card.shop?.shopName || null },
+  };
+}
+
 function stripTags(html) {
   return String(html || "").replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ");
+}
+
+function parsePrice(value) {
+  const digits = String(value || "").replace(/[^\d]/g, "");
+  return digits ? Number(digits) : null;
 }
 
 function priceFromText(html) {
@@ -228,6 +319,18 @@ function extractImage(image) {
   return null;
 }
 
+function buildRipleyImageUrl(sku) {
+  const value = String(sku || "").trim().replace(/P$/i, "");
+  return /^\d+$/.test(value) ? `https://ripley.scene7.com/is/image/Ripley/${value}` : null;
+}
+
+function extractImageFromHtml(html, sku) {
+  const match =
+    String(html || "").match(/property=["']og:image["'][^>]+content=["']([^"']+)/i) ||
+    String(html || "").match(/content=["']([^"']+)["'][^>]+property=["']og:image/i);
+  return match?.[1] || buildRipleyImageUrl(sku);
+}
+
 function productFromUrl(productUrl, reason = "Detalle no disponible desde Ripley.") {
   const url = new URL(assertRipleyUrl(productUrl));
   const slug = url.pathname.split("/").filter(Boolean).at(-1) || "";
@@ -242,7 +345,7 @@ function productFromUrl(productUrl, reason = "Detalle no disponible desde Ripley
     price: scraperMockPrices ? demoPriceForSku(sku) : null,
     currency: "CLP",
     presentation: extractPresentation(name, ""),
-    imageUrl: null,
+    imageUrl: buildRipleyImageUrl(sku),
     available: Boolean(scraperMockPrices),
     url: url.toString(),
     raw: { fallback: true, mockPrice: Boolean(scraperMockPrices), reason },
@@ -264,7 +367,7 @@ function normalizeProduct(jsonLd, url, html = "") {
     price,
     currency: offer.priceCurrency || "CLP",
     presentation: extractPresentation(name, jsonLd.description),
-    imageUrl: extractImage(jsonLd.image),
+    imageUrl: extractImage(jsonLd.image) || extractImageFromHtml(html, sku),
     available: availability ? /instock|in stock|limitedavailability/.test(availability) : price !== null,
     url,
     raw: jsonLd,
@@ -279,7 +382,13 @@ async function scrapeProduct(productUrl) {
   const fallback = productFromUrl(finalUrl, "Ripley no expuso Product JSON-LD en la página.");
   const price = priceFromText(html);
   if (price) {
-    return { ...fallback, price, available: true, raw: { ...fallback.raw, fallback: true, mockPrice: false } };
+    return {
+      ...fallback,
+      price,
+      imageUrl: extractImageFromHtml(html, fallback.sku),
+      available: true,
+      raw: { ...fallback.raw, fallback: true, mockPrice: false },
+    };
   }
   throw new Error("No se encontró precio ni bloque Product JSON-LD en la página de Ripley.");
 }
@@ -296,20 +405,30 @@ async function scrapeProductOrFallback(productUrl) {
 }
 
 async function scrapePerfumeCatalog(maxProducts = 12) {
-  const limit = Math.min(Math.max(Number(maxProducts) || 12, 1), 24);
-  const catalogUrl = assertRipleyUrl(ripleyPerfumesUrl);
+  const limit = Math.min(Math.max(Number(maxProducts) || 12, 1), 60);
+  const catalogUrl = buildRipleyCatalogPageUrl(1);
   let productUrls = [];
   let discoveryError = null;
   try {
     const { html, finalUrl } = await fetchPage(catalogUrl);
     productUrls = findProductUrls(html, finalUrl, limit);
+    const collectionCards = extractCollectionProducts(html)
+      .filter((card, index, cards) => cards.findIndex((candidate) =>
+        String(candidate.parentProductID || candidate.sku) === String(card.parentProductID || card.sku)
+      ) === index)
+      .slice(0, limit);
+    const collectionProducts = collectionCards
+      .map((card) => normalizeCollectionProduct(card, finalUrl, productUrls));
+    if (collectionProducts.length) {
+      return collectionProducts.map((product) => ({ url: product.url, ok: true, product }));
+    }
   } catch (error) {
     discoveryError = error;
   }
-  if (!productUrls.length && discoveryError && scraperMockPrices) {
-    productUrls = SEED_PERFUME_URLS.slice(0, limit);
+  if (!productUrls.length) {
+    const reason = discoveryError ? ` Último error: ${discoveryError.message}` : "";
+    throw new Error(`No se encontraron productos reales en Ripley.${reason}`);
   }
-  if (!productUrls.length) throw new Error("No se encontraron URLs de perfumes en Ripley.");
 
   const results = [];
   for (const url of productUrls) {
@@ -332,4 +451,10 @@ module.exports = {
   productFromUrl,
   isPerfumeProductUrl,
   priceFromText,
+  buildRipleyImageUrl,
+  extractImageFromHtml,
+  extractCollectionProducts,
+  normalizeCollectionProduct,
+  scrapeDirectCatalogPage,
+  buildRipleyCatalogPageUrl,
 };
