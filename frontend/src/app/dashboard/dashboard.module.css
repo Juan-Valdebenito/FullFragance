@@ -1,3 +1,5 @@
+/* ─── Page shell ─────────────────────────────────────── */
+
 .page {
   min-height: 100vh;
   background: var(--surface);
@@ -5,25 +7,11 @@
 }
 
 .main {
-  padding-top: 54px;
+  padding-top: 36px;
   padding-bottom: 64px;
 }
 
-.hero {
-  margin-bottom: 40px;
-}
-
-.hero h1 {
-  margin: 10px 0 8px;
-  max-width: 760px;
-}
-
-.hero > p:last-child {
-  max-width: 720px;
-  color: var(--on-surface-muted);
-  font-size: 1.05rem;
-  line-height: 1.6;
-}
+/* ─── Tabs nav ───────────────────────────────────────── */
 
 .tabs {
   display: flex;
@@ -39,6 +27,11 @@
   padding-bottom: 16px;
   color: var(--on-surface-muted);
   font-weight: 600;
+  transition: color var(--transition);
+}
+
+.tabs a:hover {
+  color: var(--on-surface);
 }
 
 .tabs .active {
@@ -55,180 +48,18 @@
   font-size: .65rem;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  align-items: start;
-}
+/* ─── Store section ──────────────────────────────────── */
 
 .storeSection {
   margin-top: 54px;
 }
 
-.mapCard {
-  overflow: hidden;
-  border: 1px solid var(--surface-container);
-  border-radius: var(--radius-lg);
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-
-.storeSection .mapCard {
-  display: grid;
-  grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.35fr) minmax(260px, .8fr);
-}
-
-.mapHeader {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-  padding: 28px;
-}
-
-.mapHeader h2 {
-  font-size: 1.15rem;
-}
-
-.mapHeader span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--on-surface-muted);
-  font-size: .7rem;
-}
-
-.mapHeader i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 5px rgb(211 168 77 / 14%);
-}
-
-.map {
-  position: relative;
-  min-height: 330px;
-  overflow: hidden;
-  background:
-    linear-gradient(35deg, transparent 44%, #d2d3d0 45%, #d2d3d0 47%, transparent 48%),
-    linear-gradient(125deg, #e4e5e3 25%, transparent 25% 55%, #e4e5e3 55% 60%, transparent 60%),
-    #eceeeb;
-}
-
-.mapError {
-  position: absolute;
-  inset: 30px;
-  display: grid;
-  place-items: center;
-  color: #93000a;
-  text-align: center;
-}
-
-.storeList {
-  display: grid;
-  align-content: center;
-  padding: 18px;
-}
-
-.storeList > a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-radius: var(--radius-md);
-  padding: 10px;
-}
-
-.storeList > a:hover {
-  background: var(--surface-low);
-}
-
-.storeList > a > span {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--lavender);
-  color: var(--primary);
-}
-
-.storeList div {
-  min-width: 0;
-  flex: 1;
-}
-
-.storeList strong {
-  font-size: .72rem;
-}
-
-.storeList p {
-  overflow: hidden;
-  margin-top: 3px;
-  color: var(--on-surface-muted);
-  font-size: .6rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dynamicMarker {
-  position: absolute;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  color: var(--primary);
-  filter: drop-shadow(0 3px 3px rgb(0 0 0 / 20%));
-}
-
-.dynamicMarker small {
-  position: absolute;
-  left: 16px;
-  top: -5px;
-  width: max-content;
-  border-radius: 4px;
-  background: var(--primary);
-  color: #fff;
-  padding: 4px 6px;
-  font-size: .52rem;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: .2s;
-}
-
-.dynamicMarker:hover small {
-  opacity: 1;
-  transform: none;
-}
-
-@media (max-width: 1050px) {
-  .storeSection .mapCard {
-    grid-template-columns: 1fr;
-  }
-
-  .map {
-    min-height: 360px;
-  }
-}
+/* ─── Responsive ─────────────────────────────────────── */
 
 @media (max-width: 600px) {
-  .main {
-    padding-top: 36px;
-  }
+  .main { padding-top: 24px; }
 
-  .tabs {
-    gap: 24px;
-  }
+  .tabs { gap: 24px; }
 
-  .tabs small {
-    display: none;
-  }
-
-  .mapHeader {
-    padding: 22px;
-  }
-
-  .map {
-    min-height: 320px;
-  }
+  .tabs small { display: none; }
 }

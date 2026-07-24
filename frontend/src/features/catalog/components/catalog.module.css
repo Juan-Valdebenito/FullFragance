@@ -122,7 +122,7 @@
 }
 
 .filterIntro span {
-  color: #e85b2a;
+  color: var(--gold-dark);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .1em;
@@ -262,10 +262,10 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid transparent;
-  border-radius: var(--radius-lg);
+  border-radius: var(--card-radius);
   background: #fff;
   box-shadow: var(--shadow);
-  transition: transform .22s, border-color .22s, box-shadow .22s;
+  transition: transform var(--transition-slow), border-color var(--transition), box-shadow var(--transition-slow);
 }
 
 .card:hover {
@@ -362,7 +362,7 @@
 }
 
 .cardBody :global(.eyebrow) {
-  color: #e85b2a;
+  color: var(--gold-dark);
   font-size: .58rem;
   letter-spacing: .11em;
 }
@@ -383,7 +383,7 @@
   display: -webkit-box;
   min-height: 48px;
   overflow: hidden;
-  color: #6f7f8a;
+  color: var(--on-surface-muted);
   font-size: .72rem;
   font-weight: 600;
   line-height: 1.45;
@@ -410,7 +410,7 @@
 .priceRow span {
   min-width: 0;
   overflow: hidden;
-  color: #6f7f8a;
+  color: var(--on-surface-muted);
   font-size: .68rem;
   font-weight: 800;
   text-overflow: ellipsis;
