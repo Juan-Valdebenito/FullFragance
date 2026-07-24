@@ -228,7 +228,7 @@ function productFromUrl(productUrl, reason = "Detalle bloqueado por Falabella.")
     price: scraperMockPrices ? demoPriceForSku(sku) : null,
     currency: "CLP",
     presentation: extractPresentation(name, ""),
-    imageUrl: null,
+    imageUrl: buildFalabellaImageUrl(sku),
     available: Boolean(scraperMockPrices),
     url: url.toString(),
     raw: { fallback: true, mockPrice: Boolean(scraperMockPrices), reason },
@@ -239,39 +239,201 @@ function isCloudflareBlockError(error) {
   return /HTTP 403|Cloudflare/i.test(error?.message || "");
 }
 
-function extractImage(image) {
-  const candidate = Array.isArray(image) ? image[0] : image;
-  if (typeof candidate === "string") return candidate;
-  if (candidate && typeof candidate === "object") return candidate.url || candidate.contentUrl || null;
+function buildFalabellaImageUrl(sku) {
+  const value = String(sku || "").trim();
+  return value ? `https://media.falabella.com/falabellaCL/${value}_1/public` : null;
+}
+
+function parseClPrice(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
+  const digits = String(value).replace(/[^\d]/g, "");
+  return digits ? Number(digits) : null;
+}
+
+function extractPriceFromCard(prices) {
+  if (!Array.isArray(prices) || !prices.length) return null;
+  const priority = ["internetPrice", "eventPrice", "cmrPrice", "salePrice"];
+  for (const type of priority) {
+    const entry = prices.find((item) => item?.type === type && !item.crossed);
+    const parsed = parseClPrice(entry?.price?.[0]);
+    if (parsed) return parsed;
+  }
+  const uncrossed = prices
+    .filter((item) => !item?.crossed)
+    .map((item) => parseClPrice(item?.price?.[0]))
+    .filter(Boolean);
+  if (uncrossed.length) return Math.min(...uncrossed);
+  const anyPrice = prices.map((item) => parseClPrice(item?.price?.[0])).filter(Boolean);
+  return anyPrice.length ? Math.min(...anyPrice) : null;
+}
+
+function extractImageFromCard(card) {
+  if (Array.isArray(card?.mediaUrls) && card.mediaUrls[0]) return card.mediaUrls[0];
+  return buildFalabellaImageUrl(card?.productId || card?.skuId || card?.sku);
+}
+
+function inferAvailabilityFromCard(availability) {
+  if (!availability || typeof availability !== "object") return true;
+  const values = Object.values(availability).map((value) => String(value || "").toLowerCase());
+  if (values.some((value) => /outofstock|agotado|sin stock/.test(value))) return false;
+  return true;
+}
+
+function findNextData(html) {
+  const match = html.match(/<script id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1].trim());
+  } catch {
+    return null;
+  }
+}
+
+function collectProductCards(node, hits = [], seen = new Set()) {
+  if (!node || hits.length >= 200) return hits;
+  if (Array.isArray(node)) {
+    for (const item of node) collectProductCards(item, hits, seen);
+    return hits;
+  }
+  if (typeof node === "object") {
+    const sku = String(node.productId || node.skuId || node.sku || "").trim();
+    const name = node.displayName || node.name || node.productName;
+    const hasPrices = Array.isArray(node.prices) && node.prices.length;
+    const hasMedia = Array.isArray(node.mediaUrls) && node.mediaUrls.length;
+    if (sku && /^\d+$/.test(sku) && name && (hasPrices || hasMedia) && !seen.has(sku)) {
+      seen.add(sku);
+      hits.push(node);
+    }
+    for (const value of Object.values(node)) collectProductCards(value, hits, seen);
+  }
+  return hits;
+}
+
+function extractCollectionProductCards(html) {
+  const nextData = findNextData(html);
+  if (!nextData) return [];
+  return collectProductCards(nextData);
+}
+
+function normalizeCollectionProduct(card) {
+  const sku = String(card.productId || card.skuId || card.sku || "").trim();
+  const url = card.url || `https://www.falabella.com/falabella-cl/product/${sku}`;
+  const name = String(card.displayName || card.name || card.productName || "").trim();
+  return {
+    source: "falabella-cl",
+    sku,
+    brand: card.brand || inferBrandFromName(name),
+    name,
+    price: extractPriceFromCard(card.prices),
+    currency: "CLP",
+    presentation: extractPresentation(name, ""),
+    imageUrl: extractImageFromCard(card),
+    available: inferAvailabilityFromCard(card.availability),
+    url,
+    raw: { collectionCard: true, prices: card.prices || [] },
+  };
+}
+
+function extractImageFromHtml(html, sku) {
+  const ogMatch =
+    html.match(/property=["']og:image["'][^>]+content=["']([^"']+)/i) ||
+    html.match(/content=["']([^"']+)["'][^>]+property=["']og:image/i);
+  if (ogMatch?.[1]) return ogMatch[1];
+
+  for (const card of extractCollectionProductCards(html)) {
+    const cardSku = String(card.productId || card.skuId || card.sku || "").trim();
+    if (!sku || cardSku === String(sku)) {
+      const imageUrl = extractImageFromCard(card);
+      if (imageUrl) return imageUrl;
+    }
+  }
+  return buildFalabellaImageUrl(sku);
+}
+
+function extractPriceFromHtml(html, sku) {
+  for (const card of extractCollectionProductCards(html)) {
+    const cardSku = String(card.productId || card.skuId || card.sku || "").trim();
+    if (!sku || cardSku === String(sku)) {
+      const price = extractPriceFromCard(card.prices);
+      if (price) return price;
+    }
+  }
   return null;
 }
 
-function normalizeProduct(jsonLd, url) {
+function extractImage(image, pageUrl, sku) {
+  const candidate = Array.isArray(image) ? image[0] : image;
+  if (typeof candidate === "string") {
+    try {
+      return new URL(candidate, pageUrl).toString();
+    } catch {
+      return candidate;
+    }
+  }
+  if (candidate && typeof candidate === "object") {
+    const value = candidate.url || candidate.contentUrl;
+    if (!value) return buildFalabellaImageUrl(sku);
+    try {
+      return new URL(value, pageUrl).toString();
+    } catch {
+      return value;
+    }
+  }
+  return buildFalabellaImageUrl(sku);
+}
+
+function normalizeProduct(jsonLd, url, html = "") {
   const offer = Array.isArray(jsonLd.offers) ? jsonLd.offers[0] : jsonLd.offers || {};
   const sku = String(jsonLd.sku || jsonLd.mpn || jsonLd.productID || "").trim();
   if (!sku) throw new Error("La página no expone un SKU público en sus datos estructurados.");
   const availability = String(offer.availability || "").toLowerCase();
+  const jsonLdPrice = offer.price === undefined ? null : Math.round(Number(offer.price));
+  const htmlPrice = extractPriceFromHtml(html, sku);
   return {
     source: "falabella-cl",
     sku,
     brand: typeof jsonLd.brand === "object" ? jsonLd.brand.name : jsonLd.brand || null,
     name: jsonLd.name?.trim(),
-    price: offer.price === undefined ? null : Math.round(Number(offer.price)),
+    price: htmlPrice ?? jsonLdPrice,
     currency: offer.priceCurrency || "CLP",
     presentation: extractPresentation(jsonLd.name, jsonLd.description),
-    imageUrl: extractImage(jsonLd.image),
+    imageUrl: extractImage(jsonLd.image, url, sku) || extractImageFromHtml(html, sku),
     available: /instock|in stock|limitedavailability/.test(availability),
     url,
     raw: jsonLd,
   };
 }
 
+async function scrapeProductsFromCollection(limit) {
+  const catalogUrl = assertFalabellaUrl(falabellaPerfumesUrl);
+  const { html } = await fetchPage(catalogUrl);
+  return extractCollectionProductCards(html)
+    .filter((card) => {
+      const productUrl = card.url || `https://www.falabella.com/falabella-cl/product/${card.productId || card.skuId}`;
+      return isPerfumeProductUrl(productUrl);
+    })
+    .slice(0, limit)
+    .map((card) => normalizeCollectionProduct(card));
+}
+
+async function findProductInCollection(sku) {
+  const cards = await scrapeProductsFromCollection(120);
+  return cards.find((product) => product.sku === String(sku)) || null;
+}
+
 async function scrapeProduct(productUrl) {
   const safeUrl = assertFalabellaUrl(productUrl);
   const { html, finalUrl } = await fetchPage(safeUrl);
   const jsonLd = findProductJsonLd(html);
-  if (!jsonLd) throw new Error("No se encontró el bloque Product JSON-LD en la página.");
-  return normalizeProduct(jsonLd, finalUrl);
+  if (jsonLd) return normalizeProduct(jsonLd, finalUrl, html);
+
+  const cards = extractCollectionProductCards(html);
+  const sku = new URL(finalUrl).pathname.match(/\/product\/(\d+)/)?.[1];
+  const card = cards.find((item) => String(item.productId || item.skuId || item.sku) === String(sku));
+  if (card) return normalizeCollectionProduct({ ...card, url: finalUrl });
+
+  throw new Error("No se encontró el bloque Product JSON-LD en la página.");
 }
 
 async function scrapeProductOrFallback(productUrl) {
@@ -279,6 +441,18 @@ async function scrapeProductOrFallback(productUrl) {
     return { product: await scrapeProduct(productUrl), warning: null };
   } catch (error) {
     if (!isCloudflareBlockError(error)) throw error;
+    try {
+      const sku = new URL(assertFalabellaUrl(productUrl)).pathname.match(/\/product\/(\d+)/)?.[1];
+      const fromCollection = sku ? await findProductInCollection(sku) : null;
+      if (fromCollection) {
+        return {
+          product: { ...fromCollection, url: assertFalabellaUrl(productUrl) },
+          warning: "Detalle bloqueado; precio e imagen tomados del listado de Falabella.",
+        };
+      }
+    } catch {
+      // Si el listado también falla, se usa el fallback parcial desde la URL.
+    }
     return {
       product: productFromUrl(productUrl, error.message),
       warning: "Falabella bloqueó el detalle; se guardó un producto parcial desde la URL.",
@@ -288,6 +462,16 @@ async function scrapeProductOrFallback(productUrl) {
 
 async function scrapePerfumeCatalog(maxProducts = 12) {
   const limit = Math.min(Math.max(Number(maxProducts) || 12, 1), 24);
+
+  try {
+    const collectionProducts = await scrapeProductsFromCollection(limit);
+    if (collectionProducts.length) {
+      return collectionProducts.map((product) => ({ url: product.url, ok: true, product }));
+    }
+  } catch {
+    // Si el listado no responde, se intenta el flujo anterior por URL individual.
+  }
+
   const catalogUrl = assertFalabellaUrl(falabellaPerfumesUrl);
   let productUrls = [];
   let collectionError = null;
@@ -323,8 +507,12 @@ module.exports = {
   scrapeProduct,
   scrapeProductOrFallback,
   scrapePerfumeCatalog,
+  scrapeProductsFromCollection,
   findProductUrls,
   normalizeProduct,
+  normalizeCollectionProduct,
+  extractPriceFromCard,
   productFromUrl,
   isPerfumeProductUrl,
+  buildFalabellaImageUrl,
 };
