@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { City, Comparison, SyncJob } from "@/shared/api/types";
+import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
 import { ProductCard } from "./ProductCard";
 import { Icon } from "@/shared/components/Icon";
@@ -11,6 +12,7 @@ const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon:
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const sourceBadges: Record<string, string> = { "falabella-cl": "Falabella", "ripley-cl": "Ripley" };
 const PRODUCTS_PER_PAGE = 12;
+type SortMode = "recommended" | "price" | "name";
 
 export function toProduct(item: Comparison): Product {
   const cheapestByChain = [...item.prices]
@@ -24,6 +26,9 @@ export function toProduct(item: Comparison): Product {
 }
 
 export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }) {
+  const optionalSession = useOptionalSession();
+  const user = optionalSession?.user ?? null;
+  const isAdmin = user?.role === "admin";
   const [query, setQuery] = useState(initialQuery);
   const [items, setItems] = useState<Comparison[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,13 +41,12 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [category, setCategory] = useState("");
   const [gender, setGender] = useState("");
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<SortMode>("recommended");
 
   const loadCatalog = useCallback(async (search = query) => {
-    const user = await api.me();
-    const city = user.city ?? SANTIAGO;
-    if (!user.city) await api.setCity(city);
+    const city = user?.city ?? SANTIAGO;
     setItems(await api.comparisons(city, search));
-  }, [query]);
+  }, [query, user?.city]);
 
   async function waitForSync(initialJob: SyncJob, storeName: string) {
     let job = initialJob;
@@ -93,15 +97,20 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const categories = useMemo(() => [...new Set(items.map(item => item.product.category))].sort(), [items]);
   const filteredItems = useMemo(() => items.filter(item => (!brand || item.product.brand === brand) && (!category || item.product.category === category) && (!gender || item.product.gender === gender))
     .sort((a, b) => {
+      if (sort === "name") return `${a.product.brand} ${a.product.name}`.localeCompare(`${b.product.brand} ${b.product.name}`, "es");
+      if (sort === "price") return (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
       const storeDifference = (b.product.matchedStores ?? 0) - (a.product.matchedStores ?? 0);
       if (storeDifference) return storeDifference;
       return (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
-    }), [items, brand, category, gender]);
+    }), [items, brand, category, gender, sort]);
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const visibleItems = useMemo(() => filteredItems.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE), [filteredItems, currentPage]);
   const products = useMemo(() => visibleItems.map(toProduct), [visibleItems]);
   const filterCount = [brand, category, gender].filter(Boolean).length;
+  const comparedCount = useMemo(() => items.filter(item => (item.product.matchedStores ?? 0) > 1).length, [items]);
+  const falabellaCount = useMemo(() => items.filter(item => item.product.source === "falabella-cl" || item.prices.some(price => price.storeName === "Falabella")).length, [items]);
+  const ripleyCount = useMemo(() => items.filter(item => item.product.source === "ripley-cl" || item.prices.some(price => price.storeName === "Ripley")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -113,24 +122,55 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function resetFilters() {
+    setBrand("");
+    setCategory("");
+    setGender("");
+    setPage(1);
+  }
+
+  function renderPagination(compact = false) {
+    if (filteredItems.length <= PRODUCTS_PER_PAGE) return null;
+    return <nav className={`${styles.pagination} ${compact ? styles.compactPagination : ""}`} aria-label="Páginas del catálogo">
+      <button className={styles.pageArrow} onClick={() => goToPage(1)} disabled={currentPage === 1} aria-label="Primera página">|←</button>
+      <button className={styles.pageArrow} onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Página anterior">←</button>
+      <div className={styles.pageNumbers}>{pageNumbers.map(pageNumber => <button key={pageNumber} className={pageNumber === currentPage ? styles.activePage : ""} onClick={() => goToPage(pageNumber)} aria-current={pageNumber === currentPage ? "page" : undefined}>{pageNumber}</button>)}</div>
+      <div className={styles.pageIndicator}><strong>{currentPage}</strong><span>de {totalPages}</span></div>
+      <button className={styles.pageArrow} onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Página siguiente">→</button>
+      <button className={styles.pageArrow} onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} aria-label="Última página">→|</button>
+    </nav>;
+  }
+
   return <section className={styles.explorer}>
-    <div className={styles.search}><Icon name="search" /><input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Busca por marca, categoría o nombre de perfume..." /><button aria-expanded={filtersOpen} onClick={() => setFiltersOpen(open => !open)}><Icon name="filter" /><span>Filtros{filterCount ? ` (${filterCount})` : ""}</span></button><button onClick={updateFalabella} disabled={syncing}>{syncing ? "Actualizando…" : "Actualizar Falabella"}</button><button onClick={updateRipley} disabled={syncingRipley}>{syncingRipley ? "Actualizando…" : "Actualizar Ripley"}</button></div>
-    {syncMessage && <p className={styles.empty}>{syncMessage}</p>}
-    {filtersOpen && <div className={styles.filters}><label>Marca<select value={brand} onChange={event => { setBrand(event.target.value); setPage(1); }}><option value="">Todas</option>{brands.map(value => <option key={value}>{value}</option>)}</select></label><label>Categoría<select value={category} onChange={event => { setCategory(event.target.value); setPage(1); }}><option value="">Todas</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label><label>Género<select value={gender} onChange={event => { setGender(event.target.value); setPage(1); }}><option value="">Todos</option><option>Masculino</option><option>Femenino</option><option>Unisex</option></select></label><button onClick={() => { setBrand(""); setCategory(""); setGender(""); setPage(1); }}>Limpiar filtros</button></div>}
+    <div className={styles.search}><Icon name="search" /><input value={query} onChange={event => { setQuery(event.target.value); setPage(1); }} placeholder="Busca por marca, familia olfativa o nombre..." /><button aria-expanded={filtersOpen} onClick={() => setFiltersOpen(open => !open)}><Icon name="filter" /><span>Filtros{filterCount ? ` (${filterCount})` : ""}</span></button>{isAdmin && <><button onClick={updateFalabella} disabled={syncing}>{syncing ? "Actualizando…" : "Actualizar Falabella"}</button><button onClick={updateRipley} disabled={syncingRipley}>{syncingRipley ? "Actualizando…" : "Actualizar Ripley"}</button></>}</div>
+    {syncMessage && <p className={styles.status}>{syncMessage}</p>}
     {loading ? <p className={styles.empty}>Consultando precios…</p> : error ? <p className={styles.error} role="alert">{error}</p> : <>
-      <div className={styles.catalogMeta}>
-        <div className={styles.resultCount}><strong>{filteredItems.length}</strong><span>fragancias encontradas</span></div>
-        <span className={styles.resultRange}>Mostrando {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, filteredItems.length)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredItems.length)}</span>
+      <div className={styles.catalogShell}>
+        <aside className={`${styles.filterRail} ${filtersOpen ? styles.openFilters : ""}`}>
+          <div className={styles.filterIntro}>
+            <div><span>Perfumes</span><strong>{filteredItems.length} resultados</strong></div>
+            <button onClick={resetFilters} disabled={!filterCount}>Borrar filtros</button>
+          </div>
+          <div className={styles.storeStats}><span><strong>{comparedCount}</strong> comparados</span><span><strong>{falabellaCount}</strong> Falabella</span><span><strong>{ripleyCount}</strong> Ripley</span></div>
+          <div className={styles.filters}><label>Marca<select value={brand} onChange={event => { setBrand(event.target.value); setPage(1); }}><option value="">Todas</option>{brands.map(value => <option key={value}>{value}</option>)}</select></label><label>Categoría<select value={category} onChange={event => { setCategory(event.target.value); setPage(1); }}><option value="">Todas</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label><label>Género<select value={gender} onChange={event => { setGender(event.target.value); setPage(1); }}><option value="">Todos</option><option>Masculino</option><option>Femenino</option><option>Unisex</option></select></label></div>
+          <p className={styles.filterNote}>Solo ofertas vendidas directamente por Falabella y Ripley.</p>
+        </aside>
+        <div className={styles.catalogStage}>
+          <div className={styles.catalogToolbar}>
+            <div>
+              <p>Home · Perfumes</p>
+              <h2>Catálogo de fragancias</h2>
+            </div>
+            <label>Ordenar por<select value={sort} onChange={event => { setSort(event.target.value as SortMode); setPage(1); }}><option value="recommended">Mejor comparación</option><option value="price">Precio más bajo</option><option value="name">Marca y nombre</option></select></label>
+            <div className={styles.topPager}>
+              <span>{Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, filteredItems.length)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredItems.length)} de {filteredItems.length}</span>
+              {renderPagination(true)}
+            </div>
+          </div>
+          <div className={styles.grid}>{products.map(product => <ProductCard key={product.id} product={product} />)}</div>
+          {filteredItems.length > PRODUCTS_PER_PAGE && <div className={styles.paginationWrap}>{renderPagination()}</div>}
+        </div>
       </div>
-      <div className={styles.grid}>{products.map(product => <ProductCard key={product.id} product={product} />)}</div>
-      {filteredItems.length > PRODUCTS_PER_PAGE && <div className={styles.paginationWrap}>
-        <nav className={styles.pagination} aria-label="Páginas del catálogo">
-          <button className={styles.pageArrow} onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Página anterior"><span aria-hidden="true">←</span><span>Anterior</span></button>
-          <div className={styles.pageNumbers}>{pageNumbers.map(pageNumber => <button key={pageNumber} className={pageNumber === currentPage ? styles.activePage : ""} onClick={() => goToPage(pageNumber)} aria-current={pageNumber === currentPage ? "page" : undefined}>{pageNumber}</button>)}</div>
-          <div className={styles.pageIndicator}><strong>{currentPage}</strong><span>de {totalPages}</span></div>
-          <button className={styles.pageArrow} onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}><span>Siguiente</span><span aria-hidden="true">→</span></button>
-        </nav>
-      </div>}
     </>}
     {!loading && !error && filteredItems.length === 0 && <p className={styles.empty}>No encontramos fragancias para “{query}”.</p>}
   </section>;

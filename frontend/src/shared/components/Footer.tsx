@@ -4,7 +4,33 @@ import styles from "./shared.module.css";
 
 export function Footer({ compact = false }: { compact?: boolean }) {
   return <footer className={`${styles.footer} ${compact ? styles.compact : ""}`}><div className={`container ${styles.footerInner}`}>
-    <div><Brand /><p>© 2026 FullFragrance. La autoridad en alta perfumería.</p></div>
-    <nav aria-label="Enlaces legales"><Link href="#">Privacidad</Link><Link href="#">Términos</Link><Link href="#">Contacto</Link><Link href="#">Newsletter</Link></nav>
+    <section className={styles.footerProfile}>
+      <Brand />
+      <p>Comparador local de perfumes vendidos directamente por Falabella y Ripley. Ordenamos precios, detectamos coincidencias entre tiendas y ayudamos a comprar con mejor información.</p>
+      <div className={styles.footerContact}>
+        <a href="mailto:contacto@fullfragrance.cl">contacto@fullfragrance.cl</a>
+        <a href="tel:+56912345678">+56 9 1234 5678</a>
+        <span>Santiago, Chile</span>
+      </div>
+    </section>
+    <section className={styles.footerColumn}>
+      <h2>Plataforma</h2>
+      <Link href="/dashboard">Comparar precios</Link>
+      <Link href="/test">Test olfativo</Link>
+      <Link href="/recomendaciones">Recomendaciones</Link>
+      <Link href="/favoritos">Favoritos</Link>
+    </section>
+    <section className={styles.footerColumn}>
+      <h2>Contacto</h2>
+      <Link href="mailto:contacto@fullfragrance.cl">Soporte comercial</Link>
+      <Link href="mailto:datos@fullfragrance.cl">Correcciones de datos</Link>
+      <Link href="#">Privacidad</Link>
+      <Link href="#">Términos</Link>
+    </section>
+    <aside className={styles.footerTrust}>
+      <span>Actualización local</span>
+      <strong>Falabella + Ripley</strong>
+      <p>Catálogo orientado a perfumería, sin productos marketplace en las comparaciones principales.</p>
+    </aside>
   </div></footer>;
 }

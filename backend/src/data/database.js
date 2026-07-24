@@ -77,13 +77,14 @@ function ensureDbFile() {
   }
 
   const needsUserMigration = (db.users || []).some(
-    (u) => u.favorites === undefined || u.scentPreferences === undefined
+    (u) => u.favorites === undefined || u.scentPreferences === undefined || u.role === undefined
   );
   if (needsUserMigration) {
     db.users = (db.users || []).map((user) => ({
       ...user,
       favorites: user.favorites || [],
       scentPreferences: user.scentPreferences ?? null,
+      role: user.role || "customer",
     }));
     changed = true;
   }

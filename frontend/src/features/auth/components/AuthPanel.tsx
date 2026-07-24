@@ -12,7 +12,8 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
     try {
       if (mode === "register") await api.register({ name: String(form.get("name")), email: String(form.get("email")), password: String(form.get("password")) });
       else await api.login({ email: String(form.get("email")), password: String(form.get("password")) });
-      router.push(mode === "register" ? "/test" : "/dashboard");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next || (mode === "register" ? "/test" : "/dashboard"));
     } catch (reason) { setError(reason instanceof ApiError ? reason.message : "No fue posible completar la solicitud."); setLoading(false); }
   };
   return <section className={styles.card} aria-label={mode === "register" ? "Crear cuenta" : "Iniciar sesión"}>

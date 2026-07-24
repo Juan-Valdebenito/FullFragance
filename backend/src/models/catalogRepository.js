@@ -55,7 +55,17 @@ function mergeScrapedProducts(products) {
   return groups.map((group) => {
     const converted = group.map((product) => toCatalogProduct(product, profiles));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
-    const offers = converted.flatMap((product) => product.offers);
+    // Un mismo scraper puede encontrar una ficha más de una vez al recorrer el
+    // catálogo. Para comparar tiendas, sólo debe existir una oferta por cadena.
+    const offersBySource = new Map();
+    for (const offer of converted.flatMap((product) => product.offers)) {
+      const current = offersBySource.get(offer.source);
+      const shouldReplace = !current
+        || (offer.available && !current.available)
+        || (offer.available === current.available && offer.price > 0 && (!current.price || offer.price < current.price));
+      if (shouldReplace) offersBySource.set(offer.source, offer);
+    }
+    const offers = [...offersBySource.values()];
     const positivePrices = offers.filter((offer) => offer.price > 0).map((offer) => offer.price);
     return {
       ...representative,

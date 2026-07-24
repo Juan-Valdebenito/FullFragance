@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { ApiPrice, ApiProduct, City } from "@/shared/api/types";
+import { useOptionalSession } from "@/shared/auth/SessionContext";
 import { FavoriteButton } from "./FavoriteButton";
 import styles from "./ProductDetail.module.css";
 
@@ -12,6 +13,8 @@ const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP
 const stores: Record<string, string> = { Sephora: "https://www.sephora.cl", Falabella: "https://www.falabella.com/falabella-cl", Ripley: "https://simple.ripley.cl", Paris: "https://www.paris.cl", "La Polar": "https://www.lapolar.cl" };
 
 export function ProductDetail({ productId }: { productId: string }) {
+  const optionalSession = useOptionalSession();
+  const user = optionalSession?.user ?? null;
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [prices, setPrices] = useState<ApiPrice[]>([]);
   const [error, setError] = useState("");
@@ -19,14 +22,13 @@ export function ProductDetail({ productId }: { productId: string }) {
 
   useEffect(() => { (async () => {
     try {
-      const user = await api.me();
-      const result = await api.productPrices(user.city ?? SANTIAGO, productId);
+      const result = await api.productPrices(user?.city ?? SANTIAGO, productId);
       setProduct(result.product);
       setPrices(result.prices);
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el perfume.");
     } finally { setLoading(false); }
-  })(); }, [productId]);
+  })(); }, [productId, user?.city]);
 
   const sortedPrices = useMemo(() => {
     const cheapestByStore = new Map<string, ApiPrice>();

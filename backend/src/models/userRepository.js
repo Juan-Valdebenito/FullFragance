@@ -1,5 +1,6 @@
 const { v4: uuid } = require("uuid");
 const { readDb, writeDb } = require("../data/database");
+const { adminEmails } = require("../config/env");
 
 function findByEmail(email) {
   const db = readDb();
@@ -11,6 +12,10 @@ function findById(id) {
   return db.users.find((u) => u.id === id) || null;
 }
 
+function roleForEmail(email) {
+  return adminEmails.includes(String(email).toLowerCase()) ? "admin" : "customer";
+}
+
 function create({ name, email, passwordHash }) {
   const db = readDb();
   const user = {
@@ -18,6 +23,7 @@ function create({ name, email, passwordHash }) {
     name,
     email,
     passwordHash,
+    role: roleForEmail(email),
     city: null,
     favorites: [],
     scentPreferences: null,
@@ -72,6 +78,7 @@ function toPublic(user) {
   const { passwordHash, ...publicUser } = user;
   return {
     ...publicUser,
+    role: roleForEmail(publicUser.email) === "admin" ? "admin" : publicUser.role || "customer",
     favorites: publicUser.favorites || [],
     scentPreferences: publicUser.scentPreferences ?? null,
   };
@@ -80,6 +87,7 @@ function toPublic(user) {
 module.exports = {
   findByEmail,
   findById,
+  roleForEmail,
   create,
   updateCity,
   toggleFavorite,
