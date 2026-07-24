@@ -290,6 +290,11 @@ function findNextData(html) {
   }
 }
 
+function extractPageResults(html) {
+  const results = findNextData(html)?.props?.pageProps?.results;
+  return Array.isArray(results) ? results : [];
+}
+
 function collectProductCards(node, hits = [], seen = new Set()) {
   if (!node || hits.length >= 200) return hits;
   if (Array.isArray(node)) {
@@ -331,7 +336,12 @@ function normalizeCollectionProduct(card) {
     imageUrl: extractImageFromCard(card),
     available: inferAvailabilityFromCard(card.availability),
     url,
-    raw: { collectionCard: true, prices: card.prices || [] },
+    raw: {
+      collectionCard: true,
+      prices: card.prices || [],
+      sellerId: card.sellerId || null,
+      sellerName: card.sellerName || null,
+    },
   };
 }
 
@@ -415,6 +425,20 @@ async function scrapeProductsFromCollection(limit) {
     })
     .slice(0, limit)
     .map((card) => normalizeCollectionProduct(card));
+}
+
+async function scrapeDirectCatalogPage(page = 1) {
+  const url = new URL(assertFalabellaUrl(falabellaPerfumesUrl));
+  if (page > 1) url.searchParams.set("page", String(page));
+  const { html } = await fetchPage(url.toString());
+  const nextData = findNextData(html);
+  const pagination = nextData?.props?.pageProps?.pagination || {};
+  const cards = extractPageResults(html);
+  const products = cards
+    .filter((card) => card.sellerId === "FALABELLA_CHILE" || String(card.sellerName).toUpperCase() === "FALABELLA")
+    .map((card) => normalizeCollectionProduct(card));
+  const totalPages = Math.max(1, Math.ceil(Number(pagination.count || cards.length) / Number(pagination.perPage || 48)));
+  return { products, page, totalPages, scanned: cards.length };
 }
 
 async function findProductInCollection(sku) {
@@ -515,4 +539,5 @@ module.exports = {
   productFromUrl,
   isPerfumeProductUrl,
   buildFalabellaImageUrl,
+  scrapeDirectCatalogPage,
 };

@@ -1,4 +1,4 @@
-import type { ApiNote, City, Comparison, Recommendation, Store, User } from "./types";
+import type { ApiNote, City, Comparison, Recommendation, Store, SyncJob, User } from "./types";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
 const TOKEN_KEY = "fullfragrance_token";
 type RequestOptions = RequestInit & { authenticated?: boolean };
@@ -16,6 +16,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 function saveSession(data: { token: string; user: User }) { localStorage.setItem(TOKEN_KEY, data.token); return data.user; }
 const cityQuery = (city: City) => new URLSearchParams({ cityName: city.name, lat: String(city.lat), lon: String(city.lon) }).toString();
 export const session = { hasToken: () => Boolean(token()), clear: () => localStorage.removeItem(TOKEN_KEY) };
+export function productImageUrl(imageUrl?: string | null) {
+  if (!imageUrl || !/https:\/\/rimage\.ripley\.cl\//i.test(imageUrl)) return imageUrl;
+  const sku = imageUrl.match(/(?:WOP\/1\/|full_image-)(\d{8,20})/i)?.[1];
+  return sku ? `${API_URL}/images/ripley/${sku}` : imageUrl;
+}
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
   register: (body: { name: string; email: string; password: string }) => request<{ token: string; user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
@@ -25,7 +30,9 @@ export const api = {
   productPrices: (city: City, productId: string) => request<{ product: import("./types").ApiProduct; prices: import("./types").ApiPrice[] }>(`/prices/${productId}?${cityQuery(city)}`),
   stores: (city: City) => request<{ stores: Store[] }>(`/stores?${cityQuery(city)}`).then(data => data.stores),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
-  syncFalabellaPerfumes: (maxProducts = 12) => request<{ results: Array<{ ok: boolean; error?: string }> }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ maxProducts }) }),
+  syncFalabellaPerfumes: () => request<{ job: SyncJob }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
+  syncRipleyPerfumes: () => request<{ job: SyncJob }>("/scrapers/ripley/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
+  syncJob: (jobId: string) => request<{ job: SyncJob }>(`/scrapers/sync-jobs/${jobId}`).then(data => data.job),
   saveQuiz: (scores: Record<string, number>) => request<{ recommendations: Recommendation[] }>("/users/me/scent-quiz", { method: "POST", body: JSON.stringify({ scores }) }),
   recommendations: () => request<{ source: string; recommendations: Recommendation[] }>("/users/me/recommendations"),
   toggleFavorite: (productId: string) => request<{ favorites: string[] }>(`/users/me/favorites/${productId}`, { method: "POST" }),

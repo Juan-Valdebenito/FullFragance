@@ -1,4 +1,4 @@
-const { getProducts, getOlfactoryNotes } = require("./catalogRepository");
+const { getProducts, getProductById, getOlfactoryNotes } = require("./catalogRepository");
 
 function scoreProduct(product, preferences, favoriteIds) {
   const scores = preferences?.scores || {};
@@ -9,7 +9,7 @@ function scoreProduct(product, preferences, favoriteIds) {
     notes.reduce((sum, noteId) => sum + (Number(scores[noteId]) || 0), 0) / notes.length;
 
   const favoriteBoost = favoriteIds.some((favId) => {
-    const fav = getProducts().find((p) => p.id === favId);
+    const fav = getProductById(favId);
     if (!fav) return false;
     return fav.notes.some((n) => notes.includes(n));
   })
@@ -21,13 +21,14 @@ function scoreProduct(product, preferences, favoriteIds) {
 
 function getRecommendationsForUser(user, limit = 6) {
   const products = getProducts();
+  const availableProducts = products.filter((product) => product.offers?.some((offer) => offer.price > 0));
   const notes = getOlfactoryNotes();
   const favoriteIds = user.favorites || [];
 
   if (!user.scentPreferences?.scores) {
     return {
       source: "popular",
-      recommendations: products.slice(0, limit).map((product) => ({
+      recommendations: availableProducts.slice(0, limit).map((product) => ({
         product,
         score: null,
         matchedNotes: [],
@@ -36,7 +37,8 @@ function getRecommendationsForUser(user, limit = 6) {
     };
   }
 
-  const ranked = products
+  const profiledProducts = availableProducts.filter((product) => product.notes?.length);
+  const ranked = profiledProducts
     .map((product) => {
       const matchedNotes = (product.notes || [])
         .map((id) => notes.find((n) => n.id === id))
@@ -55,6 +57,18 @@ function getRecommendationsForUser(user, limit = 6) {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+
+  if (!ranked.length) {
+    return {
+      source: "popular",
+      recommendations: availableProducts.slice(0, limit).map((product) => ({
+        product,
+        score: null,
+        matchedNotes: [],
+        reason: "Todavía no tenemos notas verificadas para este perfume; se muestra por disponibilidad.",
+      })),
+    };
+  }
 
   return { source: "preferences", recommendations: ranked };
 }

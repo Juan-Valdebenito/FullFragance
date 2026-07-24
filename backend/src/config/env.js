@@ -24,5 +24,16 @@ module.exports = {
     process.env.FALABELLA_PDP_SITEMAP_INDEX_URL ||
     "https://www.falabella.com/static/site/sitemaps/pdp/pdp_cl_FA_COM-index.xml",
   falabellaSitemapFilesToScan: Number(process.env.FALABELLA_SITEMAP_FILES_TO_SCAN || 8),
+  ripleyUserAgent:
+    process.env.RIPLEY_USER_AGENT ||
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+  ripleyMinDelayMs: Number(process.env.RIPLEY_MIN_DELAY_MS || 1200),
+  ripleyMaxDelayMs: Number(process.env.RIPLEY_MAX_DELAY_MS || 2500),
+  ripleyRequestTimeoutMs: Number(process.env.RIPLEY_REQUEST_TIMEOUT_MS || 20000),
+  ripleyCurlFallback: process.env.RIPLEY_CURL_FALLBACK !== "false",
+  ripleyFixtureDir: process.env.RIPLEY_FIXTURE_DIR || "",
+  ripleyPerfumesUrl:
+    process.env.RIPLEY_PERFUMES_URL ||
+    "https://simple.ripley.cl/belleza/perfumeria?source=menu&s=mdco",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

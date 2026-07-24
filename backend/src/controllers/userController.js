@@ -1,5 +1,6 @@
 const userRepository = require("../models/userRepository");
 const { getRecommendationsForUser } = require("../models/recommendationService");
+const { getOlfactoryNotes, getProductById } = require("../models/catalogRepository");
 
 function setCity(req, res, next) {
   try {
@@ -32,8 +33,10 @@ function toggleFavorite(req, res, next) {
   try {
     const { productId } = req.params;
     if (!productId) return res.status(400).json({ error: "Se requiere productId." });
+    const product = getProductById(productId);
+    if (!product) return res.status(404).json({ error: "El perfume ya no existe en el catálogo actual." });
 
-    const user = userRepository.toggleFavorite(req.userId, productId);
+    const user = userRepository.toggleFavorite(req.userId, product.id, product.aliases || []);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
     res.json({ user: userRepository.toPublic(user), favorites: user.favorites });
@@ -50,9 +53,10 @@ function saveScentQuiz(req, res, next) {
     }
 
     const normalized = {};
+    const validNoteIds = new Set(getOlfactoryNotes().map((note) => note.id));
     for (const [noteId, value] of Object.entries(scores)) {
       const num = Number(value);
-      if (Number.isFinite(num) && num >= 1 && num <= 5) {
+      if (validNoteIds.has(noteId) && Number.isFinite(num) && num >= 1 && num <= 5) {
         normalized[noteId] = num;
       }
     }

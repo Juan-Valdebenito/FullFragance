@@ -64,7 +64,7 @@ function upsertProduct(product) {
   );
 }
 
-function listProducts(source, limit = 100) {
+function listProducts(source, limit = 10000) {
   return db
     .prepare(`SELECT source, sku, brand, name, price, currency, presentation,
       image_url AS imageUrl,
@@ -84,4 +84,19 @@ function listProducts(source, limit = 100) {
     });
 }
 
-module.exports = { upsertProduct, listProducts, databasePath };
+function replaceProducts(source, products) {
+  if (!source || products.some((product) => product.source !== source)) {
+    throw new Error("La fuente de los productos no coincide con el catálogo a reemplazar.");
+  }
+  db.exec("BEGIN");
+  try {
+    db.prepare("DELETE FROM scraped_products WHERE source = ?").run(source);
+    products.forEach(upsertProduct);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+module.exports = { upsertProduct, listProducts, replaceProducts, databasePath };
