@@ -238,7 +238,7 @@ function normalizeCollectionProduct(card, pageUrl, productUrls = []) {
     price: Number(card.priceNumber) || parsePrice(card.price) || parsePrice(card.ripleyPrice),
     currency: "CLP",
     presentation: extractPresentation(name, card.description),
-    imageUrl: card.primaryImage || card.images?.[0] || buildRipleyImageUrl(sku),
+    imageUrl: card.primaryImage || card.images?.[0] || null,
     available: (Number(card.priceNumber) || parsePrice(card.price) || 0) > 0,
     url: matchedUrl || new URL(`/${fallbackSlug}-${sku.toLowerCase()}`, pageUrl).toString(),
     raw: { collectionCard: true, seller: card.seller || card.shop?.shopName || null },
@@ -328,7 +328,7 @@ function extractImageFromHtml(html, sku) {
   const match =
     String(html || "").match(/property=["']og:image["'][^>]+content=["']([^"']+)/i) ||
     String(html || "").match(/content=["']([^"']+)["'][^>]+property=["']og:image/i);
-  return match?.[1] || buildRipleyImageUrl(sku);
+  return match?.[1] || null;
 }
 
 function productFromUrl(productUrl, reason = "Detalle no disponible desde Ripley.") {
@@ -345,7 +345,7 @@ function productFromUrl(productUrl, reason = "Detalle no disponible desde Ripley
     price: scraperMockPrices ? demoPriceForSku(sku) : null,
     currency: "CLP",
     presentation: extractPresentation(name, ""),
-    imageUrl: buildRipleyImageUrl(sku),
+    imageUrl: null,
     available: Boolean(scraperMockPrices),
     url: url.toString(),
     raw: { fallback: true, mockPrice: Boolean(scraperMockPrices), reason },

@@ -91,6 +91,17 @@ test("genera imagen fallback desde el SKU cuando Falabella bloquea el detalle", 
   );
 });
 
+test("no inventa imagen cuando Falabella no expone una real", () => {
+  const product = normalizeProduct({
+    sku: "sku-2",
+    name: "Perfume de prueba 100 ml",
+    brand: { name: "Marca" },
+    offers: { price: 49990, priceCurrency: "CLP", availability: "https://schema.org/InStock" },
+  }, "https://www.falabella.com/falabella-cl/product/123/perfume");
+
+  assert.equal(product.imageUrl, null);
+});
+
 test("crea un producto parcial desde la URL cuando el detalle queda bloqueado", () => {
   const product = productFromUrl(
     "https://www.falabella.com/falabella-cl/product/50285241/Perfume-Hombre-Eros-Flame-EDP-200Ml-Versace",
@@ -103,7 +114,7 @@ test("crea un producto parcial desde la URL cuando el detalle queda bloqueado", 
   assert.equal(product.brand, "Versace");
   assert.equal(product.presentation, "200ml");
   assert.equal(product.price, 104990);
-  assert.equal(product.imageUrl, "https://media.falabella.com/falabellaCL/50285241_1/public");
+  assert.equal(product.imageUrl, null);
   assert.equal(product.raw.fallback, true);
   assert.equal(product.raw.mockPrice, true);
 });

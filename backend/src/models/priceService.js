@@ -1,6 +1,7 @@
 const { getProducts, getProductById } = require("./catalogRepository");
 const { getStoresForCity } = require("./storeService");
 const { seededRandom, hashSeed } = require("../utils/geo");
+const { normalize } = require("./productMatcher");
 
 const SOURCE_STORES = {
   "falabella-cl": { storeId: "falabella-online", storeName: "Falabella" },
@@ -15,10 +16,12 @@ function priceFor(cityName, storeId, product) {
 
 function matchesProduct(product, productFilter) {
   if (!productFilter) return true;
-  const query = productFilter.toLowerCase();
-  return [product.name, product.brand, product.category, product.unit]
-    .filter(Boolean)
-    .some((value) => value.toLowerCase().includes(query));
+  const queryTokens = normalize(productFilter)
+    .split(" ")
+    .filter((token) => token && !["perfume", "fragancia", "de", "del", "la", "el", "los", "las"].includes(token));
+  if (!queryTokens.length) return true;
+  const haystack = normalize([product.brand, product.name, product.category, product.unit].filter(Boolean).join(" "));
+  return queryTokens.every((token) => haystack.includes(token));
 }
 
 function pricesForRealProduct(product) {

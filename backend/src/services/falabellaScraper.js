@@ -228,7 +228,7 @@ function productFromUrl(productUrl, reason = "Detalle bloqueado por Falabella.")
     price: scraperMockPrices ? demoPriceForSku(sku) : null,
     currency: "CLP",
     presentation: extractPresentation(name, ""),
-    imageUrl: buildFalabellaImageUrl(sku),
+    imageUrl: null,
     available: Boolean(scraperMockPrices),
     url: url.toString(),
     raw: { fallback: true, mockPrice: Boolean(scraperMockPrices), reason },
@@ -270,7 +270,7 @@ function extractPriceFromCard(prices) {
 
 function extractImageFromCard(card) {
   if (Array.isArray(card?.mediaUrls) && card.mediaUrls[0]) return card.mediaUrls[0];
-  return buildFalabellaImageUrl(card?.productId || card?.skuId || card?.sku);
+  return null;
 }
 
 function inferAvailabilityFromCard(availability) {
@@ -358,7 +358,7 @@ function extractImageFromHtml(html, sku) {
       if (imageUrl) return imageUrl;
     }
   }
-  return buildFalabellaImageUrl(sku);
+  return null;
 }
 
 function extractPriceFromHtml(html, sku) {
@@ -383,14 +383,14 @@ function extractImage(image, pageUrl, sku) {
   }
   if (candidate && typeof candidate === "object") {
     const value = candidate.url || candidate.contentUrl;
-    if (!value) return buildFalabellaImageUrl(sku);
+    if (!value) return null;
     try {
       return new URL(value, pageUrl).toString();
     } catch {
       return value;
     }
   }
-  return buildFalabellaImageUrl(sku);
+  return null;
 }
 
 function normalizeProduct(jsonLd, url, html = "") {

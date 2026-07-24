@@ -51,7 +51,7 @@ test("crea un producto parcial desde la URL de Ripley", () => {
   assert.equal(product.name, "Perfume Tommy Hilfiger Tommy Edt 100 Ml");
   assert.equal(product.brand, "Tommy Hilfiger");
   assert.equal(product.presentation, "100 Ml");
-  assert.equal(product.imageUrl, "https://ripley.scene7.com/is/image/Ripley/2000403434585");
+  assert.equal(product.imageUrl, null);
   assert.equal(product.raw.fallback, true);
   assert.equal(product.raw.mockPrice, true);
 });
@@ -90,4 +90,17 @@ test("normaliza productos directamente desde el listado SSR de Ripley", () => {
   assert.equal(product.price, 57990);
   assert.equal(product.presentation, "100 ML");
   assert.equal(product.raw.collectionCard, true);
+});
+
+test("no inventa imagen cuando Ripley no expone una real", () => {
+  const product = normalizeCollectionProduct({
+    sku: "2000000000000",
+    parentProductID: "2000000000000P",
+    brand: "MARCA",
+    name: "PERFUME DE PRUEBA 100 ML",
+    price: "$57.990",
+    priceNumber: 57990,
+  }, "https://simple.ripley.cl/search/perfume");
+
+  assert.equal(product.imageUrl, null);
 });
