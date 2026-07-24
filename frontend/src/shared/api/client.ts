@@ -1,5 +1,13 @@
 import type { ApiNote, City, Comparison, Recommendation, Store, SyncJob, User } from "./types";
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
+
+// Cuando se abre la web desde otro equipo, localhost es ese equipo y no el
+// computador que ejecuta el backend. Sin variable de entorno, conservamos el
+// hostname actual y sólo cambiamos al puerto de la API.
+function apiUrl() {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  if (typeof window !== "undefined") return `${window.location.protocol}//${window.location.hostname}:3000/api`;
+  return "http://localhost:3000/api";
+}
 const TOKEN_KEY = "fullfragrance_token";
 type RequestOptions = RequestInit & { authenticated?: boolean };
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
@@ -8,7 +16,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const headers = new Headers(options.headers); headers.set("Content-Type", "application/json");
   if (options.authenticated !== false && token()) headers.set("Authorization", `Bearer ${token()}`);
   let response: Response;
-  try { response = await fetch(`${API_URL}${path}`, { ...options, headers }); } catch { throw new ApiError("No se pudo conectar con el servidor. Comprueba que el backend esté iniciado.", 0); }
+  try { response = await fetch(`${apiUrl()}${path}`, { ...options, headers }); } catch { throw new ApiError("No se pudo conectar con el servidor. Comprueba que el backend esté iniciado.", 0); }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(data.error ?? "Ocurrió un error inesperado.", response.status);
   return data as T;
@@ -19,7 +27,7 @@ export const session = { hasToken: () => Boolean(token()), clear: () => localSto
 export function productImageUrl(imageUrl?: string | null) {
   if (!imageUrl || !/https:\/\/rimage\.ripley\.cl\//i.test(imageUrl)) return imageUrl;
   const sku = imageUrl.match(/(?:WOP\/1\/|full_image-)(\d{8,20})/i)?.[1];
-  return sku ? `${API_URL}/images/ripley/${sku}` : imageUrl;
+  return sku ? `${apiUrl()}/images/ripley/${sku}` : imageUrl;
 }
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
@@ -30,6 +38,7 @@ export const api = {
   productPrices: (city: City, productId: string) => request<{ product: import("./types").ApiProduct; prices: import("./types").ApiPrice[] }>(`/prices/${productId}?${cityQuery(city)}`),
   stores: (city: City) => request<{ stores: Store[] }>(`/stores?${cityQuery(city)}`).then(data => data.stores),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
+  featuredProducts: () => request<{ products: import("./types").ApiProduct[] }>("/catalog/featured").then(data => data.products),
   syncFalabellaPerfumes: () => request<{ job: SyncJob }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
   syncRipleyPerfumes: () => request<{ job: SyncJob }>("/scrapers/ripley/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
   syncJob: (jobId: string) => request<{ job: SyncJob }>(`/scrapers/sync-jobs/${jobId}`).then(data => data.job),

@@ -1,2 +1,2 @@
-import { ProtectedContent } from "@/shared/components/ProtectedContent";
-export default function DashboardLayout({ children }: { children: React.ReactNode }) { return <ProtectedContent>{children}</ProtectedContent>; }
+import { PublicSessionContent } from "@/shared/components/PublicSessionContent";
+export default function DashboardLayout({ children }: { children: React.ReactNode }) { return <PublicSessionContent>{children}</PublicSessionContent>; }

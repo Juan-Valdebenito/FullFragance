@@ -1,5 +1,5 @@
 export type City = { name: string; country: string; lat: number; lon: number };
-export type User = { id: string; name: string; email: string; city: City | null; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
+export type User = { id: string; name: string; email: string; role?: "admin" | "customer"; city: City | null; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
 export type ApiOffer = { source: string; sku: string; price: number; available: boolean; productUrl: string; priceIsMock?: boolean };
 export type ApiProduct = { id: string; name: string; brand: string; unit: string; basePrice: number; category: string; gender: string; notes: string[]; source?: string; sourceUrl?: string | null; imageUrl?: string | null; available?: boolean; priceIsMock?: boolean; matchedStores?: number; aliases?: string[]; offers?: ApiOffer[] };
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };

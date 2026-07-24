@@ -1,14 +1,14 @@
 const { Router } = require("express");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireAdmin } = require("../middleware/authMiddleware");
 const scraperController = require("../controllers/scraperController");
 
 const router = Router();
-router.get("/falabella/products", requireAuth, scraperController.listFalabella);
-router.post("/falabella/sync", requireAuth, scraperController.syncFalabella);
-router.post("/falabella/sync-perfumes", requireAuth, scraperController.syncPerfumeCatalog);
-router.get("/ripley/products", requireAuth, scraperController.listRipley);
-router.post("/ripley/sync", requireAuth, scraperController.syncRipley);
-router.post("/ripley/sync-perfumes", requireAuth, scraperController.syncRipleyPerfumeCatalog);
-router.get("/sync-jobs/:jobId", requireAuth, scraperController.getSyncJob);
+router.get("/falabella/products", requireAdmin, scraperController.listFalabella);
+router.post("/falabella/sync", requireAdmin, scraperController.syncFalabella);
+router.post("/falabella/sync-perfumes", requireAdmin, scraperController.syncPerfumeCatalog);
+router.get("/ripley/products", requireAdmin, scraperController.listRipley);
+router.post("/ripley/sync", requireAdmin, scraperController.syncRipley);
+router.post("/ripley/sync-perfumes", requireAdmin, scraperController.syncRipleyPerfumeCatalog);
+router.get("/sync-jobs/:jobId", requireAdmin, scraperController.getSyncJob);
 
 module.exports = router;

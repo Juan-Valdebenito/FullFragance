@@ -8,6 +8,10 @@ module.exports = {
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET || "dev-secret-no-usar-en-produccion",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  adminEmails: (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
   sqlitePath: process.env.SQLITE_PATH || "./data/catalog.sqlite",
   scraperApiKey: process.env.SCRAPER_API_KEY || "",
   falabellaUserAgent:

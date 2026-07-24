@@ -1,4 +1,5 @@
 const { verifyToken } = require("../utils/jwt");
+const userRepository = require("../models/userRepository");
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
@@ -17,4 +18,16 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    const user = userRepository.findById(req.userId);
+    const publicUser = userRepository.toPublic(user);
+    if (!publicUser || publicUser.role !== "admin") {
+      return res.status(403).json({ error: "Se requiere rol administrador." });
+    }
+    req.user = publicUser;
+    next();
+  });
+}
+
+module.exports = { requireAuth, requireAdmin };
