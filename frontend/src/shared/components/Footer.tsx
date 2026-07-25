@@ -16,6 +16,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
     <section className={styles.footerColumn}>
       <h2>Plataforma</h2>
       <Link href="/dashboard">Comparar precios</Link>
+      <Link href="/tiendas">Tiendas cercanas</Link>
       <Link href="/test">Test olfativo</Link>
       <Link href="/recomendaciones">Recomendaciones</Link>
       <Link href="/favoritos">Favoritos</Link>
