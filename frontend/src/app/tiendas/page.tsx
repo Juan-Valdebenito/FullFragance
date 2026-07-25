@@ -3,6 +3,7 @@ import { Header } from "@/shared/components/Header";
 import { Footer } from "@/shared/components/Footer";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PublicSessionContent } from "@/shared/components/PublicSessionContent";
+import { FeatureTabs } from "@/shared/components/FeatureTabs";
 import { StorePanel } from "@/features/stores/components/StorePanel";
 import styles from "./tiendas.module.css";
 
@@ -19,6 +20,7 @@ export default function StoresPage() {
           description="Ubica sucursales de Falabella, Ripley, París y perfumerías cercanas a tu ciudad con mapa interactivo y enlaces directos."
         />
         <div className={`container ${styles.main}`}>
+          <FeatureTabs active="tiendas" />
           <PublicSessionContent>
             <section className={styles.storeSection}>
               <StorePanel />

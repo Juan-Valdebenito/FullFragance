@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/shared/components/Footer";
 import { Header } from "@/shared/components/Header";
+import { HeroActions } from "@/shared/components/HeroActions";
 import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import styles from "./home.module.css";
@@ -35,10 +36,7 @@ export default function HomePage() {
               <input name="q" placeholder="Busca Chanel, Versace, vainilla, hombre..." />
               <button>Buscar</button>
             </form>
-            <div className={styles.actions}>
-              <Link className={styles.primaryAction} href="/dashboard">Ver catálogo <Icon name="arrow" size={18}/></Link>
-              <Link className={styles.secondaryAction} href="/test">Hacer test olfativo</Link>
-            </div>
+            <HeroActions />
             <div className={styles.heroStats}><span><strong>Catálogo vivo</strong> fuentes actualizables</span><span><strong>Venta directa</strong> datos más limpios</span><span><strong>Perfil olfativo</strong> recomendaciones personales</span></div>
           </div>
           <div className={styles.preview} aria-label="Vista previa de tienda de perfumes">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./Brand";
+import { FooterPlatformLinks } from "./FooterPlatformLinks";
 import styles from "./shared.module.css";
 
 export function Footer({ compact = false }: { compact?: boolean }) {
@@ -15,11 +16,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
     </section>
     <section className={styles.footerColumn}>
       <h2>Plataforma</h2>
-      <Link href="/dashboard">Comparar precios</Link>
-      <Link href="/tiendas">Tiendas cercanas</Link>
-      <Link href="/test">Test olfativo</Link>
-      <Link href="/recomendaciones">Recomendaciones</Link>
-      <Link href="/favoritos">Favoritos</Link>
+      <FooterPlatformLinks />
     </section>
     <section className={styles.footerColumn}>
       <h2>Contacto</h2>

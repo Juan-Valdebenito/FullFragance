@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { RecommendationProfile, RecommendationsGrid } from "@/features/catalog/components/RecommendationsGrid";
 import { Header } from "@/shared/components/Header";
+import { FeatureTabs } from "@/shared/components/FeatureTabs";
 import { Footer } from "@/shared/components/Footer";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Icon } from "@/shared/components/Icon";
@@ -25,6 +26,7 @@ export default function RecommendationsPage() {
         </PageHeader>
 
         <div className={`container ${styles.main}`}>
+          <FeatureTabs active="recomendaciones" />
           <section>
             <div className={styles.sectionTitle}>
               <div>

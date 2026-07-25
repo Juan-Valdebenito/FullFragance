@@ -4,6 +4,7 @@ import { useOptionalSession } from "@/shared/auth/SessionContext";
 import { AdminDashboard } from "@/features/admin/components/AdminDashboard";
 import { CatalogExplorer } from "@/features/catalog/components/CatalogExplorer";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { FeatureTabs } from "@/shared/components/FeatureTabs";
 import styles from "./dashboard.module.css";
 
 export function DashboardContent({ initialQuery = "" }: { initialQuery?: string }) {
@@ -34,14 +35,7 @@ export function DashboardContent({ initialQuery = "" }: { initialQuery?: string 
         description="Reunimos fragancias de tiendas verificadas, identificamos cuándo se trata del mismo perfume y ordenamos sus precios para ayudarte a elegir dónde comprar."
       />
       <div className={`container ${styles.main}`}>
-        <nav className={styles.tabs}>
-          <span className={styles.active}>Comparar precios</span>
-          <a href="/tiendas">Tiendas cercanas</a>
-          <a href="/recomendaciones">Para ti</a>
-          <a href="/test">Notas olfativas</a>
-          <a href="/favoritos">Mis favoritos</a>
-          <small>Precios actuales</small>
-        </nav>
+        <FeatureTabs active="dashboard" />
         <CatalogExplorer initialQuery={initialQuery} />
       </div>
     </main>

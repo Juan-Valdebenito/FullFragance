@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Header } from "@/shared/components/Header";
+import { FeatureTabs } from "@/shared/components/FeatureTabs";
 import { Footer } from "@/shared/components/Footer";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FavoritesCatalog } from "@/features/catalog/components/FavoritesCatalog";
@@ -18,6 +19,7 @@ export default function FavoritesPage() {
           description="Todos los perfumes que guardaste, con sus precios actualizados."
         />
         <div className={`container ${styles.main}`}>
+          <FeatureTabs active="favoritos" />
           <FavoritesCatalog className={styles.grid} />
         </div>
       </main>
