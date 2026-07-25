@@ -25,6 +25,7 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
       {mode === "login" && <a href="#">¿Olvidaste tu contraseña?</a>}
       {error && <p className={styles.error} role="alert">{error}</p>}
       <button disabled={loading} className={styles.submit} type="submit">{loading ? "Conectando…" : mode === "register" ? "Crear mi cuenta" : "Iniciar sesión"}</button>
+      {mode === "register" && <p>Al crear una cuenta aceptas la <Link href="/politica-de-uso">política de uso</Link> y la <Link href="/politica-de-datos">política de datos</Link>.</p>}
       <p>{mode === "register" ? <>¿Ya tienes cuenta? <Link href="/login">Inicia sesión</Link></> : <>¿Aún no tienes cuenta? <Link href="/registro">Créala aquí</Link></>}</p>
     </form>
   </section>;

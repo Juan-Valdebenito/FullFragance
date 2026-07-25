@@ -24,8 +24,8 @@ export function Footer({ compact = false }: { compact?: boolean }) {
       <h2>Contacto</h2>
       <Link href="mailto:contacto@fullfragrance.cl">Soporte comercial</Link>
       <Link href="mailto:datos@fullfragrance.cl">Correcciones de datos</Link>
-      <Link href="#">Privacidad</Link>
-      <Link href="#">Términos</Link>
+      <Link href="/politica-de-datos">Política de datos</Link>
+      <Link href="/politica-de-uso">Política de uso</Link>
     </section>
     <aside className={styles.footerTrust}>
       <span>Actualización local</span>
