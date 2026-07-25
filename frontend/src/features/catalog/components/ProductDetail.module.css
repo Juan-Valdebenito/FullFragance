@@ -35,8 +35,8 @@
 }
 
 .visual {
-  position: sticky;
-  top: 24px;
+  position: relative;
+  top: 0;
   min-height: 560px;
   overflow: hidden;
   border: 1px solid var(--surface-container);

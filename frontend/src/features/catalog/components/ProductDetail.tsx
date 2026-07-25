@@ -34,6 +34,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
   const [prices, setPrices] = useState<ApiPrice[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -82,14 +83,15 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
       <section className={styles.product}>
         {/* Imagen */}
         <div className={styles.visual}>
-          {product.imageUrl
+          {product.imageUrl && !imgError
             ? <Image
                 src={productImageUrl(product.imageUrl) || product.imageUrl}
-                unoptimized={Boolean(productImageUrl(product.imageUrl)?.includes("/api/images/ripley/"))}
+                unoptimized
                 alt={`${product.name} de ${product.brand}`}
                 fill
                 priority
                 sizes="(max-width: 900px) 100vw, 34vw"
+                onError={() => setImgError(true)}
               />
             : <div className={styles.visualPlaceholder}><span>FF</span></div>}
         </div>
