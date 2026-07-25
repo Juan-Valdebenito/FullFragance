@@ -35,8 +35,8 @@
 }
 
 .visual {
-  position: sticky;
-  top: 24px;
+  position: relative;
+  top: 0;
   min-height: 560px;
   overflow: hidden;
   border: 1px solid var(--surface-container);
@@ -98,7 +98,7 @@
 .matchStatus strong { font-size: .78rem; }
 .matchStatus small { color: var(--on-surface-muted); font-size: .68rem; line-height: 1.35; }
 .matchConfirmed { border-color: #a8d5b5; background: #f1faf3; }
-.matchConfirmed > span { background: #287b43; }
+.matchConfirmed > span { background: var(--success); }
 .matchPending { border-color: #e4ca94; background: #fff9ed; }
 .matchPending > span { background: #a66b00; }
 
@@ -235,7 +235,7 @@
   font-size: .68rem;
 }
 
-.savings strong { color: #287b43; font-family: ui-monospace, monospace; }
+.savings strong { color: var(--success); font-family: ui-monospace, monospace; }
 .noOffers { padding: 28px 10px; color: var(--on-surface-muted); text-align: center; font-size: .75rem; }
 
 @media (max-width: 1080px) {

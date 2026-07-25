@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/api/openapi.json", (_req, res) => res.json(openapi));
-app.get("/api/images/ripley/:sku", imageController.ripleyImage);
+app.get("/api/images/ripley/:sku?", imageController.ripleyImage);
 app.use(
   "/api/docs",
   swaggerUi.serve,

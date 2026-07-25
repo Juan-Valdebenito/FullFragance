@@ -1,1 +1,37 @@
-.main { min-height: 65vh; padding-top: 48px; }.settings { margin-top: 38px; border-radius: var(--radius-lg); background: var(--surface-low); padding: 30px; }.settings h2 { margin: 7px 0; font: 600 1.6rem "Space Grotesk",sans-serif; }.settings > p:last-of-type { color: var(--on-surface-muted); line-height: 1.5; }
+/* ─── Page content ───────────────────────────────────── */
+
+.main {
+  min-height: 55vh;
+  padding-top: 44px;
+  padding-bottom: 72px;
+  display: grid;
+  gap: 32px;
+  align-content: start;
+}
+
+/* ─── Settings section ───────────────────────────────── */
+
+.settings {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--surface-lowest);
+  padding: 30px;
+  box-shadow: var(--shadow);
+}
+
+.settings h2 {
+  margin: 7px 0 10px;
+  font: 600 1.6rem "Space Grotesk", sans-serif;
+}
+
+.settings > p:last-of-type {
+  color: var(--on-surface-muted);
+  line-height: 1.55;
+  margin-bottom: 22px;
+}
+
+/* ─── Responsive ─────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .settings { padding: 20px; }
+}

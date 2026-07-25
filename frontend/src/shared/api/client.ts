@@ -25,9 +25,11 @@ function saveSession(data: { token: string; user: User }) { localStorage.setItem
 const cityQuery = (city: City) => new URLSearchParams({ cityName: city.name, lat: String(city.lat), lon: String(city.lon) }).toString();
 export const session = { hasToken: () => Boolean(token()), clear: () => localStorage.removeItem(TOKEN_KEY) };
 export function productImageUrl(imageUrl?: string | null) {
-  if (!imageUrl || !/https:\/\/rimage\.ripley\.cl\//i.test(imageUrl)) return imageUrl;
-  const sku = imageUrl.match(/(?:WOP\/1\/|full_image-)(\d{8,20})/i)?.[1];
-  return sku ? `${apiUrl()}/images/ripley/${sku}` : imageUrl;
+  if (!imageUrl) return imageUrl;
+  if (/https:\/\/(?:rimage|home)\.ripley\.cl\//i.test(imageUrl)) {
+    return `${apiUrl()}/images/ripley?url=${encodeURIComponent(imageUrl)}`;
+  }
+  return imageUrl;
 }
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),

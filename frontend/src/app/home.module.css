@@ -106,6 +106,12 @@
   border: 1px solid var(--outline-variant);
   background: rgb(255 255 255 / 72%);
   color: var(--on-surface);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.secondaryAction:hover {
+  border-color: var(--gold);
+  background: #fff;
 }
 
 .heroStats {
@@ -265,7 +271,7 @@
 }
 
 .previewFoot strong {
-  color: #8a6a2c;
+  color: var(--gold-dark);
 }
 
 .benefits {

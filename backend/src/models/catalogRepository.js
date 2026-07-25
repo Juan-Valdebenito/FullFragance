@@ -2,6 +2,12 @@ const { readDb } = require("../data/database");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
 const { normalizeBrand, samePerfume, tokenScore } = require("./productMatcher");
 
+let cachedProducts = null;
+
+function invalidateCatalogCache() {
+  cachedProducts = null;
+}
+
 function inferGender(name) {
   const value = String(name || "").toLowerCase();
   if (/mujer|femenin|woman|lady/.test(value)) return "Femenino";
@@ -45,11 +51,29 @@ function toCatalogProduct(product, profiles = readDb().products) {
 
 function mergeScrapedProducts(products) {
   const profiles = readDb().products;
-  const groups = [];
+
+  // 1. Agrupar por marca normalizada para evitar comparaciones N^2 entre marcas distintas
+  const byBrand = new Map();
   for (const product of products) {
-    const group = groups.find((candidate) => candidate.some((item) => samePerfume(item, product)));
-    if (group) group.push(product);
-    else groups.push([product]);
+    const brandKey = normalizeBrand(product.brand) || "unknown";
+    let list = byBrand.get(brandKey);
+    if (!list) {
+      list = [];
+      byBrand.set(brandKey, list);
+    }
+    list.push(product);
+  }
+
+  // 2. Realizar matching solo dentro del grupo de cada marca
+  const groups = [];
+  for (const brandProducts of byBrand.values()) {
+    const brandGroups = [];
+    for (const product of brandProducts) {
+      const group = brandGroups.find((candidate) => candidate.some((item) => samePerfume(item, product)));
+      if (group) group.push(product);
+      else brandGroups.push([product]);
+    }
+    groups.push(...brandGroups);
   }
 
   return groups.map((group) => {
@@ -82,9 +106,11 @@ function mergeScrapedProducts(products) {
 }
 
 function getProducts() {
+  if (cachedProducts) return cachedProducts;
   const rawScraped = ["falabella-cl", "ripley-cl"].flatMap((source) => listScrapedProducts(source));
   const scraped = mergeScrapedProducts(rawScraped);
-  return [...scraped, ...readDb().products];
+  cachedProducts = [...scraped, ...readDb().products];
+  return cachedProducts;
 }
 
 function getProductById(id) {
@@ -103,4 +129,12 @@ function getNoteById(id) {
   return getOlfactoryNotes().find((note) => note.id === id) || null;
 }
 
-module.exports = { getProducts, getProductById, getChains, getOlfactoryNotes, getNoteById, mergeScrapedProducts };
+module.exports = {
+  getProducts,
+  getProductById,
+  getChains,
+  getOlfactoryNotes,
+  getNoteById,
+  mergeScrapedProducts,
+  invalidateCatalogCache,
+};
