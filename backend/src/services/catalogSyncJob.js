@@ -1,5 +1,6 @@
 const { randomUUID } = require("crypto");
 const { replaceProducts } = require("../data/catalogDatabase");
+const { invalidateCatalogCache } = require("../models/catalogRepository");
 const { scrapeDirectCatalogPage: scrapeFalabellaPage } = require("./falabellaScraper");
 const { scrapeDirectCatalogPage: scrapeRipleyPage } = require("./ripleyScraper");
 
@@ -39,6 +40,7 @@ async function run(job) {
       job.imported = products.size;
     }
     replaceProducts(job.source, [...products.values()]);
+    invalidateCatalogCache();
     job.status = "completed";
   } catch (error) {
     job.status = "failed";
