@@ -129,6 +129,11 @@ function findXmlLocs(xml) {
 function isPerfumeProductUrl(url) {
   const pathname = decodeURIComponent(new URL(url).pathname).toLowerCase();
   if (!/\/product\/\d+\//.test(pathname)) return false;
+  
+  // Lista negra de términos que no pertenecen a perfumería
+  const blacklist = /(?:iphone|celular|smartphone|smartwatch|audifono|parlante|tablet|notebook|laptop|consola|nintendo|playstation|xbox|televisor|tv|reacondicionado|refurbished|walkie|radio|baofeng|juguete|camara|seguridad)/i;
+  if (blacklist.test(pathname)) return false;
+
   return /(?:^|[-/])(perfume|parfum|fragancia|colonia|eau|edp|edt|extrait|body-splash)(?:[-/]|$)/i.test(pathname);
 }
 
@@ -435,10 +440,11 @@ async function scrapeDirectCatalogPage(page = 1) {
   const pagination = nextData?.props?.pageProps?.pagination || {};
   const cards = extractPageResults(html);
   const products = cards
-    .filter((card) => card.sellerId === "FALABELLA_CHILE" || String(card.sellerName).toUpperCase() === "FALABELLA")
-    .map((card) => normalizeCollectionProduct(card));
+    .map((card) => normalizeCollectionProduct(card))
+    .filter((product) => isPerfumeProductUrl(product.url));
   const totalPages = Math.max(1, Math.ceil(Number(pagination.count || cards.length) / Number(pagination.perPage || 48)));
-  return { products, page, totalPages, scanned: cards.length };
+  const directTotal = pagination.count ? Number(pagination.count) : null;
+  return { products, page, totalPages, scanned: cards.length, directTotal };
 }
 
 async function findProductInCollection(sku) {

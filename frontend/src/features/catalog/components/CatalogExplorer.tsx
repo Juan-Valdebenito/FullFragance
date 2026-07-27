@@ -27,6 +27,8 @@ export function toProduct(item: Comparison): Product {
       ? "Comparado en 2 tiendas"
       : item.product.priceIsMock
       ? "Precio demo"
+      : item.product.isSet
+      ? "Set / Kit"
       : item.product.source
       ? cheapestByChain.length
         ? sourceBadges[item.product.source] ?? "Marketplace"
