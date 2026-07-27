@@ -1,6 +1,6 @@
 const { readDb } = require("../data/database");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { normalizeBrand, samePerfume, tokenScore } = require("./productMatcher");
+const { normalizeBrand, samePerfume, tokenScore, isSet } = require("./productMatcher");
 
 let cachedProducts = null;
 
@@ -38,6 +38,7 @@ function toCatalogProduct(product, profiles = readDb().products) {
     imageUrl: product.imageUrl || null,
     available: product.available,
     priceIsMock: Boolean(product.raw?.mockPrice),
+    isSet: isSet(product),
     offers: [{
       source: product.source,
       sku: product.sku,

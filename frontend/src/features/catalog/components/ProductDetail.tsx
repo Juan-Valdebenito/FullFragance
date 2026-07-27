@@ -122,6 +122,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
 
           <div className={styles.tags}>
             <span>{product.category}</span>
+            {product.isSet && <span>Set / Kit</span>}
             {product.notes.map(note => <span key={note}>{note}</span>)}
           </div>
           <div className={styles.favoriteLine}>

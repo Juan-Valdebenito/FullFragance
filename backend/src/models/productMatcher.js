@@ -3,8 +3,14 @@
 const STOP_WORDS = new Set([
   "perfume", "fragancia", "hombre", "mujer", "masculino", "femenino", "unisex",
   "eau", "de", "pour", "toilette", "parfum", "edp", "edt", "extract", "extrait",
-  "spray", "vaporizador", "ml", "set", "pack", "original",
+  "spray", "vaporizador", "ml", "original",
 ]);
+
+/**
+ * Palabras clave que indican que el producto es un set/kit.
+ * No deben ser stop words — son indicadores de tipo de producto.
+ */
+const SET_KEYWORDS = new Set(["set", "pack", "kit", "estuche", "cofre", "coffret"]);
 
 /**
  * Modificadores que forman parte de la identidad del perfume.
@@ -12,7 +18,7 @@ const STOP_WORDS = new Set([
  * NO son el mismo producto aunque el resto de tokens coincida.
  */
 const IDENTITY_MODIFIERS = new Set([
-  "intense", "intenso", "intenso", "intensamente",
+  "intense", "intenso", "intensamente",
   "absolute", "absolu", "absolut",
   "sport", "sports",
   "extreme", "extremo",
@@ -29,6 +35,21 @@ const IDENTITY_MODIFIERS = new Set([
   "infinite", "infinity",
   "legend", "legendario",
   "modern",
+  // Líneas de género (variantes masculina/femenina del mismo perfume base)
+  "donna", "uomo", "homme", "femme",
+  // Variantes de producto adicionales
+  "extradose", "overdose",
+  "night", "nuit",
+  "forever", "eternity",
+  "elixir",
+  "coral", "fantasy",
+  "yellow",
+  "stravaganza",
+  "wild", "sauvage",
+  "privee", "prive",
+  "crystal", "cristal",
+  "purple", "melancholia",
+  "green",
 ]);
 
 function normalize(value) {
@@ -94,6 +115,19 @@ function modifierOf(product) {
   return new Set([...tokens].filter((token) => IDENTITY_MODIFIERS.has(token)));
 }
 
+/**
+ * Detecta si un producto es un set/kit (no un perfume individual).
+ * Busca palabras clave y patrones de múltiples volúmenes (ej. "100ML+75ML+10ML").
+ */
+function isSet(product) {
+  const tokens = normalize(product.name).split(" ").filter(Boolean);
+  if (tokens.some((token) => SET_KEYWORDS.has(token))) return true;
+  // Patrón de múltiples volúmenes unidos con + o separados
+  const name = normalize(product.name);
+  const volumeMatches = name.match(/\d+\s*ml/g);
+  return volumeMatches !== null && volumeMatches.length >= 2;
+}
+
 function identityTokens(product) {
   const brandTokens = new Set(normalizeBrand(product.brand).split(" ").filter(Boolean));
   return normalize(product.name)
@@ -131,6 +165,9 @@ function tokenScore(left, right) {
 function samePerfume(left, right) {
   if (!left || !right || left.source === right.source) return false;
 
+  // Un set/kit NO es el mismo producto que un perfume individual
+  if (isSet(left) !== isSet(right)) return false;
+
   const leftBrand = normalizeBrand(left.brand);
   const rightBrand = normalizeBrand(right.brand);
   if (!leftBrand || !rightBrand || leftBrand !== rightBrand) return false;
@@ -144,6 +181,10 @@ function samePerfume(left, right) {
   const leftConcentration = concentrationOf(left);
   const rightConcentration = concentrationOf(right);
   if (leftConcentration && rightConcentration && leftConcentration !== rightConcentration) return false;
+  // Si solo uno tiene concentración definida, es una señal débil de mismatch.
+  // No rechazar directamente (un producto puede no listar la concentración en el nombre),
+  // pero elevar el umbral de tokens requerido al final.
+  const concentrationMismatch = Boolean(leftConcentration) !== Boolean(rightConcentration);
 
   // Verificar modificadores de identidad: si los conjuntos difieren → son productos distintos
   const leftModifiers = modifierOf(left);
@@ -169,8 +210,9 @@ function samePerfume(left, right) {
     return score >= 1.0;
   }
 
-  // Umbral general elevado a 0.72 (antes 0.60) para reducir falsos positivos
-  return score >= 0.72;
+  // Si hay mismatch de concentración (uno definida, otro no), requerir coincidencia casi perfecta
+  const threshold = concentrationMismatch ? 0.90 : 0.72;
+  return score >= threshold;
 }
 
 module.exports = {
@@ -179,6 +221,7 @@ module.exports = {
   volumeOf,
   concentrationOf,
   modifierOf,
+  isSet,
   identityTokens,
   tokenScore,
   samePerfume,

@@ -23,7 +23,7 @@ module.exports = {
   falabellaFixtureDir: process.env.FALABELLA_FIXTURE_DIR || "",
   falabellaPerfumesUrl:
     process.env.FALABELLA_PERFUMES_URL ||
-    "https://www.falabella.com/falabella-cl/collection/oferta-perfumes",
+    "https://www.falabella.com/falabella-cl/search?Ntt=perfume",
   falabellaPdpSitemapIndexUrl:
     process.env.FALABELLA_PDP_SITEMAP_INDEX_URL ||
     "https://www.falabella.com/static/site/sitemaps/pdp/pdp_cl_FA_COM-index.xml",
