@@ -5,6 +5,7 @@ import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { City, Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
+import { isPerfumeSegment, perfumeSegmentForBrand, perfumeSegments } from "../domain/segment";
 import { ProductCard } from "./ProductCard";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./catalog.module.css";
@@ -67,6 +68,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const brand       = searchParams.get("brand")  ?? "";
   const category    = searchParams.get("cat")    ?? "";
   const gender      = searchParams.get("gender") ?? "";
+  const segmentParam = searchParams.get("segment") ?? "";
+  const segment = isPerfumeSegment(segmentParam) ? segmentParam : "";
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
   const page        = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
@@ -135,7 +138,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
   /** Reset de todos los filtros en una sola llamada */
   function resetFilters() {
-    startTransition(() => applyParams({ brand: null, cat: null, gender: null, sort: null, page: null }));
+    startTransition(() => applyParams({ brand: null, cat: null, gender: null, segment: null, sort: null, page: null }));
   }
 
   /** Input de búsqueda: actualización local inmediata + debounce a URL */
@@ -191,7 +194,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       .filter(item =>
         (!brand    || item.product.brand    === brand)    &&
         (!category || item.product.category === category) &&
-        (!gender   || item.product.gender   === gender)
+        (!gender   || item.product.gender   === gender)   &&
+        (!segment  || perfumeSegmentForBrand(item.product.brand) === segment)
       )
       .sort((a, b) => {
         if (sort === "name")  return `${a.product.brand} ${a.product.name}`.localeCompare(`${b.product.brand} ${b.product.name}`, "es");
@@ -199,7 +203,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         const diff = (b.product.matchedStores ?? 0) - (a.product.matchedStores ?? 0);
         return diff || (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
       }),
-    [items, brand, category, gender, sort]
+    [items, brand, category, gender, segment, sort]
   );
 
   const totalPages   = Math.max(1, Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE));
@@ -209,7 +213,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     [filteredItems, currentPage]
   );
   const products     = useMemo(() => visibleItems.map(toProduct), [visibleItems]);
-  const filterCount  = [brand, category, gender].filter(Boolean).length;
+  const filterCount  = [brand, category, gender, segment].filter(Boolean).length;
+  const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
 
   const comparedCount  = useMemo(() => items.filter(i => (i.product.matchedStores ?? 0) > 1).length, [items]);
   const falabellaCount = useMemo(() => items.filter(i => i.product.source === "falabella-cl" || i.prices.some(p => p.storeName === "Falabella")).length, [items]);
@@ -266,6 +271,24 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
       {syncMessage && <p className={styles.status}>{syncMessage}</p>}
 
+      <nav className={styles.segmentNav} aria-label="Tipos de perfumería">
+        {perfumeSegments.map(option => (
+          <button
+            key={option.value || "all"}
+            className={segment === option.value ? styles.activeSegment : ""}
+            onClick={() => setFilter("segment", option.value)}
+            aria-current={segment === option.value ? "page" : undefined}
+          >
+            <span>{option.label}</span>
+            <small>
+              {option.value
+                ? items.filter(item => perfumeSegmentForBrand(item.product.brand) === option.value).length
+                : items.length}
+            </small>
+          </button>
+        ))}
+      </nav>
+
       {loading ? (
         <p className={styles.empty}>Consultando precios…</p>
       ) : error ? (
@@ -318,8 +341,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
           <div className={styles.catalogStage}>
             <div className={styles.catalogToolbar}>
               <div>
-                <p>Home · Perfumes</p>
-                <h2>Catálogo de fragancias</h2>
+                <p>Home · Perfumes{segment ? ` · ${activeSegment.label}` : ""}</p>
+                <h2>{activeSegment.title}</h2>
               </div>
               <label>
                 Ordenar por

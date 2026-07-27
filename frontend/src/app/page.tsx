@@ -18,7 +18,14 @@ const benefits = [
   { icon: "flower" as const, title: "Compra con criterio", text: "Combina datos de precio con preferencias olfativas para elegir algo que realmente calce contigo." },
 ];
 
-const categories = ["Mujer", "Hombre", "Unisex", "Eau de Parfum", "Eau de Toilette", "Lujo"];
+const categories = [
+  { label: "Diseñador", href: "/dashboard?segment=designer" },
+  { label: "Nicho", href: "/dashboard?segment=niche" },
+  { label: "Árabes", href: "/dashboard?segment=arabic" },
+  { label: "Mujer", href: "/dashboard?gender=Femenino" },
+  { label: "Hombre", href: "/dashboard?gender=Masculino" },
+  { label: "Unisex", href: "/dashboard?gender=Unisex" },
+];
 const steps = ["Extraemos catálogos de fuentes conectadas", "Normalizamos nombres, tamaños y marcas", "Comparamos coincidencias y precios finales"];
 
 export default function HomePage() {
@@ -53,7 +60,7 @@ export default function HomePage() {
 
       <section className={`container ${styles.shopNav}`} aria-label="Comprar por categoría">
         <div><p className="eyebrow">Comprar por categoría</p><h2>Explora la vitrina por intención.</h2></div>
-        <div>{categories.map(category => <Link key={category} href={`/dashboard?q=${encodeURIComponent(category.toLowerCase())}`}>{category}</Link>)}</div>
+        <div>{categories.map(category => <Link key={category.label} href={category.href}>{category.label}</Link>)}</div>
       </section>
 
       <section className={`container ${styles.featured}`} aria-label="Fragancias destacadas">
