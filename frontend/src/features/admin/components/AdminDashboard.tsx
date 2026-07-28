@@ -37,10 +37,16 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   // Sync state
   const [syncingFalabella, setSyncingFalabella] = useState(false);
   const [syncingRipley,    setSyncingRipley]    = useState(false);
+  const [syncingAlisha,    setSyncingAlisha]    = useState(false);
+  const [syncingSilk,      setSyncingSilk]      = useState(false);
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
   const [ripleyJob,    setRipleyJob]    = useState<SyncJob | null>(null);
+  const [alishaJob,    setAlishaJob]    = useState<SyncJob | null>(null);
+  const [silkJob,      setSilkJob]      = useState<SyncJob | null>(null);
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
+  const [alishaMsg,    setAlishaMsg]    = useState("");
+  const [silkMsg,      setSilkMsg]      = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -68,7 +74,10 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     }
   }, [user.city]);
 
-  useEffect(() => { loadCatalogData(); }, [loadCatalogData]);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => { void loadCatalogData(); }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadCatalogData]);
 
   // ── Sync helpers ────────────────────────────────────────
   async function waitForSync(
@@ -119,11 +128,39 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingRipley(false); }
   }
 
+  async function handleSyncAlisha() {
+    setSyncingAlisha(true); setAlishaMsg("Iniciando conexión con Alisha Perfumes...");
+    addActivity("Sincronización de Alisha iniciada", "Sync", styles.tagSync, "#3b82f6");
+    try {
+      const { job } = await api.syncAlishaPerfumes();
+      await waitForSync(job, "Alisha", setAlishaJob, setAlishaMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Alisha.";
+      setAlishaMsg(msg);
+      addActivity(`Error Alisha: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingAlisha(false); }
+  }
+
+  async function handleSyncSilk() {
+    setSyncingSilk(true); setSilkMsg("Iniciando conexión con Silk Perfumes...");
+    addActivity("Sincronización de Silk iniciada", "Sync", styles.tagSync, "#3b82f6");
+    try {
+      const { job } = await api.syncSilkPerfumes();
+      await waitForSync(job, "Silk", setSilkJob, setSilkMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Silk.";
+      setSilkMsg(msg);
+      addActivity(`Error Silk: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingSilk(false); }
+  }
+
   // ── Computed metrics ────────────────────────────────────
   const totalProducts  = items.length;
   const multiStore     = useMemo(() => items.filter(i => (i.product.matchedStores ?? 0) > 1).length, [items]);
   const falabellaCount = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Falabella")).length, [items]);
   const ripleyCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Ripley")).length, [items]);
+  const alishaCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
+  const silkCount      = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
 
@@ -155,6 +192,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Base de datos SQLite", sub: "catalog.sqlite", status: totalProducts > 0 ? "Activa" : "Vacía", cls: totalProducts > 0 ? styles.healthOk : styles.healthWarning, icon: totalProducts > 0 ? "🟢" : "🟡" },
     { label: "Scraper Falabella", sub: "falabella-cl · scraping habilitado", status: syncingFalabella ? "Ejecutando..." : falabellaJob?.status === "failed" ? "Error" : "Listo", cls: falabellaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: falabellaJob?.status === "failed" ? "🔴" : "🟢" },
     { label: "Scraper Ripley", sub: "ripley-cl · scraping habilitado", status: syncingRipley ? "Ejecutando..." : ripleyJob?.status === "failed" ? "Error" : "Listo", cls: ripleyJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: ripleyJob?.status === "failed" ? "🔴" : "🟢" },
+    { label: "Scraper Alisha", sub: "alisha-cl · Shopify JSON habilitado", status: syncingAlisha ? "Ejecutando..." : alishaJob?.status === "failed" ? "Error" : "Listo", cls: alishaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: alishaJob?.status === "failed" ? "🔴" : "🟢" },
+    { label: "Scraper Silk", sub: "silk-cl · Shopify JSON habilitado", status: syncingSilk ? "Ejecutando..." : silkJob?.status === "failed" ? "Error" : "Listo", cls: silkJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: silkJob?.status === "failed" ? "🔴" : "🟢" },
     { label: "Proxy de Imágenes", sub: "/api/images/ripley · curl activo", status: "Operativo", cls: styles.healthOk, icon: "🟢" },
     { label: "Caché de Catálogo", sub: "En memoria · se invalida al sincronizar", status: "Activo", cls: styles.healthOk, icon: "🟢" },
   ];
@@ -204,9 +243,11 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <section className={styles.metricsGrid}>
         {[
           { label: "Catálogo Total",   value: loading ? "..." : totalProducts,  sub: "Perfumes en base de datos",         icon: "📦", iconCls: styles.metricIconBlue,   delta: null },
-          { label: "Multi-tienda",     value: loading ? "..." : multiStore,     sub: "Coincidencias Falabella + Ripley",  icon: "🔗", iconCls: styles.metricIconGreen,  delta: totalProducts > 0 ? `${Math.round((multiStore / totalProducts) * 100)}%` : null, pos: true },
+          { label: "Multi-tienda",     value: loading ? "..." : multiStore,     sub: "Coincidencias entre tiendas",       icon: "🔗", iconCls: styles.metricIconGreen,  delta: totalProducts > 0 ? `${Math.round((multiStore / totalProducts) * 100)}%` : null, pos: true },
           { label: "Falabella",        value: loading ? "..." : falabellaCount, sub: "Ofertas sincronizadas",             icon: "🛒", iconCls: styles.metricIconAmber,  delta: null },
           { label: "Ripley",           value: loading ? "..." : ripleyCount,    sub: "Ofertas sincronizadas",             icon: "🏬", iconCls: styles.metricIconPurple, delta: null },
+          { label: "Alisha",           value: loading ? "..." : alishaCount,    sub: "Ofertas sincronizadas",             icon: "🌸", iconCls: styles.metricIconGreen,  delta: null },
+          { label: "Silk",             value: loading ? "..." : silkCount,      sub: "Ofertas sincronizadas",             icon: "✨", iconCls: styles.metricIconBlue,   delta: null },
         ].map(m => (
           <article key={m.label} className={styles.metricCard}>
             <div className={styles.metricTop}>
@@ -399,6 +440,74 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
 
           {ripleyMsg && <p className={styles.syncMessage}>{ripleyMsg}</p>}
         </article>
+
+        {/* Alisha card */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardHeader}>
+            <div className={styles.syncStoreTitle}>
+              <div className={`${styles.syncStoreLogo} ${styles.syncStoreLogoAlisha}`}>🌸</div>
+              <div className={styles.syncStoreInfo}>
+                <h3>Alisha Perfumes</h3>
+                <span>alisha-cl · ~2 600 productos</span>
+              </div>
+            </div>
+            <span className={`${styles.syncStatusBadge} ${syncingAlisha ? styles.statusRunning : alishaJob?.status === "completed" ? styles.statusCompleted : styles.statusIdle}`}>
+              {syncingAlisha ? "Ejecutando..." : alishaJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+
+          {alishaJob && (
+            <div className={styles.syncProgress}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${alishaJob.status === "completed" ? 100 : Math.min(95, alishaJob.currentPage * 8)}%` }} />
+              </div>
+              <div className={styles.syncProgressLabel}>
+                <span>{alishaJob.imported} importados · pág {alishaJob.currentPage}/{alishaJob.totalPages}</span>
+                <span>{alishaJob.status === "running" ? "Recorriendo catálogo…" : ""}</span>
+              </div>
+            </div>
+          )}
+
+          <button type="button" className={styles.syncBtn} onClick={handleSyncAlisha} disabled={syncingAlisha}>
+            {syncingAlisha ? "⏳ Sincronizando Alisha..." : "🔄 Actualizar Catálogo Alisha"}
+          </button>
+
+          {alishaMsg && <p className={styles.syncMessage}>{alishaMsg}</p>}
+        </article>
+
+        {/* Silk card */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardHeader}>
+            <div className={styles.syncStoreTitle}>
+              <div className={`${styles.syncStoreLogo} ${styles.syncStoreLogoSilk}`}>✨</div>
+              <div className={styles.syncStoreInfo}>
+                <h3>Silk Perfumes</h3>
+                <span>silk-cl · colección pública de perfumes</span>
+              </div>
+            </div>
+            <span className={`${styles.syncStatusBadge} ${syncingSilk ? styles.statusRunning : silkJob?.status === "completed" ? styles.statusCompleted : styles.statusIdle}`}>
+              {syncingSilk ? "Ejecutando..." : silkJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+
+          {silkJob && (
+            <div className={styles.syncProgress}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${silkJob.status === "completed" ? 100 : Math.min(95, silkJob.currentPage * 8)}%` }} />
+              </div>
+              <div className={styles.syncProgressLabel}>
+                <span>{silkJob.imported} importados · pág {silkJob.currentPage}/{silkJob.totalPages}</span>
+                <span>{silkJob.status === "running" ? "Recorriendo catálogo…" : ""}</span>
+              </div>
+            </div>
+          )}
+
+          <button type="button" className={styles.syncBtn} onClick={handleSyncSilk} disabled={syncingSilk}>
+            {syncingSilk ? "⏳ Sincronizando Silk..." : "🔄 Actualizar Catálogo Silk"}
+          </button>
+
+          {silkMsg && <p className={styles.syncMessage}>{silkMsg}</p>}
+        </article>
       </div>
 
       {/* Activity in sync section too */}
@@ -464,8 +573,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.sourceFalabella : src === "ripley-cl" ? styles.sourceRipley : styles.sourceMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : "Multi";
+                const srcCls = src === "falabella-cl" ? styles.sourceFalabella : src === "ripley-cl" ? styles.sourceRipley : src === "alisha-cl" ? styles.sourceAlisha : src === "silk-cl" ? styles.sourceSilk : styles.sourceMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : "Multi";
                 const avail = item.product.available !== false;
                 return (
                   <tr key={item.product.id}>
@@ -482,7 +591,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
                     </td>
                     <td>
                       {(item.product.matchedStores ?? 0) > 1
-                        ? <span style={{ color: "#15803d", fontWeight: 700, fontSize: ".75rem" }}>✓ 2 Tiendas</span>
+                        ? <span style={{ color: "#15803d", fontWeight: 700, fontSize: ".75rem" }}>✓ {item.product.matchedStores} Tiendas</span>
                         : <span style={{ color: "var(--on-surface-muted)", fontSize: ".75rem" }}>1 Tienda</span>}
                     </td>
                     <td>

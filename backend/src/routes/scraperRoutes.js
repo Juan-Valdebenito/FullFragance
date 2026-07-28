@@ -9,6 +9,12 @@ router.post("/falabella/sync-perfumes", requireAdmin, scraperController.syncPerf
 router.get("/ripley/products", requireAdmin, scraperController.listRipley);
 router.post("/ripley/sync", requireAdmin, scraperController.syncRipley);
 router.post("/ripley/sync-perfumes", requireAdmin, scraperController.syncRipleyPerfumeCatalog);
+router.get("/alisha/products", requireAdmin, scraperController.listAlisha);
+router.post("/alisha/sync", requireAdmin, scraperController.syncAlisha);
+router.post("/alisha/sync-perfumes", requireAdmin, scraperController.syncAlishaPerfumeCatalog);
+router.get("/silk/products", requireAdmin, scraperController.listSilk);
+router.post("/silk/sync", requireAdmin, scraperController.syncSilk);
+router.post("/silk/sync-perfumes", requireAdmin, scraperController.syncSilkPerfumeCatalog);
 router.get("/sync-jobs/:jobId", requireAdmin, scraperController.getSyncJob);
 
 module.exports = router;

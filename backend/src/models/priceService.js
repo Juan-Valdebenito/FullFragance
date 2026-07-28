@@ -6,6 +6,8 @@ const { normalize } = require("./productMatcher");
 const SOURCE_STORES = {
   "falabella-cl": { storeId: "falabella-online", storeName: "Falabella" },
   "ripley-cl": { storeId: "ripley-online", storeName: "Ripley" },
+  "alisha-cl": { storeId: "alisha-online", storeName: "Alisha Perfumes" },
+  "silk-cl": { storeId: "silk-online", storeName: "Silk Perfumes" },
 };
 
 function priceFor(cityName, storeId, product) {

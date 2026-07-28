@@ -43,6 +43,8 @@ export const api = {
   featuredProducts: () => request<{ products: import("./types").ApiProduct[] }>("/catalog/featured").then(data => data.products),
   syncFalabellaPerfumes: () => request<{ job: SyncJob }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
   syncRipleyPerfumes: () => request<{ job: SyncJob }>("/scrapers/ripley/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
+  syncAlishaPerfumes: () => request<{ job: SyncJob }>("/scrapers/alisha/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
+  syncSilkPerfumes: () => request<{ job: SyncJob }>("/scrapers/silk/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
   syncJob: (jobId: string) => request<{ job: SyncJob }>(`/scrapers/sync-jobs/${jobId}`).then(data => data.job),
   saveQuiz: (scores: Record<string, number>) => request<{ recommendations: Recommendation[] }>("/users/me/scent-quiz", { method: "POST", body: JSON.stringify({ scores }) }),
   recommendations: () => request<{ source: string; recommendations: Recommendation[] }>("/users/me/recommendations"),

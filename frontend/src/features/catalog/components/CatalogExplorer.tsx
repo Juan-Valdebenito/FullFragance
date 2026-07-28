@@ -12,7 +12,12 @@ import styles from "./catalog.module.css";
 
 const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const sourceBadges: Record<string, string> = { "falabella-cl": "Falabella", "ripley-cl": "Ripley" };
+const sourceBadges: Record<string, string> = {
+  "falabella-cl": "Falabella",
+  "ripley-cl": "Ripley",
+  "alisha-cl": "Alisha",
+  "silk-cl": "Silk",
+};
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "name";
 
@@ -22,10 +27,10 @@ export function toProduct(item: Comparison): Product {
     .filter((price, priceIndex, prices) =>
       prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex
     )
-    .slice(0, 2);
+    .slice(0, 4);
   const badge =
     item.product.matchedStores && item.product.matchedStores > 1
-      ? "Comparado en 2 tiendas"
+      ? `Comparado en ${item.product.matchedStores} tiendas`
       : item.product.priceIsMock
       ? "Precio demo"
       : item.product.isSet
@@ -87,6 +92,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncingRipley, setSyncingRipley] = useState(false);
+  const [syncingAlisha, setSyncingAlisha] = useState(false);
+  const [syncingSilk, setSyncingSilk] = useState(false);
   const [error, setError] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -185,6 +192,20 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     finally { setSyncingRipley(false); }
   }
 
+  async function updateAlisha() {
+    setSyncingAlisha(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncAlishaPerfumes(); await waitForSync(job, "Alisha"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Alisha."); }
+    finally { setSyncingAlisha(false); }
+  }
+
+  async function updateSilk() {
+    setSyncingSilk(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncSilkPerfumes(); await waitForSync(job, "Silk"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Silk."); }
+    finally { setSyncingSilk(false); }
+  }
+
   // ── Filtrado y paginación (client-side, instantáneo) ────────────────────
   const brands     = useMemo(() => [...new Set(items.map(i => i.product.brand))].sort(), [items]);
   const categories = useMemo(() => [...new Set(items.map(i => i.product.category))].sort(), [items]);
@@ -219,6 +240,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const comparedCount  = useMemo(() => items.filter(i => (i.product.matchedStores ?? 0) > 1).length, [items]);
   const falabellaCount = useMemo(() => items.filter(i => i.product.source === "falabella-cl" || i.prices.some(p => p.storeName === "Falabella")).length, [items]);
   const ripleyCount    = useMemo(() => items.filter(i => i.product.source === "ripley-cl"    || i.prices.some(p => p.storeName === "Ripley")).length,    [items]);
+  const alishaCount    = useMemo(() => items.filter(i => i.product.source === "alisha-cl"    || i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
+  const silkCount      = useMemo(() => items.filter(i => i.product.source === "silk-cl"      || i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -265,6 +288,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
           <>
             <button onClick={updateFalabella} disabled={syncing}>{syncing ? "Actualizando…" : "Actualizar Falabella"}</button>
             <button onClick={updateRipley}    disabled={syncingRipley}>{syncingRipley ? "Actualizando…" : "Actualizar Ripley"}</button>
+            <button onClick={updateAlisha}    disabled={syncingAlisha}>{syncingAlisha ? "Actualizando…" : "Actualizar Alisha"}</button>
+            <button onClick={updateSilk}      disabled={syncingSilk}>{syncingSilk ? "Actualizando…" : "Actualizar Silk"}</button>
           </>
         )}
       </div>
@@ -308,6 +333,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               <span><strong>{comparedCount}</strong> comparados</span>
               <span><strong>{falabellaCount}</strong> Falabella</span>
               <span><strong>{ripleyCount}</strong> Ripley</span>
+              <span><strong>{alishaCount}</strong> Alisha</span>
+              <span><strong>{silkCount}</strong> Silk</span>
             </div>
             <div className={styles.filters}>
               <label>

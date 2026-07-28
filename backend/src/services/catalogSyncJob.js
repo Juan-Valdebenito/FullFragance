@@ -3,12 +3,16 @@ const { replaceProducts } = require("../data/catalogDatabase");
 const { invalidateCatalogCache } = require("../models/catalogRepository");
 const { scrapeDirectCatalogPage: scrapeFalabellaPage } = require("./falabellaScraper");
 const { scrapeDirectCatalogPage: scrapeRipleyPage } = require("./ripleyScraper");
+const { scrapeDirectCatalogPage: scrapeAlishaPage } = require("./alishaScraper");
+const { scrapeDirectCatalogPage: scrapeSilkPage } = require("./silkScraper");
 
 const jobs = new Map();
 const activeBySource = new Map();
 const scrapers = {
   "falabella-cl": scrapeFalabellaPage,
   "ripley-cl": scrapeRipleyPage,
+  "alisha-cl": scrapeAlishaPage,
+  "silk-cl": scrapeSilkPage,
 };
 
 function publicJob(job) {

@@ -14,6 +14,8 @@ const stores: Record<string, string> = {
   Sephora: "https://www.sephora.cl",
   Falabella: "https://www.falabella.com/falabella-cl",
   Ripley: "https://simple.ripley.cl",
+  "Alisha Perfumes": "https://alishaperfumes.cl",
+  "Silk Perfumes": "https://silkperfumes.cl",
   Paris: "https://www.paris.cl",
   "La Polar": "https://www.lapolar.cl",
 };
@@ -117,7 +119,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
               ? "Producto sincronizado con precio demo para pruebas locales."
               : hasComparison
                 ? "Comparamos la misma marca, versión, concentración y tamaño antes de juntar las ofertas."
-                : "Sincroniza ambas tiendas para buscar una oferta equivalente."}
+                : "Sincroniza las tiendas disponibles para buscar una oferta equivalente."}
           </p>
 
           <div className={styles.tags}>

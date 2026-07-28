@@ -39,5 +39,24 @@ module.exports = {
   ripleyPerfumesUrl:
     process.env.RIPLEY_PERFUMES_URL ||
     "https://simple.ripley.cl/belleza/perfumeria?source=menu&s=mdco",
+  alishaUserAgent:
+    process.env.ALISHA_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  alishaMinDelayMs: Number(process.env.ALISHA_MIN_DELAY_MS || 500),
+  alishaMaxDelayMs: Number(process.env.ALISHA_MAX_DELAY_MS || 1000),
+  alishaRequestTimeoutMs: Number(process.env.ALISHA_REQUEST_TIMEOUT_MS || 20000),
+  alishaFixtureDir: process.env.ALISHA_FIXTURE_DIR || "",
+  alishaCollectionUrl:
+    process.env.ALISHA_COLLECTION_URL ||
+    "https://alishaperfumes.cl/collections/perfumes/products.json",
+  silkUserAgent:
+    process.env.SILK_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  silkMinDelayMs: Number(process.env.SILK_MIN_DELAY_MS || 500),
+  silkMaxDelayMs: Number(process.env.SILK_MAX_DELAY_MS || 1000),
+  silkRequestTimeoutMs: Number(process.env.SILK_REQUEST_TIMEOUT_MS || 20000),
+  silkCollectionUrl:
+    process.env.SILK_COLLECTION_URL ||
+    "https://silkperfumes.cl/collections/perfumes/products.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };
