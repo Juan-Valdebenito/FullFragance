@@ -186,7 +186,7 @@ function mergeScrapedProducts(products) {
 
 function getProducts() {
   if (cachedProducts) return cachedProducts;
-  const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl"].flatMap((source) => listScrapedProducts(source));
+  const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl"].flatMap((source) => listScrapedProducts(source));
   const scraped = mergeScrapedProducts(rawScraped);
   const dbProducts = readDb().products.map((p) => {
     const gender = p.gender || inferGender(p.name);

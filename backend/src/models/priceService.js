@@ -9,6 +9,7 @@ const SOURCE_STORES = {
   "alisha-cl": { storeId: "alisha-online", storeName: "Alisha Perfumes" },
   "silk-cl": { storeId: "silk-online", storeName: "Silk Perfumes" },
   "elite-cl": { storeId: "elite-online", storeName: "Elite Perfumes" },
+  "cosmetic-cl": { storeId: "cosmetic-online", storeName: "Cosmetic" },
 };
 
 function priceFor(cityName, storeId, product) {

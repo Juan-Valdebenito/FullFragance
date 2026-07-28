@@ -19,6 +19,7 @@ const stores: Record<string, string> = {
   "Alisha Perfumes": "https://alishaperfumes.cl",
   "Silk Perfumes": "https://silkperfumes.cl",
   "Elite Perfumes": "https://www.eliteperfumes.cl",
+  Cosmetic: "https://cosmetic.cl",
   Paris: "https://www.paris.cl",
   "La Polar": "https://www.lapolar.cl",
 };
