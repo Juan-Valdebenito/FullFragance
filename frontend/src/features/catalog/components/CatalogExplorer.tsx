@@ -17,9 +17,10 @@ const sourceBadges: Record<string, string> = {
   "ripley-cl": "Ripley",
   "alisha-cl": "Alisha",
   "silk-cl": "Silk",
+  "elite-cl": "Elite",
 };
 const PRODUCTS_PER_PAGE = 12;
-type SortMode = "recommended" | "price" | "name";
+type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
 export function toProduct(item: Comparison): Product {
   const cheapestByChain = [...item.prices]
@@ -27,7 +28,7 @@ export function toProduct(item: Comparison): Product {
     .filter((price, priceIndex, prices) =>
       prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex
     )
-    .slice(0, 4);
+    .slice(0, 5);
   const badge =
     item.product.matchedStores && item.product.matchedStores > 1
       ? `Comparado en ${item.product.matchedStores} tiendas`
@@ -94,6 +95,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [syncingRipley, setSyncingRipley] = useState(false);
   const [syncingAlisha, setSyncingAlisha] = useState(false);
   const [syncingSilk, setSyncingSilk] = useState(false);
+  const [syncingElite, setSyncingElite] = useState(false);
   const [error, setError] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -206,6 +208,13 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     finally { setSyncingSilk(false); }
   }
 
+  async function updateElite() {
+    setSyncingElite(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncElitePerfumes(); await waitForSync(job, "Elite"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Elite."); }
+    finally { setSyncingElite(false); }
+  }
+
   // ── Filtrado y paginación (client-side, instantáneo) ────────────────────
   const brands     = useMemo(() => [...new Set(items.map(i => i.product.brand))].sort(), [items]);
   const categories = useMemo(() => [...new Set(items.map(i => i.product.category))].sort(), [items]);
@@ -219,8 +228,20 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         (!segment  || perfumeSegmentForBrand(item.product.brand) === segment)
       )
       .sort((a, b) => {
-        if (sort === "name")  return `${a.product.brand} ${a.product.name}`.localeCompare(`${b.product.brand} ${b.product.name}`, "es");
+        if (sort === "name") return `${a.product.brand} ${a.product.name}`.localeCompare(`${b.product.brand} ${b.product.name}`, "es");
+        if (sort === "name-desc") return `${b.product.brand} ${b.product.name}`.localeCompare(`${a.product.brand} ${a.product.name}`, "es");
         if (sort === "price") return (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
+        if (sort === "price-desc") return (b.minPrice ?? 0) - (a.minPrice ?? 0);
+        if (sort === "savings") {
+          const savingsA = (a.maxPrice && a.minPrice) ? a.maxPrice - a.minPrice : 0;
+          const savingsB = (b.maxPrice && b.minPrice) ? b.maxPrice - b.minPrice : 0;
+          return savingsB - savingsA;
+        }
+        if (sort === "stores") {
+          const storesA = a.product.matchedStores ?? a.prices.length ?? 0;
+          const storesB = b.product.matchedStores ?? b.prices.length ?? 0;
+          return storesB - storesA;
+        }
         const diff = (b.product.matchedStores ?? 0) - (a.product.matchedStores ?? 0);
         return diff || (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
       }),
@@ -242,6 +263,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const ripleyCount    = useMemo(() => items.filter(i => i.product.source === "ripley-cl"    || i.prices.some(p => p.storeName === "Ripley")).length,    [items]);
   const alishaCount    = useMemo(() => items.filter(i => i.product.source === "alisha-cl"    || i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
   const silkCount      = useMemo(() => items.filter(i => i.product.source === "silk-cl"      || i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
+  const eliteCount     = useMemo(() => items.filter(i => i.product.source === "elite-cl"     || i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -290,6 +312,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
             <button onClick={updateRipley}    disabled={syncingRipley}>{syncingRipley ? "Actualizando…" : "Actualizar Ripley"}</button>
             <button onClick={updateAlisha}    disabled={syncingAlisha}>{syncingAlisha ? "Actualizando…" : "Actualizar Alisha"}</button>
             <button onClick={updateSilk}      disabled={syncingSilk}>{syncingSilk ? "Actualizando…" : "Actualizar Silk"}</button>
+            <button onClick={updateElite}     disabled={syncingElite}>{syncingElite ? "Actualizando…" : "Actualizar Elite"}</button>
           </>
         )}
       </div>
@@ -335,6 +358,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               <span><strong>{ripleyCount}</strong> Ripley</span>
               <span><strong>{alishaCount}</strong> Alisha</span>
               <span><strong>{silkCount}</strong> Silk</span>
+              <span><strong>{eliteCount}</strong> Elite</span>
             </div>
             <div className={styles.filters}>
               <label>
@@ -375,8 +399,12 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                 Ordenar por
                 <select value={sort} onChange={e => setFilter("sort", e.target.value)}>
                   <option value="recommended">Mejor comparación</option>
-                  <option value="price">Precio más bajo</option>
-                  <option value="name">Marca y nombre</option>
+                  <option value="price">Precio: menor a mayor</option>
+                  <option value="price-desc">Precio: mayor a menor</option>
+                  <option value="savings">Mayor ahorro entre tiendas</option>
+                  <option value="stores">Más tiendas comparadas</option>
+                  <option value="name">Nombre: A a Z</option>
+                  <option value="name-desc">Nombre: Z a A</option>
                 </select>
               </label>
               <div className={styles.topPager}>

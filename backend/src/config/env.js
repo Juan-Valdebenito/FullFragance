@@ -58,5 +58,14 @@ module.exports = {
   silkCollectionUrl:
     process.env.SILK_COLLECTION_URL ||
     "https://silkperfumes.cl/collections/perfumes/products.json",
+  eliteUserAgent:
+    process.env.ELITE_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  eliteMinDelayMs: Number(process.env.ELITE_MIN_DELAY_MS || 500),
+  eliteMaxDelayMs: Number(process.env.ELITE_MAX_DELAY_MS || 1000),
+  eliteRequestTimeoutMs: Number(process.env.ELITE_REQUEST_TIMEOUT_MS || 20000),
+  eliteCollectionUrl:
+    process.env.ELITE_COLLECTION_URL ||
+    "https://www.eliteperfumes.cl/collections/perfumes/products.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

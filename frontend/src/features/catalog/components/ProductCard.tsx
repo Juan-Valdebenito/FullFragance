@@ -40,14 +40,22 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
         <FavoriteButton productId={product.id} aliases={product.aliases} />
       </div>
       <div className={styles.cardBody}>
-        <p className="eyebrow">{product.brand}</p>
-        <h3>{product.name}</h3>
-        <p className={styles.notes}>{product.size} · {product.notes.join(", ")}</p>
+        <div className={styles.cardHeader}>
+          <p className="eyebrow">{product.brand}</p>
+          <h3>{product.name}</h3>
+          <p className={styles.notes}>{product.size ? `${product.size} · ` : ""}{product.notes.join(", ")}</p>
+        </div>
         <div className={styles.prices}>
           {product.prices.length ? (
             product.prices.map((price, index) => (
-              <div className={styles.priceRow} key={price.id ?? `${price.store}-${price.price}-${index}`}>
-                <span>{price.store}{price.offer && <em>Oferta</em>}</span>
+              <div
+                className={`${styles.priceRow} ${index === 0 ? styles.bestPriceRow : ""}`}
+                key={price.id ?? `${price.store}-${price.price}-${index}`}
+              >
+                <span className={styles.storeName}>
+                  {price.store}
+                  {index === 0 ? <em className={styles.bestBadge}>Mejor precio</em> : price.offer && <em>Oferta</em>}
+                </span>
                 <strong>{price.price}</strong>
               </div>
             ))
@@ -56,7 +64,11 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
           )}
         </div>
         <Link className={styles.storeButton} href={detailHref}>
-          {recommendation ? <><span>Comparar</span><Icon name="chart" /></> : "Ver precios y tiendas"}
+          {recommendation ? (
+            <><span>Comparar</span><Icon name="chart" size={16} /></>
+          ) : (
+            <><span>Ver precios y tiendas</span><Icon name="arrow" size={16} /></>
+          )}
         </Link>
       </div>
     </article>

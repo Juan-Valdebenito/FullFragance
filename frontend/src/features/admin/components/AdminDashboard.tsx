@@ -39,14 +39,17 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingRipley,    setSyncingRipley]    = useState(false);
   const [syncingAlisha,    setSyncingAlisha]    = useState(false);
   const [syncingSilk,      setSyncingSilk]      = useState(false);
+  const [syncingElite,     setSyncingElite]     = useState(false);
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
   const [ripleyJob,    setRipleyJob]    = useState<SyncJob | null>(null);
   const [alishaJob,    setAlishaJob]    = useState<SyncJob | null>(null);
   const [silkJob,      setSilkJob]      = useState<SyncJob | null>(null);
+  const [eliteJob,     setEliteJob]     = useState<SyncJob | null>(null);
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
   const [alishaMsg,    setAlishaMsg]    = useState("");
   const [silkMsg,      setSilkMsg]      = useState("");
+  const [eliteMsg,     setEliteMsg]     = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -154,6 +157,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingSilk(false); }
   }
 
+  async function handleSyncElite() {
+    setSyncingElite(true); setEliteMsg("Iniciando conexión con Elite Perfumes...");
+    addActivity("Sincronización de Elite iniciada", "Sync", styles.tagSync, "#3b82f6");
+    try {
+      const { job } = await api.syncElitePerfumes();
+      await waitForSync(job, "Elite", setEliteJob, setEliteMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Elite.";
+      setEliteMsg(msg);
+      addActivity(`Error Elite: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingElite(false); }
+  }
+
   // ── Computed metrics ────────────────────────────────────
   const totalProducts  = items.length;
   const multiStore     = useMemo(() => items.filter(i => (i.product.matchedStores ?? 0) > 1).length, [items]);
@@ -161,6 +177,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const ripleyCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Ripley")).length, [items]);
   const alishaCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
   const silkCount      = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
+  const eliteCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
 
@@ -194,6 +211,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Scraper Ripley", sub: "ripley-cl · scraping habilitado", status: syncingRipley ? "Ejecutando..." : ripleyJob?.status === "failed" ? "Error" : "Listo", cls: ripleyJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: ripleyJob?.status === "failed" ? "🔴" : "🟢" },
     { label: "Scraper Alisha", sub: "alisha-cl · Shopify JSON habilitado", status: syncingAlisha ? "Ejecutando..." : alishaJob?.status === "failed" ? "Error" : "Listo", cls: alishaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: alishaJob?.status === "failed" ? "🔴" : "🟢" },
     { label: "Scraper Silk", sub: "silk-cl · Shopify JSON habilitado", status: syncingSilk ? "Ejecutando..." : silkJob?.status === "failed" ? "Error" : "Listo", cls: silkJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: silkJob?.status === "failed" ? "🔴" : "🟢" },
+    { label: "Scraper Elite", sub: "elite-cl · Shopify JSON habilitado", status: syncingElite ? "Ejecutando..." : eliteJob?.status === "failed" ? "Error" : "Listo", cls: eliteJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: eliteJob?.status === "failed" ? "🔴" : "🟢" },
     { label: "Proxy de Imágenes", sub: "/api/images/ripley · curl activo", status: "Operativo", cls: styles.healthOk, icon: "🟢" },
     { label: "Caché de Catálogo", sub: "En memoria · se invalida al sincronizar", status: "Activo", cls: styles.healthOk, icon: "🟢" },
   ];
@@ -248,6 +266,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           { label: "Ripley",           value: loading ? "..." : ripleyCount,    sub: "Ofertas sincronizadas",             icon: "🏬", iconCls: styles.metricIconPurple, delta: null },
           { label: "Alisha",           value: loading ? "..." : alishaCount,    sub: "Ofertas sincronizadas",             icon: "🌸", iconCls: styles.metricIconGreen,  delta: null },
           { label: "Silk",             value: loading ? "..." : silkCount,      sub: "Ofertas sincronizadas",             icon: "✨", iconCls: styles.metricIconBlue,   delta: null },
+          { label: "Elite",            value: loading ? "..." : eliteCount,     sub: "Ofertas sincronizadas",             icon: "💎", iconCls: styles.metricIconPurple, delta: null },
         ].map(m => (
           <article key={m.label} className={styles.metricCard}>
             <div className={styles.metricTop}>
@@ -508,6 +527,40 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
 
           {silkMsg && <p className={styles.syncMessage}>{silkMsg}</p>}
         </article>
+
+        {/* Elite card */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardHeader}>
+            <div className={styles.syncStoreTitle}>
+              <div className={`${styles.syncStoreLogo} ${styles.syncStoreLogoElite}`}>💎</div>
+              <div className={styles.syncStoreInfo}>
+                <h3>Elite Perfumes</h3>
+                <span>elite-cl · ~890 productos</span>
+              </div>
+            </div>
+            <span className={`${styles.syncStatusBadge} ${syncingElite ? styles.statusRunning : eliteJob?.status === "completed" ? styles.statusCompleted : styles.statusIdle}`}>
+              {syncingElite ? "Ejecutando..." : eliteJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+
+          {eliteJob && (
+            <div className={styles.syncProgress}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${eliteJob.status === "completed" ? 100 : Math.min(95, eliteJob.currentPage * 22)}%` }} />
+              </div>
+              <div className={styles.syncProgressLabel}>
+                <span>{eliteJob.imported} importados · pág {eliteJob.currentPage}/{eliteJob.totalPages}</span>
+                <span>{eliteJob.status === "running" ? "Recorriendo catálogo…" : ""}</span>
+              </div>
+            </div>
+          )}
+
+          <button type="button" className={styles.syncBtn} onClick={handleSyncElite} disabled={syncingElite}>
+            {syncingElite ? "⏳ Sincronizando Elite..." : "🔄 Actualizar Catálogo Elite"}
+          </button>
+
+          {eliteMsg && <p className={styles.syncMessage}>{eliteMsg}</p>}
+        </article>
       </div>
 
       {/* Activity in sync section too */}
@@ -573,8 +626,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.sourceFalabella : src === "ripley-cl" ? styles.sourceRipley : src === "alisha-cl" ? styles.sourceAlisha : src === "silk-cl" ? styles.sourceSilk : styles.sourceMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : "Multi";
+                const srcCls = src === "falabella-cl" ? styles.sourceFalabella : src === "ripley-cl" ? styles.sourceRipley : src === "alisha-cl" ? styles.sourceAlisha : src === "silk-cl" ? styles.sourceSilk : src === "elite-cl" ? styles.sourceElite : styles.sourceMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : "Multi";
                 const avail = item.product.available !== false;
                 return (
                   <tr key={item.product.id}>
