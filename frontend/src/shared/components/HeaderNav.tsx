@@ -85,20 +85,11 @@ export function HeaderNav({ active }: { active?: "catalog" | "test" }) {
   }
 
   const navItems = filterNavItems(HEADER_NAV_ITEMS, user);
-  const [comparar, ...restNav] = navItems;
 
   return (
     <nav aria-label="Navegación principal">
-      {comparar && (
-        <Link
-          className={comparar.activeKey && active === comparar.activeKey ? styles.active : ""}
-          href={comparar.href}
-        >
-          {comparar.label}
-        </Link>
-      )}
       <PerfumesMegaMenu showPersonalTools={Boolean(user)} />
-      {restNav.map(item => (
+      {navItems.map(item => (
         <Link
           key={item.href}
           className={item.activeKey && active === item.activeKey ? styles.active : ""}

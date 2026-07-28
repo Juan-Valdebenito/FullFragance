@@ -319,24 +319,6 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
       {syncMessage && <p className={styles.status}>{syncMessage}</p>}
 
-      <nav className={styles.segmentNav} aria-label="Tipos de perfumería">
-        {perfumeSegments.map(option => (
-          <button
-            key={option.value || "all"}
-            className={segment === option.value ? styles.activeSegment : ""}
-            onClick={() => setFilter("segment", option.value)}
-            aria-current={segment === option.value ? "page" : undefined}
-          >
-            <span>{option.label}</span>
-            <small>
-              {option.value
-                ? items.filter(item => perfumeSegmentForBrand(item.product.brand) === option.value).length
-                : items.length}
-            </small>
-          </button>
-        ))}
-      </nav>
-
       {loading ? (
         <p className={styles.empty}>Consultando precios…</p>
       ) : error ? (

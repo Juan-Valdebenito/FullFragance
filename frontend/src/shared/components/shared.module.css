@@ -42,13 +42,13 @@
 .navStart {
   display: flex;
   align-items: center;
-  gap: 64px;
+  gap: 36px;
 }
 
 .navStart nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 22px;
 }
 
 .navStart nav a {
