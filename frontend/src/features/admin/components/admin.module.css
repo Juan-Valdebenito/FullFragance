@@ -160,7 +160,7 @@
 
 .metricsGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
 }
 
@@ -306,6 +306,9 @@
 
 .syncStoreLogoFalabella { background: #dbeafe; }
 .syncStoreLogoRipley    { background: #fce7f3; }
+.syncStoreLogoAlisha    { background: #fce7f3; color: #be185d; }
+.syncStoreLogoSilk      { background: #f3e8ff; color: #7e22ce; }
+.syncStoreLogoElite     { background: #e0e7ff; color: #4338ca; }
 
 .syncStoreInfo h3 { font: 700 1rem "Space Grotesk", sans-serif; margin: 0; }
 .syncStoreInfo span { color: var(--on-surface-muted); font-size: .72rem; }
@@ -648,6 +651,9 @@
 
 .sourceFalabella { background: #dbeafe; color: #1e40af; }
 .sourceRipley    { background: #fce7f3; color: #9d174d; }
+.sourceAlisha    { background: #fce7f3; color: #be185d; }
+.sourceSilk      { background: #f3e8ff; color: #7e22ce; }
+.sourceElite     { background: #e0e7ff; color: #4338ca; }
 .sourceMulti     { background: #d1fae5; color: #065f46; }
 
 .availBadge {

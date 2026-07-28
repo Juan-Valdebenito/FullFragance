@@ -14,7 +14,6 @@ export type NavItem = {
 export const HEADER_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Comparar", activeKey: "catalog" },
   { href: "/test", label: "Test olfativo", requiresAuth: true, activeKey: "test" },
-  { href: "/tiendas", label: "Tiendas cercanas" },
   { href: "/recomendaciones", label: "Para ti", requiresAuth: true },
   { href: "/favoritos", label: "Favoritos", requiresAuth: true },
 ];
@@ -22,7 +21,6 @@ export const HEADER_NAV_ITEMS: NavItem[] = [
 /** Pestañas secundarias del comparador y secciones relacionadas. */
 export const FEATURE_TABS: NavItem[] = [
   { href: "/dashboard", label: "Comparar precios", tabId: "dashboard" },
-  { href: "/tiendas", label: "Tiendas cercanas", tabId: "tiendas" },
   { href: "/recomendaciones", label: "Para ti", requiresAuth: true, tabId: "recomendaciones" },
   { href: "/test", label: "Notas olfativas", requiresAuth: true, tabId: "test" },
   { href: "/favoritos", label: "Mis favoritos", requiresAuth: true, tabId: "favoritos" },
@@ -31,7 +29,6 @@ export const FEATURE_TABS: NavItem[] = [
 /** Enlaces del footer en la columna Plataforma. */
 export const FOOTER_PLATFORM_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Comparar precios" },
-  { href: "/tiendas", label: "Tiendas cercanas" },
   { href: "/test", label: "Test olfativo", requiresAuth: true },
   { href: "/recomendaciones", label: "Recomendaciones", requiresAuth: true },
   { href: "/favoritos", label: "Favoritos", requiresAuth: true },

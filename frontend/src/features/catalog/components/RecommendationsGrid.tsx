@@ -6,7 +6,13 @@ import type { Product } from "../domain/product";
 import { ProductCard } from "./ProductCard";
 import styles from "./catalog.module.css";
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const stores: Record<string, string> = { "falabella-cl": "Falabella", "ripley-cl": "Ripley" };
+const stores: Record<string, string> = {
+  "falabella-cl": "Falabella",
+  "ripley-cl": "Ripley",
+  "alisha-cl": "Alisha Perfumes",
+  "silk-cl": "Silk Perfumes",
+  "elite-cl": "Elite Perfumes",
+};
 function adapt(item: Recommendation): Product {
   const prices = (item.product.offers || [])
     .filter(offer => offer.price > 0)
@@ -20,7 +26,11 @@ function adapt(item: Recommendation): Product {
     size: item.product.unit,
     notes: item.matchedNotes.length ? item.matchedNotes.map(note => note.name) : [item.product.category],
     image: productImageUrl(item.product.imageUrl),
-    badge: item.score ? `Match ${Math.min(99, Math.round(item.score * 20))}%` : item.product.source === "falabella-cl" ? "Dato scraper" : "Popular",
+    badge: item.score
+      ? `Match ${Math.min(99, Math.round(item.score * 20))}%`
+      : item.product.source && stores[item.product.source]
+        ? "Dato scraper"
+        : "Popular",
     prices: prices.length ? prices : item.product.basePrice > 0 ? [{ store: "Precio disponible", price: money.format(item.product.basePrice) }] : [],
   };
 }

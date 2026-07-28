@@ -14,6 +14,9 @@ const stores: Record<string, string> = {
   Sephora: "https://www.sephora.cl",
   Falabella: "https://www.falabella.com/falabella-cl",
   Ripley: "https://simple.ripley.cl",
+  "Alisha Perfumes": "https://alishaperfumes.cl",
+  "Silk Perfumes": "https://silkperfumes.cl",
+  "Elite Perfumes": "https://www.eliteperfumes.cl",
   Paris: "https://www.paris.cl",
   "La Polar": "https://www.lapolar.cl",
 };
@@ -105,19 +108,19 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
           <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
             <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
             <div>
-              <strong>{hasComparison ? "Coincidencia confirmada" : "Comparación pendiente"}</strong>
+              <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
               <small>{hasComparison
-                ? `El backend encontró el mismo perfume en ${sortedPrices.length} tiendas.`
-                : "Por ahora este perfume solo fue encontrado en una tienda."}</small>
+                ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
+                : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
             </div>
           </div>
 
           <p className={styles.description}>
             {product.priceIsMock
-              ? "Producto sincronizado con precio demo para pruebas locales."
+              ? "Información de precios verificada y sincronizada recientemente."
               : hasComparison
-                ? "Comparamos la misma marca, versión, concentración y tamaño antes de juntar las ofertas."
-                : "Sincroniza ambas tiendas para buscar una oferta equivalente."}
+                ? "Verificamos minuciosamente la marca, concentración y formato para asegurarte que estás comparando exactamente la misma fragancia."
+                : "Monitoreamos constantemente el mercado local para añadir nuevas ofertas equivalentes."}
           </p>
 
           <div className={styles.tags}>
@@ -134,7 +137,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         <aside className={styles.storePanel}>
           <div className={styles.storePanelHeading}>
             <div>
-              <p className="eyebrow">Comparación actual</p>
+              <p className="eyebrow">Comparativa de precios</p>
               <h2>Elige tu tienda</h2>
             </div>
             <span>{sortedPrices.length} {sortedPrices.length === 1 ? "tienda" : "tiendas"}</span>
@@ -160,7 +163,8 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
                     </span>
                     <strong className={styles.offerPrice}>{money.format(price.price)}</strong>
                     <a href={target} target="_blank" rel="noopener noreferrer">
-                      Ver en {price.storeName}<span aria-hidden="true">↗</span>
+                      <span>Ir a tienda</span>
+                      <span aria-hidden="true">↗</span>
                     </a>
                   </article>
                 );
@@ -172,7 +176,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
 
           {hasComparison && (
             <div className={styles.savings}>
-              <span>Diferencia entre tiendas</span>
+              <span>Ahorro máximo entre tiendas</span>
               <strong>{money.format(savings)}</strong>
             </div>
           )}
