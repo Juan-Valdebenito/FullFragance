@@ -24,7 +24,7 @@ function featuredProducts(_req, res, next) {
         const comparison = (second.matchedStores || 0) - (first.matchedStores || 0);
         return comparison || first.basePrice - second.basePrice;
       })
-      .slice(0, 3);
+      .slice(0, 10);
     res.json({ products });
   } catch (err) {
     next(err);
