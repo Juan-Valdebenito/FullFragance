@@ -3,15 +3,20 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/shared/api/client";
+import { useOptionalSession } from "@/shared/auth/SessionContext";
 import styles from "./AuthPanel.module.css";
 
 export function AuthPanel({ mode }: { mode: "register" | "login" }) {
-  const router = useRouter(); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
+  const router = useRouter();
+  const optionalSession = useOptionalSession();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setLoading(true); setError(""); const form = new FormData(event.currentTarget);
     try {
       if (mode === "register") await api.register({ name: String(form.get("name")), email: String(form.get("email")), password: String(form.get("password")) });
       else await api.login({ email: String(form.get("email")), password: String(form.get("password")) });
+      await optionalSession?.refreshUser();
       const next = new URLSearchParams(window.location.search).get("next");
       router.push(next || (mode === "register" ? "/test" : "/dashboard"));
     } catch (reason) { setError(reason instanceof ApiError ? reason.message : "No fue posible completar la solicitud."); setLoading(false); }
