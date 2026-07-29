@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
-import type { ApiPrice, ApiProduct, City } from "@/shared/api/types";
+import type { ApiPrice, ApiProduct, City, ProductDetailResult } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
+import { Icon } from "@/shared/components/Icon";
 import { FavoriteButton } from "./FavoriteButton";
+import { PriceHistoryChart } from "./PriceHistoryChart";
 import styles from "./ProductDetail.module.css";
 
 const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
@@ -17,9 +19,13 @@ const stores: Record<string, string> = {
   "Alisha Perfumes": "https://alishaperfumes.cl",
   "Silk Perfumes": "https://silkperfumes.cl",
   "Elite Perfumes": "https://www.eliteperfumes.cl",
+  Cosmetic: "https://cosmetic.cl",
   Paris: "https://www.paris.cl",
   "La Polar": "https://www.lapolar.cl",
 };
+
+const noteIconFor = (family: string): "leaf" | "tree" | "flower" =>
+  family.includes("Amader") ? "tree" : family.includes("Floral") ? "flower" : "leaf";
 
 interface ProductDetailProps {
   productId: string;
@@ -33,6 +39,7 @@ interface ProductDetailProps {
 export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDetailProps) {
   const optionalSession = useOptionalSession();
   const user = optionalSession?.user ?? null;
+  const [detailResult, setDetailResult] = useState<ProductDetailResult | null>(null);
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [prices, setPrices] = useState<ApiPrice[]>([]);
   const [error, setError] = useState("");
@@ -43,6 +50,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
     (async () => {
       try {
         const result = await api.productPrices(user?.city ?? SANTIAGO, productId);
+        setDetailResult(result);
         setProduct(result.product);
         setPrices(result.prices);
       } catch (reason) {
@@ -115,19 +123,45 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
             </div>
           </div>
 
-          <p className={styles.description}>
-            {product.priceIsMock
-              ? "Información de precios verificada y sincronizada recientemente."
-              : hasComparison
-                ? "Verificamos minuciosamente la marca, concentración y formato para asegurarte que estás comparando exactamente la misma fragancia."
-                : "Monitoreamos constantemente el mercado local para añadir nuevas ofertas equivalentes."}
-          </p>
+          {/* Descripción técnica/emocional de la fragancia */}
+          {product.description && (
+            <div className={styles.perfumeDescription}>
+              <h3>Acerca de esta fragancia</h3>
+              <p>{product.description}</p>
+            </div>
+          )}
 
-          <div className={styles.tags}>
+          {/* Notas olfativas detalladas */}
+          {product.olfactoryNotes && product.olfactoryNotes.length > 0 && (
+            <div className={styles.notesSection}>
+              <h3>Notas olfativas principales</h3>
+              <div className={styles.notesGrid}>
+                {product.olfactoryNotes.map((note) => (
+                  <div key={note.id} className={styles.noteBadge} title={note.description}>
+                    <Icon name={noteIconFor(note.family)} size={18} />
+                    <div>
+                      <strong>{note.name}</strong>
+                      <small>{note.family}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className={styles.tags} style={{ marginTop: "16px" }}>
             <span>{product.category}</span>
             {product.isSet && <span>Set / Kit</span>}
-            {product.notes.map(note => <span key={note}>{note}</span>)}
           </div>
+
+          {/* Componente Gráfico de Historial e Inferencia de Tendencias de Precios */}
+          <PriceHistoryChart
+            history30d={detailResult?.priceHistory30d}
+            history90d={detailResult?.priceHistory}
+            opportunity={detailResult?.opportunity}
+            currentPrice={sortedPrices[0]?.price || product.basePrice}
+          />
+
           <div className={styles.favoriteLine}>
             <FavoriteButton productId={product.id} aliases={product.aliases} large />
           </div>

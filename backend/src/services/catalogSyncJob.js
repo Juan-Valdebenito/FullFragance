@@ -6,6 +6,7 @@ const { scrapeDirectCatalogPage: scrapeRipleyPage } = require("./ripleyScraper")
 const { scrapeDirectCatalogPage: scrapeAlishaPage } = require("./alishaScraper");
 const { scrapeDirectCatalogPage: scrapeSilkPage } = require("./silkScraper");
 const { scrapeDirectCatalogPage: scrapeElitePage } = require("./eliteScraper");
+const { scrapeDirectCatalogPage: scrapeCosmeticPage } = require("./cosmeticScraper");
 
 const jobs = new Map();
 const activeBySource = new Map();
@@ -15,6 +16,7 @@ const scrapers = {
   "alisha-cl": scrapeAlishaPage,
   "silk-cl": scrapeSilkPage,
   "elite-cl": scrapeElitePage,
+  "cosmetic-cl": scrapeCosmeticPage,
 };
 
 function publicJob(job) {

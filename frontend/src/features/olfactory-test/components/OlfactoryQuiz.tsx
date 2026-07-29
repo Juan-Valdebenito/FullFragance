@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, ApiError } from "@/shared/api/client";
+import { api, ApiError, session } from "@/shared/api/client";
 import type { ApiNote } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./quiz.module.css";
@@ -18,8 +18,15 @@ export function OlfactoryQuiz() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.notes(), api.me()])
-      .then(([availableNotes, user]) => { setNotes(availableNotes); setRatings(user.scentPreferences?.scores ?? {}); })
+    api.notes()
+      .then(availableNotes => {
+        setNotes(availableNotes);
+        if (session.hasToken()) {
+          api.me()
+            .then(user => setRatings(user.scentPreferences?.scores ?? {}))
+            .catch(() => {});
+        }
+      })
       .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar las notas."));
   }, []);
 
@@ -34,8 +41,15 @@ export function OlfactoryQuiz() {
     setError("");
     if (!isLastStep) { setStep(current => current + 1); return; }
     setSaving(true);
-    try { await api.saveQuiz(ratings); router.push("/recomendaciones"); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo guardar el test."); setSaving(false); }
+    try {
+      if (session.hasToken()) {
+        await api.saveQuiz(ratings);
+      }
+      router.push("/recomendaciones");
+    } catch (reason) {
+      setError(reason instanceof ApiError ? reason.message : "No se pudo guardar el test.");
+      setSaving(false);
+    }
   };
 
   return <div className={styles.backdrop}><section className={styles.modal} aria-labelledby="quiz-title">

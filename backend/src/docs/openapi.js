@@ -578,6 +578,84 @@ const openapi = {
         },
       },
     },
+    "/scrapers/cosmetic/products": {
+      get: {
+        tags: ["Scrapers"],
+        summary: "Listar productos sincronizados desde Cosmetic",
+        security: bearerAuth,
+        responses: {
+          200: {
+            description: "Productos de Cosmetic",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    products: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ScrapedProduct" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/scrapers/cosmetic/sync": {
+      post: {
+        tags: ["Scrapers"],
+        summary: "Sincronizar URLs especificas de Cosmetic",
+        security: bearerAuth,
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ProductUrlSyncRequest" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Resultado de sincronizacion",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ScraperSyncResponse" },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/scrapers/cosmetic/sync-perfumes": {
+      post: {
+        tags: ["Scrapers"],
+        summary: "Buscar y sincronizar perfumes desde Cosmetic",
+        security: bearerAuth,
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/FalabellaPerfumeSyncRequest" },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Resultado de sincronizacion",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ScraperSyncResponse" },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {

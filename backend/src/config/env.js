@@ -67,5 +67,15 @@ module.exports = {
   eliteCollectionUrl:
     process.env.ELITE_COLLECTION_URL ||
     "https://www.eliteperfumes.cl/collections/perfumes/products.json",
+  cosmeticUserAgent:
+    process.env.COSMETIC_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  cosmeticMinDelayMs: Number(process.env.COSMETIC_MIN_DELAY_MS || 500),
+  cosmeticMaxDelayMs: Number(process.env.COSMETIC_MAX_DELAY_MS || 1000),
+  cosmeticRequestTimeoutMs: Number(process.env.COSMETIC_REQUEST_TIMEOUT_MS || 20000),
+  cosmeticFixtureDir: process.env.COSMETIC_FIXTURE_DIR || "",
+  cosmeticCollectionUrl:
+    process.env.COSMETIC_COLLECTION_URL ||
+    "https://cosmetic.cl/collections/perfumes/products.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

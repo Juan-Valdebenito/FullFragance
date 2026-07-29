@@ -4,7 +4,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 
 const DB_PATH = path.join(__dirname, "db.json");
-const CATALOG_VERSION = 2;
+const CATALOG_VERSION = 3;
 
 const DEFAULT_DATA = {
   catalogVersion: CATALOG_VERSION,
@@ -34,18 +34,24 @@ const DEFAULT_DATA = {
     { id: "n22", name: "Piña", family: "Afrutados", description: "Tropical y chispeante, aporta carácter distintivo." }
   ],
   products: [
-    { id: "p1", name: "Sauvage", brand: "Dior", unit: "EDT 100 ml", basePrice: 89990, category: "Amaderado especiado", gender: "Masculino", notes: ["n1", "n16", "n14", "n8"] },
-    { id: "p2", name: "N°5", brand: "Chanel", unit: "EDP 100 ml", basePrice: 145000, category: "Floral aldehídico", gender: "Femenino", notes: ["n4", "n5", "n7", "n9"] },
-    { id: "p3", name: "Bleu de Chanel", brand: "Chanel", unit: "EDP 100 ml", basePrice: 119990, category: "Amaderado aromático", gender: "Masculino", notes: ["n2", "n8", "n15", "n10"] },
-    { id: "p4", name: "La Vie Est Belle", brand: "Lancôme", unit: "EDP 75 ml", basePrice: 94990, category: "Floral gourmand", gender: "Femenino", notes: ["n21", "n7", "n11", "n13"] },
-    { id: "p5", name: "Acqua di Giò", brand: "Giorgio Armani", unit: "EDT 100 ml", basePrice: 79990, category: "Acuático fresco", gender: "Masculino", notes: ["n18", "n2", "n6", "n8"] },
-    { id: "p6", name: "Black Opium", brand: "Yves Saint Laurent", unit: "EDP 90 ml", basePrice: 98990, category: "Oriental gourmand", gender: "Femenino", notes: ["n12", "n11", "n5", "n14"] },
-    { id: "p7", name: "Aventus", brand: "Creed", unit: "EDP 100 ml", basePrice: 289990, category: "Chipre afrutado", gender: "Masculino", notes: ["n22", "n1", "n10", "n8"] },
-    { id: "p8", name: "Flowerbomb", brand: "Viktor & Rolf", unit: "EDP 100 ml", basePrice: 109990, category: "Floral gourmand", gender: "Femenino", notes: ["n4", "n5", "n11", "n13"] },
-    { id: "p9", name: "Good Girl", brand: "Carolina Herrera", unit: "EDP 80 ml", basePrice: 92990, category: "Floral oriental", gender: "Femenino", notes: ["n13", "n5", "n11", "n14"] },
-    { id: "p10", name: "Light Blue", brand: "Dolce & Gabbana", unit: "EDT 100 ml", basePrice: 69990, category: "Cítrico floral", gender: "Femenino", notes: ["n2", "n20", "n4", "n8"] },
-    { id: "p11", name: "1 Million", brand: "Paco Rabanne", unit: "EDT 100 ml", basePrice: 84990, category: "Especiado cuero", gender: "Masculino", notes: ["n3", "n17", "n16", "n14"] },
-    { id: "p12", name: "Terre d'Hermès", brand: "Hermès", unit: "EDT 100 ml", basePrice: 124990, category: "Amaderado cítrico", gender: "Masculino", notes: ["n3", "n10", "n15", "n8"] }
+    { id: "p1", name: "Sauvage", brand: "Dior", unit: "EDT 100 ml", basePrice: 89990, category: "Amaderado especiado", gender: "Masculino", description: "Una composición de una frescura rotunda, dictada por una salida radiante de bergamota de Calabria y un fondo amaderado envuelto en pimienta Sichuan y ámbar de cetalox.", notes: ["n1", "n16", "n14", "n8"] },
+    { id: "p2", name: "N°5", brand: "Chanel", unit: "EDP 100 ml", basePrice: 145000, category: "Floral aldehídico", gender: "Femenino", description: "El aroma mítico de la perfumería femenina. Un ramo floral abstracto sublimado por aldehídos, corazón seductores de jazmín de Grasse y rosa de mayo sobre un cálido sándalo.", notes: ["n4", "n5", "n7", "n9"] },
+    { id: "p3", name: "Bleu de Chanel", brand: "Chanel", unit: "EDP 100 ml", basePrice: 119990, category: "Amaderado aromático", gender: "Masculino", description: "Un tributo a la libertad masculina en una fragancia amaderada aromática de estela cautivadora. Combina notas cítricas de limón con cedro seco y vetiver ahumado.", notes: ["n2", "n8", "n15", "n10"] },
+    { id: "p4", name: "La Vie Est Belle", brand: "Lancôme", unit: "EDP 75 ml", basePrice: 94990, category: "Floral gourmand", gender: "Femenino", description: "Una declaración universal a la belleza de la vida. Destaca por su majestuoso corazón de iris, pera jugosa y un fondo envolvente de vainilla y praliné cacao.", notes: ["n21", "n7", "n11", "n13"] },
+    { id: "p5", name: "Acqua di Giò", brand: "Giorgio Armani", unit: "EDT 100 ml", basePrice: 79990, category: "Acuático fresco", gender: "Masculino", description: "Inspirado en la costa salvaje del Mediterráneo. Una fragancia marina y fresca que combina notas acuáticas con cítricos, lavanda suave y elegante cedro.", notes: ["n18", "n2", "n6", "n8"] },
+    { id: "p6", name: "Black Opium", brand: "Yves Saint Laurent", unit: "EDP 90 ml", basePrice: 98990, category: "Oriental gourmand", gender: "Femenino", description: "Una fragancia adictiva e hiper-sensual. El llamativo contraste entre el café negro amargo y las flores blancas de jazmín, rematado con vainilla gourmand y ámbar.", notes: ["n12", "n11", "n5", "n14"] },
+    { id: "p7", name: "Aventus", brand: "Creed", unit: "EDP 100 ml", basePrice: 289990, category: "Chipre afrutado", gender: "Masculino", description: "Celebra la fuerza, el poder y el éxito. Abre con acordes chispeantes de piña fresca y bergamota, evolucionando hacia un corazón ahumado de vetiver y cedro.", notes: ["n22", "n1", "n10", "n8"] },
+    { id: "p8", name: "Flowerbomb", brand: "Viktor & Rolf", unit: "EDP 100 ml", basePrice: 109990, category: "Floral gourmand", gender: "Femenino", description: "Una explosión floral voluptuosa y mágica. Un ramillete intenso de rosa, jazmín Sambac y orquídea fundido sobre una apetitosa base de vainilla y notas cacao.", notes: ["n4", "n5", "n11", "n13"] },
+    { id: "p9", name: "Good Girl", brand: "Carolina Herrera", unit: "EDP 80 ml", basePrice: 92990, category: "Floral oriental", gender: "Femenino", description: "Icono de la dualidad femenina. Combina la luminosidad del jazmín tuberosa con la oscuridad misteriosa del cacao, haba tonka y dulce vainilla.", notes: ["n13", "n5", "n11", "n14"] },
+    { id: "p10", name: "Light Blue", brand: "Dolce & Gabbana", unit: "EDT 100 ml", basePrice: 69990, category: "Cítrico floral", gender: "Femenino", description: "La alegría de vivir al estilo mediterráneo. Un perfume fresco y chispeante compuesto por manzana Granny Smith, limón siciliano y toques florales de rosa sobre cedro.", notes: ["n2", "n20", "n4", "n8"] },
+    { id: "p11", name: "1 Million", brand: "Paco Rabanne", unit: "EDT 100 ml", basePrice: 84990, category: "Especiado cuero", gender: "Masculino", description: "Audaz, descarado y seductor. Notas de salida de mandarina cítrica y menta, un corazón especiado de canela y pimienta, con una cálida estela de ámbar y cuero.", notes: ["n3", "n17", "n16", "n14"] },
+    { id: "p12", name: "Terre d'Hermès", brand: "Hermès", unit: "EDT 100 ml", basePrice: 124990, category: "Amaderado cítrico", gender: "Masculino", description: "Conecta al hombre con sus orígenes y con las fuerzas de la naturaleza. Una fragancia vegetal y mineral que une la amargura de la naranja con vetiver, incienso y cedro.", notes: ["n3", "n10", "n15", "n8"] },
+    { id: "p13", name: "Boss Bottled", brand: "Hugo Boss", unit: "EDT 100 ml", basePrice: 76990, category: "Amaderado especiado", gender: "Masculino", description: "Un clásico contemporáneo para el hombre moderno. Salida afrutada de manzana verde y canela, con un elegante secado amaderado de cedro y sándalo.", notes: ["n20", "n17", "n8", "n9"] },
+    { id: "p14", name: "Eros", brand: "Versace", unit: "EDT 100 ml", basePrice: 82990, category: "Oriental fresco", gender: "Masculino", description: "Inspirado en la mitología griega y la pasión desmedida. Notas refrescantes de menta helada y manzana verde combinadas con haba tonka, ambar y vainilla.", notes: ["n19", "n20", "n11", "n14"] },
+    { id: "p15", name: "Libre", brand: "Yves Saint Laurent", unit: "EDP 90 ml", basePrice: 104990, category: "Floral aromático", gender: "Femenino", description: "El perfume de la libertad audaz. La tensión entre la sensualidad del flor de azahar y jazmín con la audacia de la lavanda francesa y la calidez de la vainilla.", notes: ["n6", "n5", "n11", "n1"] },
+    { id: "p16", name: "Invictus", brand: "Paco Rabanne", unit: "EDT 100 ml", basePrice: 83990, category: "Acuático amaderado", gender: "Masculino", description: "La fragancia de la victoria. Un contraste entre la frescura marina del acorde acuático con la calidez del laurel, ámbar gris y madera de cedro.", notes: ["n18", "n1", "n8", "n14"] },
+    { id: "p17", name: "212 VIP Black", brand: "Carolina Herrera", unit: "EDP 100 ml", basePrice: 89990, category: "Aromático especiado", gender: "Masculino", description: "Una fragancia nocturna exclusiva y rompedora. Abre con un acorde explosivo de absenta, lavanda aromática y una envolvente base de vainilla negra y almizcle.", notes: ["n6", "n11", "n14", "n16"] },
+    { id: "p18", name: "Scandal", brand: "Jean Paul Gaultier", unit: "EDP 80 ml", basePrice: 96990, category: "Floral gourmand", gender: "Femenino", description: "Una sobredosis de placer sensual e irreverente. Una miel gourmand irresistible combinada con la elegancia de la gardenia, jazmín y la calidez del pachulí.", notes: ["n5", "n11", "n3", "n13"] }
   ],
   chains: [
     { id: "c1", name: "Sephora" },
@@ -56,7 +62,14 @@ const DEFAULT_DATA = {
   ]
 };
 
+let isDbInitialized = false;
+
 function ensureDbFile() {
+  if (isDbInitialized && fs.existsSync(DB_PATH)) {
+    return;
+  }
+  isDbInitialized = true;
+
   if (!fs.existsSync(DB_PATH)) {
     fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DATA, null, 2));
   }
@@ -90,29 +103,30 @@ function ensureDbFile() {
     changed = true;
   }
 
-  // Garantizar usuario administrador por defecto
-  const adminEmail = "fullfragance@gmail.com";
+  // Garantizar usuarios administradores por defecto
+  const adminEmails = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
   db.users = db.users || [];
-  const existingAdmin = db.users.find((u) => u.email.toLowerCase() === adminEmail.toLowerCase());
-  const adminPasswordHash = bcrypt.hashSync("123456", 10);
 
-  if (!existingAdmin) {
-    db.users.push({
-      id: "admin-fullfragrance",
-      name: "Administrador FullFragrance",
-      email: adminEmail,
-      passwordHash: adminPasswordHash,
-      role: "admin",
-      city: null,
-      favorites: [],
-      scentPreferences: null,
-      createdAt: new Date().toISOString(),
-    });
-    changed = true;
-  } else if (existingAdmin.role !== "admin" || !bcrypt.compareSync("123456", existingAdmin.passwordHash)) {
-    existingAdmin.role = "admin";
-    existingAdmin.passwordHash = adminPasswordHash;
-    changed = true;
+  for (const adminEmail of adminEmails) {
+    const existingAdmin = db.users.find((u) => u.email.toLowerCase() === adminEmail.toLowerCase());
+    if (!existingAdmin) {
+      const adminPasswordHash = bcrypt.hashSync("123456", 10);
+      db.users.push({
+        id: `admin-${adminEmail.replace(/[@.]/g, "-")}`,
+        name: "Administrador FullFragrance",
+        email: adminEmail,
+        passwordHash: adminPasswordHash,
+        role: "admin",
+        city: null,
+        favorites: [],
+        scentPreferences: null,
+        createdAt: new Date().toISOString(),
+      });
+      changed = true;
+    } else if (existingAdmin.role !== "admin") {
+      existingAdmin.role = "admin";
+      changed = true;
+    }
   }
 
   if (changed) {
