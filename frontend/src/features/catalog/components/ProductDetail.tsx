@@ -101,39 +101,54 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         <strong>{product.name}</strong>
       </nav>
 
+      {/* Layout de 2 columnas: Columna principal (Izquierda) + Panel de tiendas (Derecha) */}
       <section className={styles.product}>
-        {/* Imagen */}
-        <div className={styles.visual}>
-          {product.imageUrl && !imgError
-            ? <Image
-                src={productImageUrl(product.imageUrl) || product.imageUrl}
-                unoptimized
-                alt={`${product.name} de ${product.brand}`}
-                fill
-                priority
-                sizes="(max-width: 900px) 100vw, 34vw"
-                onError={() => setImgError(true)}
-              />
-            : <div className={styles.visualPlaceholder}><span>FF</span></div>}
-        </div>
+        <div className={styles.leftColumn}>
+          {/* Fila Hero: Imagen e Info principal */}
+          <div className={styles.heroRow}>
+            {/* Imagen */}
+            <div className={styles.visual}>
+              {product.imageUrl && !imgError
+                ? <Image
+                    src={productImageUrl(product.imageUrl) || product.imageUrl}
+                    unoptimized
+                    alt={`${product.name} de ${product.brand}`}
+                    fill
+                    priority
+                    sizes="(max-width: 900px) 100vw, 34vw"
+                    onError={() => setImgError(true)}
+                  />
+                : <div className={styles.visualPlaceholder}><span>FF</span></div>}
+            </div>
 
-        {/* Info del producto */}
-        <div className={styles.info}>
-          <p className="eyebrow">{product.brand}</p>
-          <h1>{product.name}</h1>
-          <p className={styles.unit}>{product.unit} · {product.gender}</p>
+            {/* Info del producto */}
+            <div className={styles.info}>
+              <p className="eyebrow">{product.brand}</p>
+              <h1>{product.name}</h1>
+              <p className={styles.unit}>{product.unit} · {product.gender}</p>
 
-          <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
-            <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
-            <div>
-              <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
-              <small>{hasComparison
-                ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
-                : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
+              <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
+                <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
+                <div>
+                  <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
+                  <small>{hasComparison
+                    ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
+                    : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
+                </div>
+              </div>
+
+              <div className={styles.tags} style={{ marginTop: "16px" }}>
+                <span>{product.category}</span>
+                {product.isSet && <span>Set / Kit</span>}
+              </div>
+
+              <div className={styles.favoriteLine}>
+                <FavoriteButton productId={product.id} aliases={product.aliases} large />
+              </div>
             </div>
           </div>
 
-          {/* Descripción técnica/emocional de la fragancia */}
+          {/* Bloques que ocupan el espacio bajo la imagen e info */}
           {product.description && (
             <div className={styles.perfumeDescription}>
               <h3>Acerca de esta fragancia</h3>
@@ -141,7 +156,6 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
             </div>
           )}
 
-          {/* Notas olfativas detalladas */}
           {product.olfactoryNotes && product.olfactoryNotes.length > 0 && (
             <section className={styles.notesSection} aria-labelledby="olfactory-notes-title">
               <div className={styles.notesHeading}>
@@ -160,31 +174,21 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
                       <small>{note.family}</small>
                       {note.description && <p>{note.description}</p>}
                     </div>
-                </article>
+                  </article>
                 ))}
               </div>
             </section>
           )}
 
-          <div className={styles.tags} style={{ marginTop: "16px" }}>
-            <span>{product.category}</span>
-            {product.isSet && <span>Set / Kit</span>}
-          </div>
-
-          {/* Componente Gráfico de Historial e Inferencia de Tendencias de Precios */}
           <PriceHistoryChart
             history30d={detailResult?.priceHistory30d}
             history90d={detailResult?.priceHistory}
             opportunity={detailResult?.opportunity}
             currentPrice={sortedPrices[0]?.price || product.basePrice}
           />
-
-          <div className={styles.favoriteLine}>
-            <FavoriteButton productId={product.id} aliases={product.aliases} large />
-          </div>
         </div>
 
-        {/* Panel de tiendas */}
+        {/* Panel de tiendas (Columna Derecha) */}
         <aside className={styles.storePanel}>
           <div className={styles.storePanelHeading}>
             <div>

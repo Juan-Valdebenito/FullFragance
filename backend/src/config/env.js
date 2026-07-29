@@ -87,5 +87,11 @@ module.exports = {
   parisPerfumesUrl:
     process.env.PARIS_PERFUMES_URL ||
     "https://www.paris.cl/belleza/perfumes/",
+  parisSearchApiUrl:
+    process.env.PARIS_SEARCH_API_URL ||
+    "https://be-paris-backend-cl-ms-search.ccom.paris.cl/products/",
+  parisApplicationId:
+    process.env.PARIS_APPLICATION_ID ||
+    "34bb8686968a85a272a6c546ddcb9860db1ea14ee72f5207ef0c028280a6e7bc",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

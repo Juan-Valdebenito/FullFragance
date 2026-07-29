@@ -45,11 +45,25 @@
   font-weight: 700;
 }
 
-/* ─── Grid de Producto ────────────────────────────────── */
+/* ─── Grid de Producto: 2 Columnas ───────────────────── */
 .product {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(300px, 1fr) minmax(320px, 0.9fr);
-  gap: clamp(28px, 3.5vw, 48px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
+  gap: clamp(24px, 3vw, 38px);
+  align-items: start;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.heroRow {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: clamp(20px, 2.5vw, 32px);
   align-items: start;
 }
 
@@ -380,11 +394,10 @@
 
 @media (max-width: 1080px) {
   .product {
-    grid-template-columns: minmax(280px, 1fr) minmax(300px, 1fr);
+    grid-template-columns: 1fr;
   }
   .storePanel {
     position: static;
-    grid-column: 1 / -1;
   }
   .offerList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -392,16 +405,13 @@
 }
 
 @media (max-width: 720px) {
-  .product {
+  .heroRow {
     grid-template-columns: 1fr;
   }
   .visual {
     position: relative;
     top: auto;
     min-height: 380px;
-  }
-  .storePanel {
-    grid-column: auto;
   }
   .offerList {
     grid-template-columns: 1fr;
@@ -491,9 +501,9 @@
 
 .notesGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 9px;
-  padding: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px;
 }
 
 .noteBadge {

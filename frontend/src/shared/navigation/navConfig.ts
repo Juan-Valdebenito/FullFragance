@@ -17,9 +17,6 @@ export const HEADER_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard?segment=niche", label: "Nicho" },
   { href: "/dashboard?segment=arabic", label: "Árabes" },
   { href: "/dashboard", label: "Catálogo Completo", activeKey: "catalog" },
-  { href: "/test", label: "Test olfativo", requiresAuth: true, activeKey: "test" },
-  { href: "/recomendaciones", label: "Para ti", requiresAuth: true },
-  { href: "/favoritos", label: "Favoritos", requiresAuth: true },
 ];
 
 /** Pestañas secundarias del comparador y secciones relacionadas. */

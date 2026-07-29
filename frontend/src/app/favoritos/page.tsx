@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Mis favoritos | FullFragrance" };
 export default function FavoritesPage() {
   return (
     <>
-      <Header active="catalog" />
+      <Header />
       <main>
         <PageHeader
           eyebrow="Tu colección personal"

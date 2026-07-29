@@ -7,6 +7,8 @@ const {
   parisRequestTimeoutMs,
   parisFixtureDir,
   parisPerfumesUrl,
+  parisSearchApiUrl,
+  parisApplicationId,
 } = require("../config/env");
 
 // Paris entrega 30 productos por página en el listado SSR. Usar ese listado
@@ -245,70 +247,147 @@ function extractTotalProducts(html) {
   return Number.isFinite(total) && total > 0 ? total : null;
 }
 
-function findXmlLocs(xml) {
-  return [...String(xml || "").matchAll(/<loc>([^<]+)<\/loc>/gi)].map((match) => match[1].trim());
+
+
+function normalizeApiProduct(item) {
+  const sku = String(item.masterVariant?.sku || item.id || "").trim();
+  const name = String(
+    item.name?.["es-CL"] || item.name?.es || Object.values(item.name || {})[0] || ""
+  ).trim();
+  const slug = String(
+    item.slug?.["es-CL"] || item.slug?.es || Object.values(item.slug || {})[0] || ""
+  ).trim();
+  const brand = typeof item.brand === "string" ? item.brand : item.brand?.name || null;
+  const images = item.masterVariant?.images || [];
+  const imageUrl = images[0]?.url || null;
+
+  // Precio: preferir oferta > regular. Ignorar paymentMethod (tarjeta Cencosud).
+  const prices = item.masterVariant?.prices || {};
+  const offerCents = prices.offer?.value?.centAmount;
+  const regularCents = prices.regular?.value?.centAmount;
+  const priceCents = offerCents ?? regularCents ?? null;
+  const price = priceCents !== null && Number.isFinite(priceCents) ? Math.round(priceCents) : null;
+  const currency = prices.offer?.value?.currencyCode || prices.regular?.value?.currencyCode || "CLP";
+
+  const sellers = Array.isArray(item.sellers) ? item.sellers : [];
+  const url = slug
+    ? `https://www.paris.cl/${slug}.html`
+    : `https://www.paris.cl/product-${sku}.html`;
+
+  if (!sku || !name) {
+    throw new Error("El producto de la API de Paris no contiene SKU o nombre.");
+  }
+
+  return {
+    source: "paris-cl",
+    sku,
+    brand: String(brand || "").trim() || null,
+    name,
+    price,
+    currency,
+    presentation: extractPresentation(name),
+    imageUrl,
+    available: item.published !== false && price !== null,
+    url,
+    raw: {
+      collectionCard: true,
+      availability: null,
+      rating: item.averageRating ?? null,
+      reviewCount: item.countRating ?? null,
+      sellers,
+    },
+  };
 }
 
-function isParisPerfumeProductUrl(value) {
+async function fetchSearchApi(page = 1, pageSize = PAGE_SIZE) {
+  const body = {
+    filters: [{ key: "group_id", stringValues: ["blzPerfumes"] }],
+    pagination: { page, pageSize },
+    sortBy: "relevance",
+    sponsoredProducts: true,
+    applicationId: parisApplicationId,
+  };
+
+  await waitForRateLimit();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), parisRequestTimeoutMs);
+  let response;
   try {
-    const url = new URL(value);
-    if (!/(^|\.)paris\.cl$/i.test(url.hostname) || !/\.html$/i.test(url.pathname)) return false;
-    const pathname = decodeURIComponent(url.pathname).toLowerCase();
-    return /(?:^|[-/])(?:perfume|parfum|fragrance|colonia|cologne|edp|edt|extrait|body-splash)(?:[-/]|$)/i.test(pathname);
-  } catch {
-    return false;
+    response = await fetch(parisSearchApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": parisUserAgent,
+        Origin: "https://www.paris.cl",
+        Referer: "https://www.paris.cl/",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
   }
-}
 
-async function discoverPerfumeUrlsFromSitemap() {
-  const { html: indexXml } = await fetchPage("https://www.paris.cl/sitemap_index.xml");
-  const sitemapUrls = findXmlLocs(indexXml)
-    .filter((url) => /\/sitemap_products_es_cl_\d+\.xml$/i.test(url));
-  if (!sitemapUrls.length) throw new Error("El sitemap de Paris no contiene archivos de productos.");
-
-  const productUrls = new Set();
-  for (const sitemapUrl of sitemapUrls) {
-    const { html: sitemapXml } = await fetchPage(sitemapUrl);
-    for (const productUrl of findXmlLocs(sitemapXml)) {
-      if (isParisPerfumeProductUrl(productUrl)) productUrls.add(assertParisUrl(productUrl));
+  if (response.status === 429) {
+    const retryAfter = Number(response.headers.get("retry-after") || 0);
+    if (retryAfter > 0 && retryAfter <= 60) {
+      await sleep(retryAfter * 1000);
+      return fetchSearchApi(page, pageSize);
     }
+    throw new Error("Paris limitó temporalmente las solicitudes (HTTP 429).");
   }
-  if (!productUrls.size) throw new Error("No se encontraron fichas de perfume en el sitemap de Paris.");
-  return [...productUrls];
-}
+  if (response.status === 403) throw new Error("Paris bloqueó la consulta automática (HTTP 403).");
+  if (!response.ok) throw new Error(`Paris API respondió HTTP ${response.status}.`);
 
-async function scrapeProduct(productUrl) {
-  const { html, finalUrl } = await fetchPage(productUrl);
-  const documents = extractJsonLd(html);
-  if (!hasPerfumeBreadcrumb(documents)) return null;
-  const products = productsFromJsonLd(documents);
-  const product = products.find((candidate) => candidate.sku && candidate.name && candidate.offers);
-  if (!product) throw new Error("Paris no expuso datos estructurados en la ficha de producto.");
-  const parisOffers = offersSoldByParis(product);
-  if (!parisOffers.length) return null;
-  return normalizeProduct({ ...product, offers: parisOffers }, finalUrl);
-}
-
-async function scrapeProductBatch(productUrls) {
-  const settled = await Promise.allSettled(productUrls.map((url) => scrapeProduct(url)));
-  return settled.flatMap((result) => result.status === "fulfilled" && result.value ? [result.value] : []);
+  const data = await response.json();
+  const items = Array.isArray(data.results) ? data.results : [];
+  return { items, total: data.total || 0, count: items.length };
 }
 
 async function scrapeDirectCatalogPage(page = 1) {
-  const pageUrl = buildParisCatalogPageUrl(page);
-  const { html, finalUrl } = await fetchPage(pageUrl);
-  const products = extractCatalogProducts(html, finalUrl);
-  const directTotal = extractTotalProducts(html);
-  if (!products.length && page === 1) {
-    throw new Error("Paris no expuso productos estructurados en el catálogo de perfumes.");
+  // Intentar primero la API interna (soporta paginación real).
+  try {
+    const { items, total, count } = await fetchSearchApi(page);
+    const products = [];
+    for (const item of items) {
+      try {
+        const sellers = Array.isArray(item.sellers) ? item.sellers.map((s) => String(s).toUpperCase()) : [];
+        // Filtrar productos del marketplace, solo los vendidos por Paris.
+        if (sellers.length && !sellers.some((s) => s === "PARIS" || s === "PARIS.CL")) continue;
+        products.push(normalizeApiProduct(item));
+      } catch {
+        // Un producto malformado no debe cancelar el catálogo.
+      }
+    }
+    if (!products.length && page === 1) {
+      throw new Error("La API de Paris no devolvió productos de perfumería.");
+    }
+    return {
+      products,
+      page,
+      totalPages: Math.max(1, Math.ceil((total || count) / PAGE_SIZE)),
+      scanned: count,
+      directTotal: total || count,
+    };
+  } catch (apiError) {
+    // Fallback: intentar el scraping HTML clásico (solo funciona para página 1).
+    if (page > 1) throw apiError;
+    const pageUrl = buildParisCatalogPageUrl(page);
+    const { html, finalUrl } = await fetchPage(pageUrl);
+    const products = extractCatalogProducts(html, finalUrl);
+    const directTotal = extractTotalProducts(html);
+    if (!products.length) {
+      throw new Error(`Paris no expuso productos estructurados en el catálogo de perfumes. Error API: ${apiError.message}`);
+    }
+    return {
+      products,
+      page,
+      totalPages: 1,
+      scanned: products.length,
+      directTotal: directTotal || products.length,
+    };
   }
-  return {
-    products,
-    page,
-    totalPages: Math.max(1, Math.ceil((directTotal || products.length) / PAGE_SIZE)),
-    scanned: products.length,
-    directTotal: directTotal || products.length,
-  };
 }
 
 async function scrapePerfumeCatalog(maxProducts = 12) {
@@ -329,14 +408,11 @@ module.exports = {
   extractJsonLd,
   extractCatalogProducts,
   extractTotalProducts,
-  findXmlLocs,
-  isParisPerfumeProductUrl,
   hasPerfumeBreadcrumb,
   offersSoldByParis,
-  discoverPerfumeUrlsFromSitemap,
-  scrapeProduct,
-  scrapeProductBatch,
   normalizeProduct,
+  normalizeApiProduct,
+  fetchSearchApi,
   scrapeDirectCatalogPage,
   scrapePerfumeCatalog,
 };
