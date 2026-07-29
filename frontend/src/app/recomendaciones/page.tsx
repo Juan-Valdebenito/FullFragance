@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Fragancias para ti | FullFragrance" 
 export default function RecommendationsPage() {
   return (
     <>
-      <Header active="test" />
+      <Header />
       <main>
         <PageHeader
           eyebrow="Selección personalizada"

@@ -278,6 +278,20 @@ function extractImageFromCard(card) {
   return null;
 }
 
+function isSoldByFalabella(card) {
+  const sellerId = String(card?.sellerId || card?.seller?.id || "").trim().toUpperCase();
+  const sellerName = String(card?.sellerName || card?.seller?.name || "").trim().toUpperCase();
+  return sellerId === "FALABELLA_CHILE" || sellerName === "FALABELLA";
+}
+
+function isJsonLdSoldByFalabella(product) {
+  const offers = Array.isArray(product?.offers) ? product.offers : [product?.offers];
+  return offers.some((offer) => {
+    const seller = String(offer?.seller?.name || offer?.seller || "").trim().toUpperCase();
+    return seller === "FALABELLA" || seller === "FALABELLA CHILE";
+  });
+}
+
 function inferAvailabilityFromCard(availability) {
   if (!availability || typeof availability !== "object") return true;
   const values = Object.values(availability).map((value) => String(value || "").toLowerCase());
@@ -426,7 +440,7 @@ async function scrapeProductsFromCollection(limit) {
   return extractCollectionProductCards(html)
     .filter((card) => {
       const productUrl = card.url || `https://www.falabella.com/falabella-cl/product/${card.productId || card.skuId}`;
-      return isPerfumeProductUrl(productUrl);
+      return isSoldByFalabella(card) && isPerfumeProductUrl(productUrl);
     })
     .slice(0, limit)
     .map((card) => normalizeCollectionProduct(card));
@@ -440,6 +454,7 @@ async function scrapeDirectCatalogPage(page = 1) {
   const pagination = nextData?.props?.pageProps?.pagination || {};
   const cards = extractPageResults(html);
   const products = cards
+    .filter(isSoldByFalabella)
     .map((card) => normalizeCollectionProduct(card))
     .filter((product) => isPerfumeProductUrl(product.url));
   const totalPages = Math.max(1, Math.ceil(Number(pagination.count || cards.length) / Number(pagination.perPage || 48)));
@@ -456,12 +471,20 @@ async function scrapeProduct(productUrl) {
   const safeUrl = assertFalabellaUrl(productUrl);
   const { html, finalUrl } = await fetchPage(safeUrl);
   const jsonLd = findProductJsonLd(html);
-  if (jsonLd) return normalizeProduct(jsonLd, finalUrl, html);
+  if (jsonLd) {
+    const cards = extractCollectionProductCards(html);
+    const sku = String(jsonLd.sku || jsonLd.mpn || jsonLd.productID || "").trim();
+    const card = cards.find((item) => String(item.productId || item.skuId || item.sku) === sku);
+    if (!isSoldByFalabella(card) && !isJsonLdSoldByFalabella(jsonLd)) {
+      throw new Error("El producto no es vendido directamente por Falabella.");
+    }
+    return normalizeProduct(jsonLd, finalUrl, html);
+  }
 
   const cards = extractCollectionProductCards(html);
   const sku = new URL(finalUrl).pathname.match(/\/product\/(\d+)/)?.[1];
   const card = cards.find((item) => String(item.productId || item.skuId || item.sku) === String(sku));
-  if (card) return normalizeCollectionProduct({ ...card, url: finalUrl });
+  if (card && isSoldByFalabella(card)) return normalizeCollectionProduct({ ...card, url: finalUrl });
 
   throw new Error("No se encontró el bloque Product JSON-LD en la página.");
 }
@@ -542,6 +565,7 @@ module.exports = {
   normalizeProduct,
   normalizeCollectionProduct,
   extractPriceFromCard,
+  isSoldByFalabella,
   productFromUrl,
   isPerfumeProductUrl,
   buildFalabellaImageUrl,

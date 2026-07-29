@@ -10,6 +10,7 @@ const {
   normalizeProduct,
   normalizeCollectionProduct,
   extractPriceFromCard,
+  isSoldByFalabella,
   productFromUrl,
   buildFalabellaImageUrl,
 } = require("../src/services/falabellaScraper");
@@ -61,6 +62,12 @@ test("prioriza internetPrice del listado sobre el JSON-LD", () => {
 
   assert.equal(product.price, 79900);
   assert.equal(product.imageUrl, "https://media.falabella.com/falabellaCL/50285241_1/public");
+});
+
+test("acepta únicamente productos vendidos directamente por Falabella", () => {
+  assert.equal(isSoldByFalabella({ sellerId: "FALABELLA_CHILE", sellerName: "FALABELLA" }), true);
+  assert.equal(isSoldByFalabella({ sellerId: "SC55CFB", sellerName: "COSMETIC" }), false);
+  assert.equal(isSoldByFalabella({ sellerName: "Vendedor marketplace" }), false);
 });
 
 test("extrae precio internet desde el arreglo prices", () => {

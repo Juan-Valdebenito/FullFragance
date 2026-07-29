@@ -12,10 +12,11 @@ export type NavItem = {
 
 /** Enlaces principales del header (clientes). El mega menú de perfumes se inserta aparte. */
 export const HEADER_NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Comparar", activeKey: "catalog" },
-  { href: "/test", label: "Test olfativo", requiresAuth: true, activeKey: "test" },
-  { href: "/recomendaciones", label: "Para ti", requiresAuth: true },
-  { href: "/favoritos", label: "Favoritos", requiresAuth: true },
+  { href: "/dashboard?sort=savings", label: "Mejores Ofertas" },
+  { href: "/dashboard?segment=designer", label: "Diseñador" },
+  { href: "/dashboard?segment=niche", label: "Nicho" },
+  { href: "/dashboard?segment=arabic", label: "Árabes" },
+  { href: "/dashboard", label: "Catálogo Completo", activeKey: "catalog" },
 ];
 
 /** Pestañas secundarias del comparador y secciones relacionadas. */

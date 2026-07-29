@@ -45,11 +45,25 @@
   font-weight: 700;
 }
 
-/* ─── Grid de Producto ────────────────────────────────── */
+/* ─── Grid de Producto: 2 Columnas ───────────────────── */
 .product {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(300px, 1fr) minmax(320px, 0.9fr);
-  gap: clamp(28px, 3.5vw, 48px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
+  gap: clamp(24px, 3vw, 38px);
+  align-items: start;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.heroRow {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: clamp(20px, 2.5vw, 32px);
   align-items: start;
 }
 
@@ -380,11 +394,10 @@
 
 @media (max-width: 1080px) {
   .product {
-    grid-template-columns: minmax(280px, 1fr) minmax(300px, 1fr);
+    grid-template-columns: 1fr;
   }
   .storePanel {
     position: static;
-    grid-column: 1 / -1;
   }
   .offerList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -392,16 +405,13 @@
 }
 
 @media (max-width: 720px) {
-  .product {
+  .heroRow {
     grid-template-columns: 1fr;
   }
   .visual {
     position: relative;
     top: auto;
     min-height: 380px;
-  }
-  .storePanel {
-    grid-column: auto;
   }
   .offerList {
     grid-template-columns: 1fr;
@@ -429,8 +439,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.perfumeDescription h3,
-.notesSection h3 {
+.perfumeDescription h3 {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--on-surface);
@@ -445,35 +454,90 @@
 }
 
 .notesSection {
-  margin-top: 20px;
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffdf8 0%, #ffffff 62%);
+  box-shadow: 0 10px 28px rgba(72, 56, 28, 0.04);
+}
+
+.notesHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.16);
+}
+
+.sectionKicker {
+  margin: 0 0 3px;
+  color: var(--gold-dark);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.notesHeading h3 {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.noteCount {
+  flex: none;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  border-radius: 999px;
+  background: rgba(197, 160, 89, 0.1);
+  padding: 5px 9px;
+  color: var(--gold-dark);
+  font-size: 0.66rem;
+  font-weight: 700;
 }
 
 .notesGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px;
 }
 
 .noteBadge {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  transition: all 0.2s ease;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  border: 1px solid var(--note-border, rgba(83, 113, 92, 0.18));
+  border-radius: 13px;
+  background: var(--note-surface, #f6faf6);
+  padding: 11px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .noteBadge:hover {
-  border-color: rgba(168, 85, 247, 0.4);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 7px 14px rgba(49, 61, 48, 0.08);
+}
+
+.noteIcon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--note-icon-surface, rgba(83, 113, 92, 0.13));
+  color: var(--note-icon, #53715c);
 }
 
 .noteBadge div {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .noteBadge strong {
@@ -483,7 +547,31 @@
 }
 
 .noteBadge small {
-  font-size: 0.68rem;
-  color: var(--gold-dark);
+  margin-top: 2px;
+  color: var(--note-icon, var(--gold-dark));
+  font-size: 0.64rem;
+  font-weight: 650;
 }
 
+.noteBadge p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 5px 0 0;
+  color: var(--on-surface-muted);
+  font-size: 0.66rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.noteFloral { --note-surface: #fff7fb; --note-border: #efd7e3; --note-icon-surface: #f6dfea; --note-icon: #a54c77; }
+.noteWoody { --note-surface: #fbf8f1; --note-border: #e6d7bc; --note-icon-surface: #efe2c9; --note-icon: #8a6334; }
+.noteCitrus { --note-surface: #fffbed; --note-border: #eee0a5; --note-icon-surface: #f8edbd; --note-icon: #9b7417; }
+.noteFruity { --note-surface: #fff7f3; --note-border: #f0d2c4; --note-icon-surface: #f8ded0; --note-icon: #b66240; }
+.noteSpicy { --note-surface: #fcf6f2; --note-border: #ead4c3; --note-icon-surface: #f1dece; --note-icon: #9b6040; }
+.noteFresh { --note-surface: #f4faf7; --note-border: #d1e5dc; --note-icon-surface: #dceee5; --note-icon: #39755d; }
+
+@media (max-width: 500px) {
+  .notesHeading { padding: 14px; }
+  .notesGrid { grid-template-columns: 1fr; }
+}

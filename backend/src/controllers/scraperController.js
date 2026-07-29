@@ -21,6 +21,9 @@ const {
   scrapeProductOrFallback: scrapeCosmeticProductOrFallback,
   scrapePerfumeCatalog: scrapeCosmeticPerfumeCatalog,
 } = require("../services/cosmeticScraper");
+const {
+  scrapePerfumeCatalog: scrapeParisPerfumeCatalog,
+} = require("../services/parisScraper");
 
 async function syncFalabella(req, res, next) {
   try {
@@ -287,6 +290,36 @@ function listCosmetic(_req, res) {
   res.json({ products: listProducts("cosmetic-cl") });
 }
 
+async function syncParis(req, res, next) {
+  try {
+    const maxProducts = Number(req.body?.maxProducts || 12);
+    if (!Number.isInteger(maxProducts) || maxProducts < 1 || maxProducts > 24) {
+      return res.status(400).json({ error: "maxProducts debe ser un entero entre 1 y 24." });
+    }
+    const results = await scrapeParisPerfumeCatalog(maxProducts);
+    const products = results.filter((result) => result.ok).map((result) => result.product);
+    if (products.length) replaceProducts("paris-cl", products);
+    res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function syncParisPerfumeCatalog(req, res, next) {
+  try {
+    if (req.body?.fullCatalog) {
+      return res.status(202).json({ job: startCatalogSync("paris-cl") });
+    }
+    return syncParis(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function listParis(_req, res) {
+  res.json({ products: listProducts("paris-cl") });
+}
+
 module.exports = {
   syncFalabella,
   syncPerfumeCatalog,
@@ -306,5 +339,8 @@ module.exports = {
   syncCosmetic,
   syncCosmeticPerfumeCatalog,
   listCosmetic,
+  syncParis,
+  syncParisPerfumeCatalog,
+  listParis,
   getSyncJob,
 };

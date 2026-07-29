@@ -18,6 +18,8 @@ const sourceBadges: Record<string, string> = {
   "alisha-cl": "Alisha",
   "silk-cl": "Silk",
   "elite-cl": "Elite",
+  "cosmetic-cl": "Cosmetic",
+  "paris-cl": "Paris",
 };
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
@@ -264,6 +266,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const alishaCount    = useMemo(() => items.filter(i => i.product.source === "alisha-cl"    || i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
   const silkCount      = useMemo(() => items.filter(i => i.product.source === "silk-cl"      || i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
   const eliteCount     = useMemo(() => items.filter(i => i.product.source === "elite-cl"     || i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
+  const cosmeticCount  = useMemo(() => items.filter(i => i.product.source === "cosmetic-cl"  || i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
+  const parisCount     = useMemo(() => items.filter(i => i.product.source === "paris-cl"     || i.prices.some(p => p.storeName === "Paris")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -318,24 +322,6 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       </div>
 
       {syncMessage && <p className={styles.status}>{syncMessage}</p>}
-
-      <nav className={styles.segmentNav} aria-label="Tipos de perfumería">
-        {perfumeSegments.map(option => (
-          <button
-            key={option.value || "all"}
-            className={segment === option.value ? styles.activeSegment : ""}
-            onClick={() => setFilter("segment", option.value)}
-            aria-current={segment === option.value ? "page" : undefined}
-          >
-            <span>{option.label}</span>
-            <small>
-              {option.value
-                ? items.filter(item => perfumeSegmentForBrand(item.product.brand) === option.value).length
-                : items.length}
-            </small>
-          </button>
-        ))}
-      </nav>
 
       {loading ? (
         <p className={styles.empty}>Consultando precios…</p>
