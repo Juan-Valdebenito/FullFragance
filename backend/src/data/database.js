@@ -62,7 +62,14 @@ const DEFAULT_DATA = {
   ]
 };
 
+let isDbInitialized = false;
+
 function ensureDbFile() {
+  if (isDbInitialized && fs.existsSync(DB_PATH)) {
+    return;
+  }
+  isDbInitialized = true;
+
   if (!fs.existsSync(DB_PATH)) {
     fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DATA, null, 2));
   }
@@ -99,11 +106,11 @@ function ensureDbFile() {
   // Garantizar usuarios administradores por defecto
   const adminEmails = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
   db.users = db.users || [];
-  const adminPasswordHash = bcrypt.hashSync("123456", 10);
 
   for (const adminEmail of adminEmails) {
     const existingAdmin = db.users.find((u) => u.email.toLowerCase() === adminEmail.toLowerCase());
     if (!existingAdmin) {
+      const adminPasswordHash = bcrypt.hashSync("123456", 10);
       db.users.push({
         id: `admin-${adminEmail.replace(/[@.]/g, "-")}`,
         name: "Administrador FullFragrance",
@@ -116,9 +123,8 @@ function ensureDbFile() {
         createdAt: new Date().toISOString(),
       });
       changed = true;
-    } else if (existingAdmin.role !== "admin" || !bcrypt.compareSync("123456", existingAdmin.passwordHash)) {
+    } else if (existingAdmin.role !== "admin") {
       existingAdmin.role = "admin";
-      existingAdmin.passwordHash = adminPasswordHash;
       changed = true;
     }
   }

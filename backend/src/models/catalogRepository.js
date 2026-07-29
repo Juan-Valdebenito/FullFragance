@@ -44,8 +44,7 @@ function getOlfactoryNotes() {
   return readDb().olfactoryNotes || [];
 }
 
-function resolveOlfactoryNotes(noteIds) {
-  const allNotes = getOlfactoryNotes();
+function resolveOlfactoryNotes(noteIds, allNotes = getOlfactoryNotes()) {
   return (noteIds || []).map((id) => allNotes.find((n) => n.id === id)).filter(Boolean);
 }
 
@@ -84,11 +83,11 @@ function scentProfileFor(product, profiles) {
   ) || null;
 }
 
-function toCatalogProduct(product, profiles = readDb().products) {
+function toCatalogProduct(product, profiles = getDbData().products, allNotes = getDbData().olfactoryNotes) {
   const profile = scentProfileFor(product, profiles);
   const gender = inferGender(product.name);
   const rawNotes = profile?.notes && profile.notes.length ? profile.notes : inferOlfactoryNotes(product, gender);
-  const olfactoryNotes = resolveOlfactoryNotes(rawNotes);
+  const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
   const description = profile?.description || inferDescription(product, gender, olfactoryNotes);
 
   return {
@@ -119,8 +118,18 @@ function toCatalogProduct(product, profiles = readDb().products) {
   };
 }
 
+function getDbData() {
+  const db = readDb();
+  return {
+    products: db.products || [],
+    olfactoryNotes: db.olfactoryNotes || [],
+  };
+}
+
 function mergeScrapedProducts(products) {
-  const profiles = readDb().products;
+  const dbData = getDbData();
+  const profiles = dbData.products;
+  const allNotes = dbData.olfactoryNotes;
 
   // 1. Agrupar por marca normalizada para evitar comparaciones N^2 entre marcas distintas
   const byBrand = new Map();
@@ -147,7 +156,7 @@ function mergeScrapedProducts(products) {
   }
 
   return groups.map((group) => {
-    const converted = group.map((product) => toCatalogProduct(product, profiles));
+    const converted = group.map((product) => toCatalogProduct(product, profiles, allNotes));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
     // Un mismo scraper puede encontrar una ficha más de una vez al recorrer el
     // catálogo. Para comparar tiendas, sólo debe existir una oferta por cadena.
@@ -163,7 +172,7 @@ function mergeScrapedProducts(products) {
     const positivePrices = offers.filter((offer) => offer.price > 0).map((offer) => offer.price);
     const gender = representative.gender || inferGender(representative.name);
     const notes = representative.notes && representative.notes.length ? representative.notes : inferOlfactoryNotes(representative, gender);
-    const olfactoryNotes = resolveOlfactoryNotes(notes);
+    const olfactoryNotes = resolveOlfactoryNotes(notes, allNotes);
     const description = representative.description || inferDescription(representative, gender, olfactoryNotes);
 
     return {
@@ -188,10 +197,12 @@ function getProducts() {
   if (cachedProducts) return cachedProducts;
   const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl"].flatMap((source) => listScrapedProducts(source));
   const scraped = mergeScrapedProducts(rawScraped);
-  const dbProducts = readDb().products.map((p) => {
+  const dbData = getDbData();
+  const allNotes = dbData.olfactoryNotes;
+  const dbProducts = dbData.products.map((p) => {
     const gender = p.gender || inferGender(p.name);
     const notes = p.notes && p.notes.length ? p.notes : inferOlfactoryNotes(p, gender);
-    const olfactoryNotes = resolveOlfactoryNotes(notes);
+    const olfactoryNotes = resolveOlfactoryNotes(notes, allNotes);
     const description = inferDescription(p, gender, olfactoryNotes);
     return {
       ...p,
