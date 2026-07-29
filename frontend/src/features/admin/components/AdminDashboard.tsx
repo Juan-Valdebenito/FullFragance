@@ -18,14 +18,6 @@ interface AdminDashboardProps {
   initialQuery?: string;
 }
 
-const STORES_CONFIG = [
-  { key: "falabella", name: "Falabella", tag: "falabella-cl", desc: "Retailer principal · ~3 000 productos", badgeCls: styles.badgeFalabella },
-  { key: "ripley",    name: "Ripley",    tag: "ripley-cl",    desc: "Retailer principal · ~600 productos",   badgeCls: styles.badgeRipley },
-  { key: "alisha",    name: "Alisha",    tag: "alisha-cl",    desc: "Perfumería especializada · ~2 600 productos", badgeCls: styles.badgeAlisha },
-  { key: "silk",      name: "Silk",      tag: "silk-cl",      desc: "Perfumería boutique · Colección completa", badgeCls: styles.badgeSilk },
-  { key: "elite",     name: "Elite",     tag: "elite-cl",     desc: "Perfumería nicho & lujo · ~890 productos", badgeCls: styles.badgeElite },
-];
-
 function now() { return new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }); }
 
 export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps) {
@@ -39,6 +31,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingAlisha,    setSyncingAlisha]    = useState(false);
   const [syncingSilk,      setSyncingSilk]      = useState(false);
   const [syncingElite,     setSyncingElite]     = useState(false);
+  const [syncingParis,     setSyncingParis]     = useState(false);
   const [syncingAll,       setSyncingAll]       = useState(false);
 
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
@@ -46,12 +39,14 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [alishaJob,    setAlishaJob]    = useState<SyncJob | null>(null);
   const [silkJob,      setSilkJob]      = useState<SyncJob | null>(null);
   const [eliteJob,     setEliteJob]     = useState<SyncJob | null>(null);
+  const [parisJob,     setParisJob]     = useState<SyncJob | null>(null);
 
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
   const [alishaMsg,    setAlishaMsg]    = useState("");
   const [silkMsg,      setSilkMsg]      = useState("");
   const [eliteMsg,     setEliteMsg]     = useState("");
+  const [parisMsg,     setParisMsg]     = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -173,6 +168,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingElite(false); }
   }
 
+  async function handleSyncParis() {
+    setSyncingParis(true); setParisMsg("Iniciando conexión con Paris...");
+    addActivity("Sincronización de Paris iniciada", "Sync", styles.tagSync, "#e11d48");
+    try {
+      const { job } = await api.syncParisPerfumes();
+      await waitForSync(job, "Paris", setParisJob, setParisMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Paris.";
+      setParisMsg(msg);
+      addActivity(`Error Paris: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingParis(false); }
+  }
+
   async function handleSyncAll() {
     setSyncingAll(true);
     addActivity("Sincronización masiva de todas las tiendas iniciada", "Sync", styles.tagSync, "#3b82f6");
@@ -182,6 +190,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       await handleSyncAlisha();
       await handleSyncSilk();
       await handleSyncElite();
+      await handleSyncParis();
     } finally {
       setSyncingAll(false);
     }
@@ -195,6 +204,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const alishaCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
   const silkCount      = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
   const eliteCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
+  const parisCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Paris")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
@@ -234,6 +244,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Scraper Falabella", sub: "falabella-cl · JSON API", status: syncingFalabella ? "Ejecutando..." : falabellaJob?.status === "failed" ? "Error" : "Listo", cls: falabellaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
     { label: "Scraper Ripley", sub: "ripley-cl · REST Client", status: syncingRipley ? "Ejecutando..." : ripleyJob?.status === "failed" ? "Error" : "Listo", cls: ripleyJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🏬" },
     { label: "Scrapers Shopify (3)", sub: "Alisha, Silk, Elite · JSON API", status: (syncingAlisha || syncingSilk || syncingElite) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },
+    { label: "Scraper Paris", sub: "paris.cl · Catálogo SSR", status: syncingParis ? "Ejecutando..." : parisJob?.status === "failed" ? "Error" : "Listo", cls: parisJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
   ];
 
   // ── HEADER CONTROL BAR ──────────────────────────────────
@@ -330,8 +341,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <span>Tiendas Conectadas</span>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
-          <strong className={styles.kpiValue}>5</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk y Elite</p>
+          <strong className={styles.kpiValue}>6</strong>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite y Paris</p>
         </article>
       </section>
 
@@ -339,7 +350,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.panelCard}>
         <div className={styles.panelHeader}>
           <h3>Distribución por Tienda Verificada</h3>
-          <span className={styles.panelHeaderBadge}>5 Fuentes de origen</span>
+          <span className={styles.panelHeaderBadge}>6 Fuentes de origen</span>
         </div>
         <div className={styles.storePillsRow}>
           {[
@@ -348,6 +359,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             { name: "Alisha",    count: alishaCount,    color: "#ec4899", tag: "alisha-cl" },
             { name: "Silk",      count: silkCount,      color: "#2563eb", tag: "silk-cl" },
             { name: "Elite",     count: eliteCount,     color: "#d97706", tag: "elite-cl" },
+            { name: "Paris",     count: parisCount,     color: "#e11d48", tag: "paris-cl" },
           ].map(s => {
             const pct = totalProducts > 0 ? Math.round((s.count / totalProducts) * 100) : 0;
             return (
@@ -446,7 +458,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           type="button"
           className={styles.syncAllBtn}
           onClick={handleSyncAll}
-          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite}
+          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingParis}
         >
           {syncingAll ? "⏳ Sincronizando Todo..." : "⚡ Sincronizar Todo el Catálogo"}
         </button>
@@ -592,6 +604,34 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </button>
           {eliteMsg && <p className={styles.syncMsg}>{eliteMsg}</p>}
         </article>
+
+        {/* Paris */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(225, 29, 72, 0.1)", color: "#e11d48" }}>
+              🛍️
+            </div>
+            <div>
+              <h3>Paris.cl</h3>
+              <small>paris-cl · Catálogo de perfumería</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingParis ? styles.stateRunning : parisJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingParis ? "Ejecutando..." : parisJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {parisJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${parisJob.targetProducts ? Math.min(100, Math.round((parisJob.imported / parisJob.targetProducts) * 100)) : (parisJob.status === "completed" ? 100 : 3)}%` }} />
+              </div>
+              <small>{parisJob.imported} productos importados · pág {parisJob.currentPage}/{parisJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncParis} disabled={syncingParis || syncingAll}>
+            {syncingParis ? "Iniciando scraper..." : "🔄 Sincronizar Paris"}
+          </button>
+          {parisMsg && <p className={styles.syncMsg}>{parisMsg}</p>}
+        </article>
       </div>
 
       {/* Sync history timeline */}
@@ -649,6 +689,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="alisha">Alisha</option>
               <option value="silk">Silk</option>
               <option value="elite">Elite</option>
+              <option value="paris">Paris</option>
             </select>
           </div>
         </div>
@@ -671,8 +712,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : styles.badgeMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : "Multi-tienda";
+                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "paris-cl" ? styles.badgeParis : styles.badgeMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "paris-cl" ? "Paris" : "Multi-tienda";
                 const avail = item.product.available !== false;
                 const matchedCount = item.product.matchedStores ?? 1;
 

@@ -1,168 +1,157 @@
 .container {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
-  background: rgba(18, 22, 36, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 16px;
+  margin-top: 1.75rem;
+  border: 1px solid rgba(197, 160, 89, 0.24);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffdf9 0%, #ffffff 70%);
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(72, 56, 28, 0.05);
+}
+
+.header,
+.headerTitle,
+.chartHeader,
+.footerNote {
+  display: flex;
+  align-items: center;
 }
 
 .header {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.headerTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
+.headerTitle { gap: 10px; flex-wrap: wrap; }
 
 .headerTitle h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f3f4f6;
   margin: 0;
+  color: var(--on-surface);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.headerHint {
+  margin: 5px 0 0;
+  color: var(--on-surface-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .opportunityTag {
-  padding: 0.35rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 700;
 }
 
-.tagGreatDeal {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.tagStable {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.tagTrendingUp {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
+.tagGreatDeal { border: 1px solid rgba(40, 123, 67, 0.3); background: rgba(40, 123, 67, 0.1); color: #287b43; }
+.tagStable { border: 1px solid rgba(70, 109, 150, 0.25); background: rgba(89, 117, 147, 0.1); color: #466d96; }
+.tagTrendingUp { border: 1px solid rgba(181, 120, 41, 0.3); background: rgba(181, 120, 41, 0.11); color: #94601d; }
 
 .toggleGroup {
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 3px;
-  border-radius: 8px;
   gap: 2px;
+  flex: none;
+  border-radius: 9px;
+  background: #f4f0e8;
+  padding: 3px;
 }
 
 .toggleBtn {
-  background: transparent;
-  border: none;
-  color: #9ca3af;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border: 0;
   border-radius: 6px;
+  background: transparent;
+  padding: 0.38rem 0.75rem;
+  color: var(--on-surface-muted);
   cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 650;
   transition: all 0.2s ease;
 }
 
-.toggleBtn:hover {
-  color: #f3f4f6;
-}
-
-.toggleActive {
-  background: #a855f7;
-  color: #ffffff;
-}
+.toggleBtn:hover { color: var(--on-surface); }
+.toggleActive { background: var(--primary); color: #ffffff; box-shadow: 0 2px 6px rgba(26, 28, 28, 0.16); }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
 }
 
 .statCard {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 0.75rem;
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  border: 1px solid rgba(130, 101, 57, 0.1);
+  border-radius: 10px;
+  background: #fcfaf6;
+  padding: 0.75rem;
 }
 
-.statLabel {
-  font-size: 0.75rem;
-  color: #9ca3af;
+.statLabel { color: var(--on-surface-muted); font-size: 0.68rem; }
+.statValue { color: var(--on-surface); font-size: 1rem; font-weight: 750; letter-spacing: -0.02em; }
+.statMin { color: #287b43; }
+
+.chartHeader {
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--on-surface-muted);
+  font-size: 0.67rem;
+  font-weight: 600;
 }
 
-.statValue {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #f3f4f6;
-}
-
-.statMin {
-  color: #34d399;
-}
+.chartHeader span:last-child { color: #907f68; }
 
 .chartWrapper {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 196px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(246, 240, 230, 0.38), rgba(255, 255, 255, 0));
 }
 
-.svgChart {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  cursor: crosshair;
-}
+.svgChart { width: 100%; height: 100%; overflow: visible; cursor: crosshair; }
+.gridLine { stroke: rgba(126, 96, 53, 0.14); stroke-dasharray: 3 4; }
+.axisLabel { fill: #9b8b77; font-size: 10px; font-family: inherit; }
 
 .tooltip {
   position: absolute;
-  transform: translate(-50%, -100%);
-  background: #1e1b4b;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  padding: 0.4rem 0.6rem;
-  border-radius: 8px;
-  pointer-events: none;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 10;
+  transform: translate(-50%, -100%);
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  border-radius: 8px;
+  background: #29231d;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 10px 25px rgba(42, 31, 17, 0.24);
+  pointer-events: none;
   white-space: nowrap;
 }
 
-.tooltipDate {
-  font-size: 0.7rem;
-  color: #9ca3af;
-}
-
-.tooltipPrice {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #a855f7;
-}
+.tooltipDate { color: #d7ccbf; font-size: 0.7rem; }
+.tooltipPrice { color: #f2d69c; font-size: 0.85rem; font-weight: 700; }
 
 .footerNote {
-  font-size: 0.75rem;
-  color: #6b7280;
-  display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(130, 101, 57, 0.1);
+  padding-top: 12px;
+  color: var(--on-surface-muted);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 480px) {
+  .container { padding: 14px; }
+  .header { align-items: flex-start; flex-direction: column; }
+  .statsGrid { gap: 6px; }
+  .statCard { padding: 0.65rem; }
+  .statValue { font-size: 0.87rem; }
+  .chartHeader span:last-child, .footerNote span:last-child { display: none; }
 }

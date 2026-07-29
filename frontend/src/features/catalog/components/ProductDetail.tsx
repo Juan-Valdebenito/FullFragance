@@ -27,6 +27,16 @@ const stores: Record<string, string> = {
 const noteIconFor = (family: string): "leaf" | "tree" | "flower" =>
   family.includes("Amader") ? "tree" : family.includes("Floral") ? "flower" : "leaf";
 
+const noteToneFor = (family: string) => {
+  const normalizedFamily = family.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (normalizedFamily.includes("floral")) return "floral";
+  if (normalizedFamily.includes("amader")) return "woody";
+  if (normalizedFamily.includes("citr")) return "citrus";
+  if (normalizedFamily.includes("frut")) return "fruity";
+  if (normalizedFamily.includes("orient") || normalizedFamily.includes("espec")) return "spicy";
+  return "fresh";
+};
+
 interface ProductDetailProps {
   productId: string;
   /**
@@ -133,20 +143,27 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
 
           {/* Notas olfativas detalladas */}
           {product.olfactoryNotes && product.olfactoryNotes.length > 0 && (
-            <div className={styles.notesSection}>
-              <h3>Notas olfativas principales</h3>
+            <section className={styles.notesSection} aria-labelledby="olfactory-notes-title">
+              <div className={styles.notesHeading}>
+                <div>
+                  <p className={styles.sectionKicker}>Perfil olfativo</p>
+                  <h3 id="olfactory-notes-title">Notas que definen esta fragancia</h3>
+                </div>
+                <span className={styles.noteCount}>{product.olfactoryNotes.length} notas</span>
+              </div>
               <div className={styles.notesGrid}>
                 {product.olfactoryNotes.map((note) => (
-                  <div key={note.id} className={styles.noteBadge} title={note.description}>
-                    <Icon name={noteIconFor(note.family)} size={18} />
+                  <article key={note.id} className={`${styles.noteBadge} ${styles[`note${noteToneFor(note.family)[0].toUpperCase()}${noteToneFor(note.family).slice(1)}`]}`}>
+                    <span className={styles.noteIcon} aria-hidden="true"><Icon name={noteIconFor(note.family)} size={20} /></span>
                     <div>
                       <strong>{note.name}</strong>
                       <small>{note.family}</small>
+                      {note.description && <p>{note.description}</p>}
                     </div>
-                  </div>
+                </article>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           <div className={styles.tags} style={{ marginTop: "16px" }}>

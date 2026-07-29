@@ -77,5 +77,15 @@ module.exports = {
   cosmeticCollectionUrl:
     process.env.COSMETIC_COLLECTION_URL ||
     "https://cosmetic.cl/collections/perfumes/products.json",
+  parisUserAgent:
+    process.env.PARIS_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  parisMinDelayMs: Number(process.env.PARIS_MIN_DELAY_MS || 150),
+  parisMaxDelayMs: Number(process.env.PARIS_MAX_DELAY_MS || 300),
+  parisRequestTimeoutMs: Number(process.env.PARIS_REQUEST_TIMEOUT_MS || 20000),
+  parisFixtureDir: process.env.PARIS_FIXTURE_DIR || "",
+  parisPerfumesUrl:
+    process.env.PARIS_PERFUMES_URL ||
+    "https://www.paris.cl/belleza/perfumes/",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };
