@@ -64,7 +64,8 @@ async function initDatabase() {
       const client = await p.connect();
       client.release();
 
-      // Crear esquemas en PostgreSQL
+      // Crear esquemas en PostgreSQL. Todas las tablas usan IF NOT EXISTS para
+      // que ejecutar la migración más de una vez no borre ni duplique datos.
       await p.query(`
         CREATE TABLE IF NOT EXISTS olfactory_notes (
           id VARCHAR(50) PRIMARY KEY,
@@ -128,13 +129,17 @@ async function initDatabase() {
           key VARCHAR(100) PRIMARY KEY,
           value TEXT NOT NULL
         );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
+          ON users(google_id) WHERE google_id IS NOT NULL;
       `);
 
       // Migrar datos legados desde db.json y catalog.sqlite si existen y la BD está limpia
       await seedAndMigrateFromLegacy(p);
       isInitialized = true;
     } catch (err) {
-      if (process.env.NODE_ENV === "test" || err.code === "ECONNREFUSED" || err.message.includes("timeout")) {
+      const allowMemoryFallback = process.env.NODE_ENV === "test" || process.env.ALLOW_MEMORY_FALLBACK === "true";
+      if (allowMemoryFallback) {
         console.warn("PostgreSQL no disponible, activando modo memoria para continuar:", err.message);
         useMemoryFallback = true;
         seedMemoryFromLegacy();

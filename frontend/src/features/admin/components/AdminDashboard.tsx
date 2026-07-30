@@ -276,7 +276,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   // System health
   const healthItems = [
     { label: "Backend API (Express)", sub: "http://localhost:3000", status: "Operativo", cls: styles.healthOk, icon: "⚡" },
-    { label: "Base de datos (SQLite)", sub: "catalog.sqlite · Catálogo en memoria", status: totalProducts > 0 ? "Activa" : "Vacía", cls: totalProducts > 0 ? styles.healthOk : styles.healthWarning, icon: "🗄️" },
+    { label: "Base de datos (PostgreSQL)", sub: "PostgreSQL · migración idempotente", status: totalProducts > 0 ? "Activa" : "Vacía", cls: totalProducts > 0 ? styles.healthOk : styles.healthWarning, icon: "🗄️" },
     { label: "Scraper Falabella", sub: "falabella-cl · JSON API", status: syncingFalabella ? "Ejecutando..." : falabellaJob?.status === "failed" ? "Error" : "Listo", cls: falabellaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
     { label: "Scraper Ripley", sub: "ripley-cl · REST Client", status: syncingRipley ? "Ejecutando..." : ripleyJob?.status === "failed" ? "Error" : "Listo", cls: ripleyJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🏬" },
     { label: "Scrapers Shopify / UCP (4)", sub: "Alisha, Silk, Elite y Cosmetic", status: (syncingAlisha || syncingSilk || syncingElite || syncingCosmetic) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },

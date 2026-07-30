@@ -179,6 +179,53 @@ La arquitectura separa claramente:
 * Estado compartido de sesión.
 * Tokens globales de diseño.
 
+## Puesta en marcha: PostgreSQL y Google Sign-In
+
+### 1. Preparar PostgreSQL sin perder datos
+
+La aplicación conserva los archivos legados como fuente de respaldo durante la migración. No elimines `backend/src/data/db.json` ni `backend/data/catalog.sqlite` hasta completar la verificación posterior.
+
+1. Crea una base de datos PostgreSQL vacía llamada `fullfragance` (o usa el nombre que prefieras).
+2. Copia `backend/.env.example` a `backend/.env` y completa `DATABASE_URL` —recomendado— o las variables `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` y `PGPASSWORD`.
+3. Desde la carpeta `backend`, ejecuta la migración:
+
+   ```bash
+   npm run migrate:postgres
+   ```
+
+   El proceso crea las tablas, importa usuarios, favoritos, preferencias, notas, productos, cadenas y el catálogo scraping disponible. Es idempotente: puede ejecutarse otra vez sin borrar ni duplicar la información ya migrada.
+
+4. Revisa los conteos que imprime el comando y valida la aplicación con una copia de seguridad de PostgreSQL antes de archivar los archivos legados.
+5. Inicia el servidor:
+
+   ```bash
+   npm start
+   ```
+
+El servidor exige PostgreSQL al iniciar. El modo en memoria sólo está disponible si se define explícitamente `ALLOW_MEMORY_FALLBACK=true` para pruebas locales; no debe utilizarse en producción.
+
+### 2. Activar autenticación con Google
+
+1. En Google Cloud Console crea un cliente OAuth 2.0 de tipo **Aplicación web**.
+2. Agrega los orígenes JavaScript autorizados para cada entorno, por ejemplo `http://localhost:3001` en desarrollo y el dominio HTTPS real en producción.
+3. Configura el Client ID generado en ambos lados:
+
+   ```env
+   # backend/.env
+   GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+
+   # frontend/.env.local
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+   ```
+
+4. Copia `frontend/.env.example` como `frontend/.env.local` si aún no existe y reinicia frontend y backend.
+
+El backend valida la firma, la audiencia y que el correo de Google esté verificado antes de emitir el JWT de FullFragrance. No acepta correos ni perfiles enviados directamente por el navegador.
+
+### 3. Tema visual
+
+El selector de tema está disponible en el encabezado. Incluye los modos claro, oscuro cálido (recomendado como modo nocturno principal) y negro OLED. La preferencia se guarda localmente en el navegador.
+
 ## Rutas disponibles
 
 ```text
