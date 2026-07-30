@@ -1,11 +1,18 @@
-const { readDb } = require("../data/database");
+const { query } = require("../data/pgDatabase");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
 const { normalizeBrand, inferBrandFromName, samePerfume, tokenScore, isSet } = require("./productMatcher");
+const { DEFAULT_DATA } = require("../data/database");
 
 let cachedProducts = null;
+let cachedOlfactoryNotes = null;
+let cachedBaseProducts = null;
+let cachedChains = null;
 
 function invalidateCatalogCache() {
   cachedProducts = null;
+  cachedOlfactoryNotes = null;
+  cachedBaseProducts = null;
+  cachedChains = null;
 }
 
 function inferGender(name) {
@@ -47,11 +54,69 @@ const NOTE_PATTERNS = [
   { id: "n22", regex: /piña|pina|pineapple|tropical|aventus|212/i },
 ];
 
-function getOlfactoryNotes() {
-  return readDb().olfactoryNotes || [];
+async function loadOlfactoryNotesFromDb() {
+  if (cachedOlfactoryNotes) return cachedOlfactoryNotes;
+  try {
+    const res = await query("SELECT * FROM olfactory_notes");
+    if (res.rows && res.rows.length) {
+      cachedOlfactoryNotes = res.rows;
+      return cachedOlfactoryNotes;
+    }
+  } catch (err) {
+    // Fallback
+  }
+  cachedOlfactoryNotes = DEFAULT_DATA.olfactoryNotes || [];
+  return cachedOlfactoryNotes;
 }
 
-function resolveOlfactoryNotes(noteIds, allNotes = getOlfactoryNotes()) {
+async function loadBaseProductsFromDb() {
+  if (cachedBaseProducts) return cachedBaseProducts;
+  try {
+    const res = await query("SELECT * FROM base_products");
+    if (res.rows && res.rows.length) {
+      cachedBaseProducts = res.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        brand: row.brand,
+        unit: row.unit,
+        basePrice: row.base_price,
+        category: row.category,
+        gender: row.gender,
+        description: row.description,
+        notes: typeof row.notes === "string" ? JSON.parse(row.notes) : (row.notes || []),
+      }));
+      return cachedBaseProducts;
+    }
+  } catch (err) {
+    // Fallback
+  }
+  cachedBaseProducts = DEFAULT_DATA.products || [];
+  return cachedBaseProducts;
+}
+
+async function loadChainsFromDb() {
+  if (cachedChains) return cachedChains;
+  try {
+    const res = await query("SELECT * FROM chains");
+    if (res.rows && res.rows.length) {
+      cachedChains = res.rows;
+      return cachedChains;
+    }
+  } catch (err) {
+    // Fallback
+  }
+  cachedChains = DEFAULT_DATA.chains || [];
+  return cachedChains;
+}
+
+function getDbData() {
+  return {
+    products: cachedBaseProducts || DEFAULT_DATA.products || [],
+    olfactoryNotes: cachedOlfactoryNotes || DEFAULT_DATA.olfactoryNotes || [],
+  };
+}
+
+function resolveOlfactoryNotes(noteIds, allNotes = getDbData().olfactoryNotes) {
   return (noteIds || []).map((id) => allNotes.find((n) => n.id === id)).filter(Boolean);
 }
 
@@ -128,20 +193,11 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   };
 }
 
-function getDbData() {
-  const db = readDb();
-  return {
-    products: db.products || [],
-    olfactoryNotes: db.olfactoryNotes || [],
-  };
-}
-
 function mergeScrapedProducts(products) {
   const dbData = getDbData();
   const profiles = dbData.products;
   const allNotes = dbData.olfactoryNotes;
 
-  // 1. Agrupar por marca normalizada para evitar comparaciones N^2 entre marcas distintas
   const enrichedProducts = products.map((product) => {
     const inferredBrand = resolvedBrand(product);
     return inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
@@ -157,7 +213,6 @@ function mergeScrapedProducts(products) {
     list.push(product);
   }
 
-  // 2. Realizar matching solo dentro del grupo de cada marca
   const groups = [];
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
@@ -172,8 +227,6 @@ function mergeScrapedProducts(products) {
   return groups.map((group) => {
     const converted = group.map((product) => toCatalogProduct(product, profiles, allNotes));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
-    // Un mismo scraper puede encontrar una ficha más de una vez al recorrer el
-    // catálogo. Para comparar tiendas, sólo debe existir una oferta por cadena.
     const offersBySource = new Map();
     for (const offer of converted.flatMap((product) => product.offers)) {
       const current = offersBySource.get(offer.source);
@@ -207,12 +260,20 @@ function mergeScrapedProducts(products) {
   });
 }
 
-function getProducts() {
+async function getProducts() {
   if (cachedProducts) return cachedProducts;
-  const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl"].flatMap((source) => listScrapedProducts(source));
+
+  await loadOlfactoryNotesFromDb();
+  await loadBaseProductsFromDb();
+
+  const sources = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl"];
+  const scrapedLists = await Promise.all(sources.map((source) => listScrapedProducts(source)));
+  const rawScraped = scrapedLists.flat();
+
   const scraped = mergeScrapedProducts(rawScraped);
   const dbData = getDbData();
   const allNotes = dbData.olfactoryNotes;
+
   const dbProducts = dbData.products.map((p) => {
     const gender = p.gender || inferGender(p.name);
     const notes = p.notes && p.notes.length ? p.notes : inferOlfactoryNotes(p, gender);
@@ -226,24 +287,27 @@ function getProducts() {
       description,
     };
   });
+
   cachedProducts = [...scraped, ...dbProducts];
   return cachedProducts;
 }
 
-function getProductById(id) {
-  return getProducts().find((product) => product.id === id || product.aliases?.includes(id)) || null;
+async function getProductById(id) {
+  const products = await getProducts();
+  return products.find((product) => product.id === id || product.aliases?.includes(id)) || null;
 }
 
-function getChains() {
-  return readDb().chains;
+async function getChains() {
+  return await loadChainsFromDb();
 }
 
-function getOlfactoryNotes() {
-  return readDb().olfactoryNotes || [];
+async function getOlfactoryNotes() {
+  return await loadOlfactoryNotesFromDb();
 }
 
-function getNoteById(id) {
-  return getOlfactoryNotes().find((note) => note.id === id) || null;
+async function getNoteById(id) {
+  const notes = await getOlfactoryNotes();
+  return notes.find((note) => note.id === id) || null;
 }
 
 module.exports = {

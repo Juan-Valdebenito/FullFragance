@@ -13,6 +13,12 @@ module.exports = {
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
+  databaseUrl: process.env.DATABASE_URL || "",
+  pgHost: process.env.PGHOST || "localhost",
+  pgPort: Number(process.env.PGPORT || 5432),
+  pgDatabase: process.env.PGDATABASE || "fullfragance",
+  pgUser: process.env.PGUSER || "postgres",
+  pgPassword: process.env.PGPASSWORD || "postgres",
   sqlitePath: process.env.SQLITE_PATH || "./data/catalog.sqlite",
   scraperApiKey: process.env.SCRAPER_API_KEY || "",
   falabellaUserAgent:

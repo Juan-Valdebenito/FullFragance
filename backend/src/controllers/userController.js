@@ -2,7 +2,7 @@ const userRepository = require("../models/userRepository");
 const { getRecommendationsForUser } = require("../models/recommendationService");
 const { getOlfactoryNotes, getProductById } = require("../models/catalogRepository");
 
-function setCity(req, res, next) {
+async function setCity(req, res, next) {
   try {
     const { name, country, lat, lon } = req.body;
     if (!name || lat === undefined || lon === undefined) {
@@ -10,7 +10,7 @@ function setCity(req, res, next) {
     }
 
     const city = { name, country: country || "", lat: Number(lat), lon: Number(lon) };
-    const user = userRepository.updateCity(req.userId, city);
+    const user = await userRepository.updateCity(req.userId, city);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
     res.json({ user: userRepository.toPublic(user) });
@@ -19,9 +19,9 @@ function setCity(req, res, next) {
   }
 }
 
-function getFavorites(req, res, next) {
+async function getFavorites(req, res, next) {
   try {
-    const user = userRepository.findById(req.userId);
+    const user = await userRepository.findById(req.userId);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
     res.json({ favorites: user.favorites || [] });
   } catch (err) {
@@ -29,14 +29,14 @@ function getFavorites(req, res, next) {
   }
 }
 
-function toggleFavorite(req, res, next) {
+async function toggleFavorite(req, res, next) {
   try {
     const { productId } = req.params;
     if (!productId) return res.status(400).json({ error: "Se requiere productId." });
-    const product = getProductById(productId);
+    const product = await getProductById(productId);
     if (!product) return res.status(404).json({ error: "El perfume ya no existe en el catálogo actual." });
 
-    const user = userRepository.toggleFavorite(req.userId, product.id, product.aliases || []);
+    const user = await userRepository.toggleFavorite(req.userId, product.id, product.aliases || []);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
     res.json({ user: userRepository.toPublic(user), favorites: user.favorites });
@@ -45,7 +45,7 @@ function toggleFavorite(req, res, next) {
   }
 }
 
-function saveScentQuiz(req, res, next) {
+async function saveScentQuiz(req, res, next) {
   try {
     const { scores } = req.body;
     if (!scores || typeof scores !== "object") {
@@ -53,7 +53,8 @@ function saveScentQuiz(req, res, next) {
     }
 
     const normalized = {};
-    const validNoteIds = new Set(getOlfactoryNotes().map((note) => note.id));
+    const notes = await getOlfactoryNotes();
+    const validNoteIds = new Set(notes.map((note) => note.id));
     for (const [noteId, value] of Object.entries(scores)) {
       const num = Number(value);
       if (validNoteIds.has(noteId) && Number.isFinite(num) && num >= 1 && num <= 5) {
@@ -65,10 +66,10 @@ function saveScentQuiz(req, res, next) {
       return res.status(400).json({ error: "Debes calificar al menos una nota olfativa." });
     }
 
-    const user = userRepository.saveScentPreferences(req.userId, normalized);
+    const user = await userRepository.saveScentPreferences(req.userId, normalized);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
-    const { recommendations } = getRecommendationsForUser(user);
+    const { recommendations } = await getRecommendationsForUser(user);
     res.json({
       user: userRepository.toPublic(user),
       recommendations,
@@ -78,12 +79,12 @@ function saveScentQuiz(req, res, next) {
   }
 }
 
-function getRecommendations(req, res, next) {
+async function getRecommendations(req, res, next) {
   try {
-    const user = userRepository.findById(req.userId);
+    const user = await userRepository.findById(req.userId);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
-    const result = getRecommendationsForUser(user);
+    const result = await getRecommendationsForUser(user);
     res.json(result);
   } catch (err) {
     next(err);

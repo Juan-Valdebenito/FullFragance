@@ -19,14 +19,18 @@ function requireAuth(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    const user = userRepository.findById(req.userId);
-    const publicUser = userRepository.toPublic(user);
-    if (!publicUser || publicUser.role !== "admin") {
-      return res.status(403).json({ error: "Se requiere rol administrador." });
+  requireAuth(req, res, async () => {
+    try {
+      const user = await userRepository.findById(req.userId);
+      const publicUser = userRepository.toPublic(user);
+      if (!publicUser || publicUser.role !== "admin") {
+        return res.status(403).json({ error: "Se requiere rol administrador." });
+      }
+      req.user = publicUser;
+      next();
+    } catch (err) {
+      next(err);
     }
-    req.user = publicUser;
-    next();
   });
 }
 

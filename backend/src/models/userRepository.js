@@ -1,54 +1,87 @@
 const { v4: uuid } = require("uuid");
-const { readDb, writeDb } = require("../data/database");
+const { query } = require("../data/pgDatabase");
 const { adminEmails } = require("../config/env");
-
-function findByEmail(email) {
-  const db = readDb();
-  return db.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
-}
-
-function findById(id) {
-  const db = readDb();
-  return db.users.find((u) => u.id === id) || null;
-}
 
 const DEFAULT_ADMIN_EMAILS = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
 
 function roleForEmail(email) {
+  if (!email) return "customer";
   const normalized = String(email).toLowerCase();
   return DEFAULT_ADMIN_EMAILS.includes(normalized) || adminEmails.includes(normalized) ? "admin" : "customer";
 }
 
-function create({ name, email, passwordHash }) {
-  const db = readDb();
+function rowToUser(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    passwordHash: row.password_hash || null,
+    googleId: row.google_id || null,
+    picture: row.picture || null,
+    role: row.role || roleForEmail(row.email),
+    city: typeof row.city === "string" ? JSON.parse(row.city) : row.city,
+    favorites: typeof row.favorites === "string" ? JSON.parse(row.favorites) : (row.favorites || []),
+    scentPreferences: typeof row.scent_preferences === "string" ? JSON.parse(row.scent_preferences) : (row.scent_preferences || null),
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+  };
+}
+
+async function findByEmail(email) {
+  if (!email) return null;
+  const res = await query("SELECT * FROM users WHERE LOWER(email) = LOWER($1)", [email]);
+  return res.rows.length ? rowToUser(res.rows[0]) : null;
+}
+
+async function findById(id) {
+  if (!id) return null;
+  const res = await query("SELECT * FROM users WHERE id = $1", [id]);
+  return res.rows.length ? rowToUser(res.rows[0]) : null;
+}
+
+async function create({ name, email, passwordHash }) {
   const user = {
     id: uuid(),
     name,
     email,
-    passwordHash,
+    passwordHash: passwordHash || null,
     role: roleForEmail(email),
     city: null,
     favorites: [],
     scentPreferences: null,
     createdAt: new Date().toISOString(),
   };
-  db.users.push(user);
-  writeDb(db);
+
+  await query(
+    `INSERT INTO users (id, name, email, password_hash, role, city, favorites, scent_preferences, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      user.id,
+      user.name,
+      user.email,
+      user.passwordHash,
+      user.role,
+      null,
+      JSON.stringify(user.favorites),
+      null,
+      user.createdAt,
+    ]
+  );
+
   return user;
 }
 
-function updateCity(userId, city) {
-  const db = readDb();
-  const user = db.users.find((u) => u.id === userId);
+async function updateCity(userId, city) {
+  const user = await findById(userId);
   if (!user) return null;
+
+  await query("UPDATE users SET city = $2 WHERE id = $1", [userId, JSON.stringify(city)]);
   user.city = city;
-  writeDb(db);
   return user;
 }
 
-function toggleFavorite(userId, productId, aliases = []) {
-  const db = readDb();
-  const user = db.users.find((u) => u.id === userId);
+async function toggleFavorite(userId, productId, aliases = []) {
+  const user = await findById(userId);
   if (!user) return null;
 
   user.favorites = user.favorites || [];
@@ -59,32 +92,38 @@ function toggleFavorite(userId, productId, aliases = []) {
   } else {
     user.favorites.push(productId);
   }
-  writeDb(db);
+
+  await query("UPDATE users SET favorites = $2 WHERE id = $1", [userId, JSON.stringify(user.favorites)]);
   return user;
 }
 
-function saveScentPreferences(userId, scores) {
-  const db = readDb();
-  const user = db.users.find((u) => u.id === userId);
+async function saveScentPreferences(userId, scores) {
+  const user = await findById(userId);
   if (!user) return null;
 
-  user.scentPreferences = {
+  const scentPreferences = {
     scores,
     completedAt: new Date().toISOString(),
   };
-  writeDb(db);
+
+  await query("UPDATE users SET scent_preferences = $2 WHERE id = $1", [userId, JSON.stringify(scentPreferences)]);
+  user.scentPreferences = scentPreferences;
   return user;
 }
 
-function findOrCreateGoogleUser({ name, email, googleId, picture }) {
-  const db = readDb();
-  let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+async function findOrCreateGoogleUser({ name, email, googleId, picture }) {
+  let user = await findByEmail(email);
 
   if (user) {
     let updated = false;
     if (googleId && !user.googleId) { user.googleId = googleId; updated = true; }
     if (picture && !user.picture) { user.picture = picture; updated = true; }
-    if (updated) writeDb(db);
+    if (updated) {
+      await query(
+        "UPDATE users SET google_id = COALESCE($1, google_id), picture = COALESCE($2, picture) WHERE id = $3",
+        [user.googleId, user.picture, user.id]
+      );
+    }
     return user;
   }
 
@@ -101,8 +140,25 @@ function findOrCreateGoogleUser({ name, email, googleId, picture }) {
     scentPreferences: null,
     createdAt: new Date().toISOString(),
   };
-  db.users.push(user);
-  writeDb(db);
+
+  await query(
+    `INSERT INTO users (id, name, email, password_hash, google_id, picture, role, city, favorites, scent_preferences, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    [
+      user.id,
+      user.name,
+      user.email,
+      null,
+      user.googleId,
+      user.picture,
+      user.role,
+      null,
+      JSON.stringify(user.favorites),
+      null,
+      user.createdAt,
+    ]
+  );
+
   return user;
 }
 

@@ -1,6 +1,6 @@
-const { getProducts, getProductById, getOlfactoryNotes } = require("./catalogRepository");
+const { getProducts, getOlfactoryNotes } = require("./catalogRepository");
 
-function scoreProduct(product, preferences, favoriteIds) {
+function scoreProduct(product, preferences, favoriteIds, allProducts = []) {
   const scores = preferences?.scores || {};
   const notes = product.notes || [];
   if (!notes.length) return 0;
@@ -9,9 +9,9 @@ function scoreProduct(product, preferences, favoriteIds) {
     notes.reduce((sum, noteId) => sum + (Number(scores[noteId]) || 0), 0) / notes.length;
 
   const favoriteBoost = favoriteIds.some((favId) => {
-    const fav = getProductById(favId);
+    const fav = allProducts.find((p) => p.id === favId || p.aliases?.includes(favId));
     if (!fav) return false;
-    return fav.notes.some((n) => notes.includes(n));
+    return fav.notes?.some((n) => notes.includes(n));
   })
     ? 1.5
     : 0;
@@ -19,10 +19,10 @@ function scoreProduct(product, preferences, favoriteIds) {
   return noteScore + favoriteBoost;
 }
 
-function getRecommendationsForUser(user, limit = 6) {
-  const products = getProducts();
+async function getRecommendationsForUser(user, limit = 6) {
+  const products = await getProducts();
   const availableProducts = products.filter((product) => product.offers?.some((offer) => offer.price > 0));
-  const notes = getOlfactoryNotes();
+  const notes = await getOlfactoryNotes();
   const favoriteIds = user.favorites || [];
 
   if (!user.scentPreferences?.scores) {
@@ -47,7 +47,7 @@ function getRecommendationsForUser(user, limit = 6) {
 
       return {
         product,
-        score: scoreProduct(product, user.scentPreferences, favoriteIds),
+        score: scoreProduct(product, user.scentPreferences, favoriteIds, products),
         matchedNotes,
         reason:
           matchedNotes.length > 0
