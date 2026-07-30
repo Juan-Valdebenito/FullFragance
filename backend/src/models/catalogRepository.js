@@ -66,14 +66,15 @@ function inferOlfactoryNotes(product, gender) {
 
 function inferDescription(product, gender, noteObjects) {
   if (product.description && product.description.trim().length > 10) return product.description;
-  const noteNames = (noteObjects || []).map((n) => n.name).join(", ");
+  const noteNames = (noteObjects || []).map((n) => n.name).filter(Boolean).join(", ");
   const brand = product.brand && product.brand !== "Sin marca" ? `de ${product.brand}` : "";
+  const notesText = noteNames ? ` que destaca por sus notas de ${noteNames}` : "";
   if (gender === "Masculino") {
-    return `${product.name} ${brand} ofrece una experiencia olfativa masculina y sofisticada. Una combinación equilibrada que destaca por sus notas de ${noteNames}, aportando carácter, distinción y una estela memorable.`;
+    return `${product.name} ${brand} ofrece una experiencia olfativa masculina y sofisticada. Una combinación equilibrada${notesText}, aportando carácter, distinción y una estela memorable.`;
   } else if (gender === "Femenino") {
-    return `${product.name} ${brand} es una fragancia envolvente y elegante. Su armonía de acordes destaca por matices de ${noteNames}, creando una estela seductora, femenina y llena de luminosidad.`;
+    return `${product.name} ${brand} es una fragancia envolvente y elegante. Su armonía de acordes${notesText}, creando una estela seductora, femenina y llena de luminosidad.`;
   }
-  return `${product.name} ${brand} es una creación versátil y cautivadora. Combina notas de ${noteNames} para lograr una estela moderna, fresca y atemporal ideal para cualquier ocasión.`;
+  return `${product.name} ${brand} es una creación versátil y cautivadora. Combina acordes refinados${notesText} para lograr una estela moderna, fresca y atemporal ideal para cualquier ocasión.`;
 }
 
 function scentProfileFor(product, profiles) {

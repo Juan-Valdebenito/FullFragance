@@ -101,61 +101,36 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         <strong>{product.name}</strong>
       </nav>
 
-      {/* Layout de 2 columnas: Columna principal (Izquierda) + Panel de tiendas (Derecha) */}
-      <section className={styles.product}>
-        <div className={styles.leftColumn}>
-          {/* Fila Hero: Imagen e Info principal */}
-          <div className={styles.heroRow}>
-            {/* Imagen */}
-            <div className={styles.visual}>
-              {product.imageUrl && !imgError
-                ? <Image
-                    src={productImageUrl(product.imageUrl) || product.imageUrl}
-                    unoptimized
-                    alt={`${product.name} de ${product.brand}`}
-                    fill
-                    priority
-                    sizes="(max-width: 900px) 100vw, 34vw"
-                    onError={() => setImgError(true)}
-                  />
-                : <div className={styles.visualPlaceholder}><span>FF</span></div>}
-            </div>
-
-            {/* Info del producto */}
-            <div className={styles.info}>
-              <p className="eyebrow">{product.brand}</p>
-              <h1>{product.name}</h1>
-              <p className={styles.unit}>{product.unit} · {product.gender}</p>
-
-              <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
-                <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
-                <div>
-                  <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
-                  <small>{hasComparison
-                    ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
-                    : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
-                </div>
-              </div>
-
-              <div className={styles.tags} style={{ marginTop: "16px" }}>
-                <span>{product.category}</span>
-                {product.isSet && <span>Set / Kit</span>}
-              </div>
-
-              <div className={styles.favoriteLine}>
-                <FavoriteButton productId={product.id} aliases={product.aliases} large />
-              </div>
-            </div>
+      {/* Layout de 2 columnas perfeccionado: Columna izquierda (Visual/Notas/Gráfico) + Columna derecha (Info/Tiendas) */}
+      <section className={styles.productGrid}>
+        {/* Columna Izquierda: Imagen + Descripción + Perfil Olfativo + Gráfico de Precios */}
+        <div className={styles.leftCol}>
+          {/* Imagen del perfume */}
+          <div className={styles.visual}>
+            {product.imageUrl && !imgError
+              ? <Image
+                  src={productImageUrl(product.imageUrl) || product.imageUrl}
+                  unoptimized
+                  alt={`${product.name} de ${product.brand}`}
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 100vw, 45vw"
+                  onError={() => setImgError(true)}
+                />
+              : <div className={styles.visualPlaceholder}><span>FF</span></div>}
           </div>
 
-          {/* Bloques que ocupan el espacio bajo la imagen e info */}
-          {product.description && (
-            <div className={styles.perfumeDescription}>
-              <h3>Acerca de esta fragancia</h3>
-              <p>{product.description}</p>
-            </div>
-          )}
+          {/* Descripción de la fragancia */}
+          <div className={styles.perfumeDescription}>
+            <h3>Acerca de esta fragancia</h3>
+            <p>
+              {product.description && product.description.trim().length > 5
+                ? product.description
+                : `${product.name} ${product.brand && product.brand !== "Sin marca" ? `de ${product.brand}` : ""} ofrece una experiencia olfativa distinguida y refinada.`}
+            </p>
+          </div>
 
+          {/* Notas olfativas detalladas */}
           {product.olfactoryNotes && product.olfactoryNotes.length > 0 && (
             <section className={styles.notesSection} aria-labelledby="olfactory-notes-title">
               <div className={styles.notesHeading}>
@@ -180,6 +155,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
             </section>
           )}
 
+          {/* Historial y tendencia de precios */}
           <PriceHistoryChart
             history30d={detailResult?.priceHistory30d}
             history90d={detailResult?.priceHistory}
@@ -188,54 +164,83 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
           />
         </div>
 
-        {/* Panel de tiendas (Columna Derecha) */}
-        <aside className={styles.storePanel}>
-          <div className={styles.storePanelHeading}>
-            <div>
-              <p className="eyebrow">Comparativa de precios</p>
-              <h2>Elige tu tienda</h2>
+        {/* Columna Derecha: Título/Info principal + Comparativa de Tiendas */}
+        <div className={styles.rightCol}>
+          {/* Info del producto */}
+          <div className={styles.info}>
+            <p className="eyebrow">{product.brand}</p>
+            <h1>{product.name}</h1>
+            <p className={styles.unit}>{product.unit} · {product.gender}</p>
+
+            <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
+              <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
+              <div>
+                <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
+                <small>{hasComparison
+                  ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
+                  : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
+              </div>
             </div>
-            <span>{sortedPrices.length} {sortedPrices.length === 1 ? "tienda" : "tiendas"}</span>
+
+            <div className={styles.tags} style={{ marginTop: "16px" }}>
+              <span>{product.category}</span>
+              {product.isSet && <span>Set / Kit</span>}
+            </div>
+
+            <div className={styles.favoriteLine}>
+              <FavoriteButton productId={product.id} aliases={product.aliases} large />
+            </div>
           </div>
 
-          {sortedPrices.length ? (
-            <div className={styles.offerList}>
-              {sortedPrices.map((price, index) => {
-                const target = price.productUrl
-                  ?? stores[price.storeName]
-                  ?? `https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name} ${price.storeName}`)}`;
-                return (
-                  <article
-                    className={`${styles.offerCard} ${index === 0 ? styles.bestOffer : ""}`}
-                    key={`${price.storeId}-${price.storeName}`}
-                  >
-                    <div className={styles.offerTop}>
-                      <strong>{price.storeName}</strong>
-                      {index === 0 && <em>Mejor precio</em>}
-                    </div>
-                    <span className={price.available === false ? styles.noStock : styles.inStock}>
-                      {price.available === false ? "Sin stock" : "Disponible online"}
-                    </span>
-                    <strong className={styles.offerPrice}>{money.format(price.price)}</strong>
-                    <a href={target} target="_blank" rel="noopener noreferrer">
-                      <span>Ir a tienda</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  </article>
-                );
-              })}
+          {/* Panel de tiendas */}
+          <aside className={styles.storePanel}>
+            <div className={styles.storePanelHeading}>
+              <div>
+                <p className="eyebrow">Comparativa de precios</p>
+                <h2>Elige tu tienda</h2>
+              </div>
+              <span>{sortedPrices.length} {sortedPrices.length === 1 ? "tienda" : "tiendas"}</span>
             </div>
-          ) : (
-            <div className={styles.noOffers}>Todavía no hay precios disponibles.</div>
-          )}
 
-          {hasComparison && (
-            <div className={styles.savings}>
-              <span>Ahorro máximo entre tiendas</span>
-              <strong>{money.format(savings)}</strong>
-            </div>
-          )}
-        </aside>
+            {sortedPrices.length ? (
+              <div className={styles.offerList}>
+                {sortedPrices.map((price, index) => {
+                  const target = price.productUrl
+                    ?? stores[price.storeName]
+                    ?? `https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name} ${price.storeName}`)}`;
+                  return (
+                    <article
+                      className={`${styles.offerCard} ${index === 0 ? styles.bestOffer : ""}`}
+                      key={`${price.storeId}-${price.storeName}`}
+                    >
+                      <div className={styles.offerTop}>
+                        <strong>{price.storeName}</strong>
+                        {index === 0 && <em>Mejor precio</em>}
+                      </div>
+                      <span className={price.available === false ? styles.noStock : styles.inStock}>
+                        {price.available === false ? "Sin stock" : "Disponible online"}
+                      </span>
+                      <strong className={styles.offerPrice}>{money.format(price.price)}</strong>
+                      <a href={target} target="_blank" rel="noopener noreferrer">
+                        <span>Ir a tienda</span>
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={styles.noOffers}>Todavía no hay precios disponibles.</div>
+            )}
+
+            {hasComparison && (
+              <div className={styles.savings}>
+                <span>Ahorro máximo entre tiendas</span>
+                <strong>{money.format(savings)}</strong>
+              </div>
+            )}
+          </aside>
+        </div>
       </section>
     </main>
   );

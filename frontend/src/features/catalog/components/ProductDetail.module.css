@@ -45,32 +45,32 @@
   font-weight: 700;
 }
 
-/* ─── Grid de Producto: 2 Columnas ───────────────────── */
-.product {
+/* ─── Grid de Producto: 2 Columnas Perfectas ─────────── */
+.productGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
-  gap: clamp(24px, 3vw, 38px);
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr);
+  gap: clamp(24px, 3.5vw, 44px);
   align-items: start;
 }
 
-.leftColumn {
+.leftCol {
   display: flex;
   flex-direction: column;
   gap: 24px;
   min-width: 0;
 }
 
-.heroRow {
-  display: grid;
-  grid-template-columns: minmax(260px, 320px) 1fr;
-  gap: clamp(20px, 2.5vw, 32px);
-  align-items: start;
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
 }
 
 /* ─── Visual / Imagen ─────────────────────────────────── */
 .visual {
   position: relative;
-  min-height: 520px;
+  min-height: 440px;
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.07);
   border-radius: 20px;
@@ -392,8 +392,8 @@
   font-size: 0.8rem;
 }
 
-@media (max-width: 1080px) {
-  .product {
+@media (max-width: 960px) {
+  .productGrid {
     grid-template-columns: 1fr;
   }
   .storePanel {
@@ -405,13 +405,10 @@
 }
 
 @media (max-width: 720px) {
-  .heroRow {
-    grid-template-columns: 1fr;
-  }
   .visual {
     position: relative;
     top: auto;
-    min-height: 380px;
+    min-height: 340px;
   }
   .offerList {
     grid-template-columns: 1fr;
@@ -432,25 +429,28 @@
 
 /* ─── Descripción y Notas Olfativas ───────────────────── */
 .perfumeDescription {
-  margin: 20px 0;
-  padding: 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0;
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffdf8 0%, #ffffff 62%);
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  box-shadow: 0 10px 28px rgba(72, 56, 28, 0.04);
 }
 
 .perfumeDescription h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
+  margin: 0 0 8px;
   color: var(--on-surface);
-  margin-bottom: 8px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .perfumeDescription p {
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: #4b5563;
   margin: 0;
+  color: var(--on-surface-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 
 .notesSection {
