@@ -60,4 +60,50 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { register, login, me };
+async function googleAuth(req, res, next) {
+  try {
+    const { credential, idToken, email: directEmail, name: directName, googleId: directGoogleId, picture: directPicture } = req.body;
+    let email = directEmail;
+    let name = directName;
+    let googleId = directGoogleId;
+    let picture = directPicture;
+
+    const token = credential || idToken;
+    if (token && typeof token === "string") {
+      try {
+        const parts = token.split(".");
+        if (parts.length === 3) {
+          const payloadJson = Buffer.from(parts[1], "base64").toString("utf-8");
+          const payload = JSON.parse(payloadJson);
+          if (payload.email) {
+            email = payload.email;
+            name = payload.name || name;
+            googleId = payload.sub || googleId;
+            picture = payload.picture || picture;
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo decodificar el token de Google:", err.message);
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: "No se pudo obtener el correo electrónico desde la autenticación de Google." });
+    }
+
+    const user = userRepository.findOrCreateGoogleUser({
+      name: name || email.split("@")[0],
+      email,
+      googleId,
+      picture,
+    });
+
+    const jwtToken = signToken({ sub: user.id });
+    res.json({ token: jwtToken, user: userRepository.toPublic(user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, me, googleAuth };
+

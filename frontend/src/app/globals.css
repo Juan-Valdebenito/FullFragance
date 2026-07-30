@@ -57,6 +57,76 @@
   --page-header-border: rgb(197 160 89 / 20%);
 }
 
+/* ─── Warm Dark Theme (Espresso & Champagne Gold) ─────── */
+[data-theme="dark"] {
+  --surface:          #161412;
+  --surface-dim:      #110f0e;
+  --surface-bright:   #23201d;
+  --surface-lowest:   #1c1917;
+  --surface-low:      #262320;
+  --surface-container:#2e2925;
+  --surface-high:     #38322d;
+  --surface-highest:  #443d37;
+
+  --on-surface:       #f5f2eb;
+  --on-surface-muted: #b5ada3;
+
+  --outline:          #595249;
+  --outline-variant:  #3d3832;
+
+  --primary:          #e5c687;
+  --on-primary:       #1c160a;
+  --gold:             #d4af37;
+  --gold-dark:        #f0cf65;
+  --gold-light:       rgba(212, 175, 55, 0.18);
+  --accent:           #e2b857;
+
+  --lavender:         #332d3d;
+  --rose:             #3b2a2a;
+
+  --shadow:           0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-md:        0 14px 40px rgba(0, 0, 0, 0.6);
+  --shadow-lg:        0 24px 60px rgba(0, 0, 0, 0.75);
+
+  --page-header-bg:   linear-gradient(160deg, #1f1b18 0%, #161412 100%);
+  --page-header-border: rgba(212, 175, 55, 0.22);
+}
+
+/* ─── Pitch Black Theme (Pure OLED Black) ─────────────── */
+[data-theme="pitch-black"] {
+  --surface:          #000000;
+  --surface-dim:      #050505;
+  --surface-bright:   #181818;
+  --surface-lowest:   #0a0a0a;
+  --surface-low:      #121212;
+  --surface-container:#1e1e1e;
+  --surface-high:     #282828;
+  --surface-highest:  #333333;
+
+  --on-surface:       #ffffff;
+  --on-surface-muted: #a4a4a4;
+
+  --outline:          #444444;
+  --outline-variant:  #2d2d2d;
+
+  --primary:          #ffffff;
+  --on-primary:       #000000;
+  --gold:             #d4af37;
+  --gold-dark:        #e5c158;
+  --gold-light:       rgba(212, 175, 55, 0.2);
+  --accent:           #e2b857;
+
+  --lavender:         #222026;
+  --rose:             #291e1e;
+
+  --shadow:           0 8px 32px rgba(0, 0, 0, 0.7);
+  --shadow-md:        0 14px 40px rgba(0, 0, 0, 0.85);
+  --shadow-lg:        0 24px 60px rgba(0, 0, 0, 0.95);
+
+  --page-header-bg:   linear-gradient(160deg, #121212 0%, #000000 100%);
+  --page-header-border: rgba(255, 255, 255, 0.15);
+}
+
 /* ─── Reset ─────────────────────────────────────────── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }

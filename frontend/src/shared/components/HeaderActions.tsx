@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
+import { ThemeToggle } from "@/shared/theme/ThemeToggle";
 import { Icon } from "./Icon";
 import { LogoutButton } from "./LogoutButton";
 import { UserLocation } from "./UserLocation";
@@ -14,6 +15,7 @@ export function HeaderActions() {
   if (!user) {
     return (
       <div className={styles.actions}>
+        <ThemeToggle />
         <Link className={styles.loginLink} href="/login">Ingresar</Link>
         <Link className={styles.registerLink} href="/registro">Crear cuenta</Link>
       </div>
@@ -40,6 +42,7 @@ export function HeaderActions() {
           ⚙️ Admin Panel
         </Link>
       )}
+      <ThemeToggle />
       <span><UserLocation /></span>
       <Link aria-label="Perfil" href="/perfil"><Icon name="user" /></Link>
       <LogoutButton />

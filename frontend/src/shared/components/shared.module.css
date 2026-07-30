@@ -26,8 +26,8 @@
   position: sticky;
   z-index: 30;
   top: 0;
-  border-bottom: 1px solid rgb(196 199 199 / 35%);
-  background: rgb(249 249 249 / 93%);
+  border-bottom: 1px solid var(--outline-variant);
+  background: var(--surface);
   backdrop-filter: blur(20px);
 }
 
@@ -115,9 +115,9 @@
   right: 0;
   left: 0;
   visibility: hidden;
-  border-top: 1px solid rgb(197 160 89 / 28%);
+  border-top: 1px solid var(--gold-light);
   border-bottom: 1px solid var(--surface-container);
-  background: rgb(252 251 248 / 98%);
+  background: var(--surface-bright);
   color: var(--on-surface);
   opacity: 0;
   box-shadow: 0 22px 48px rgb(31 27 20 / 13%);
@@ -186,17 +186,17 @@
   display: grid;
   gap: 3px;
   width: 100%;
-  border: 1px solid transparent !important;
+  border: 1px solid var(--outline-variant) !important;
   border-radius: 10px !important;
-  background: #fff;
+  background: var(--surface-bright);
   padding: 9px 11px !important;
-  box-shadow: 0 5px 18px rgb(0 0 0 / 4%);
+  box-shadow: var(--shadow);
   transition: border-color .2s, background .2s, transform .2s !important;
 }
 
 .toolsColumn > a:hover {
-  border-color: rgb(197 160 89 / 45%) !important;
-  background: #fffdf8;
+  border-color: var(--gold) !important;
+  background: var(--surface-low);
 }
 
 .toolsColumn strong {
@@ -240,7 +240,7 @@
 }
 
 .loginLink { color: var(--on-surface-muted); }
-.registerLink { background: var(--primary); color: #fff; }
+.registerLink { background: var(--primary); color: var(--on-primary); }
 
 /* ─── PageHeader inner (extra spacing slot) ──────────────────────────────── */
 
@@ -254,7 +254,7 @@
 .footer {
   margin-top: 90px;
   background: var(--surface-container);
-  border-top: 1px solid rgb(196 199 199 / 25%);
+  border-top: 1px solid var(--outline-variant);
 }
 
 .compact { margin-top: 0; }
@@ -288,7 +288,7 @@
 .footerContact > * {
   border: 1px solid var(--outline-variant);
   border-radius: 99px;
-  background: #fff;
+  background: var(--surface-bright);
   padding: 8px 11px;
   color: var(--on-surface-muted);
   font-size: .68rem;
@@ -321,11 +321,11 @@
 }
 
 .footerTrust {
-  border: 1px solid rgb(197 160 89 / 28%);
+  border: 1px solid var(--gold-light);
   border-radius: var(--radius-lg);
-  background: rgb(255 255 255 / 62%);
+  background: var(--surface-bright);
   padding: 20px;
-  box-shadow: 0 10px 28px rgb(0 0 0 / 4%);
+  box-shadow: var(--shadow);
 }
 
 .footerTrust span {

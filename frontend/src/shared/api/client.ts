@@ -34,6 +34,7 @@ export function productImageUrl(imageUrl?: string | null) {
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
   register: (body: { name: string; email: string; password: string }) => request<{ token: string; user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
+  loginWithGoogle: (payload: { credential?: string; idToken?: string; email?: string; name?: string; googleId?: string; picture?: string }) => request<{ token: string; user: User }>("/auth/google", { method: "POST", body: JSON.stringify(payload), authenticated: false }).then(saveSession),
   me: () => request<{ user: User }>("/auth/me").then(data => data.user),
   setCity: (city: City) => request<{ user: User }>("/users/me/city", { method: "PUT", body: JSON.stringify(city) }).then(data => data.user),
   comparisons: (city: City, query = "") => request<{ comparison: Comparison[] }>(`/prices?${cityQuery(city)}&q=${encodeURIComponent(query)}`).then(data => data.comparison),

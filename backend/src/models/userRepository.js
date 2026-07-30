@@ -76,6 +76,36 @@ function saveScentPreferences(userId, scores) {
   return user;
 }
 
+function findOrCreateGoogleUser({ name, email, googleId, picture }) {
+  const db = readDb();
+  let user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+
+  if (user) {
+    let updated = false;
+    if (googleId && !user.googleId) { user.googleId = googleId; updated = true; }
+    if (picture && !user.picture) { user.picture = picture; updated = true; }
+    if (updated) writeDb(db);
+    return user;
+  }
+
+  user = {
+    id: uuid(),
+    name: name || email.split("@")[0],
+    email,
+    passwordHash: null,
+    googleId: googleId || null,
+    picture: picture || null,
+    role: roleForEmail(email),
+    city: null,
+    favorites: [],
+    scentPreferences: null,
+    createdAt: new Date().toISOString(),
+  };
+  db.users.push(user);
+  writeDb(db);
+  return user;
+}
+
 function toPublic(user) {
   if (!user) return null;
   const { passwordHash, ...publicUser } = user;
@@ -92,6 +122,7 @@ module.exports = {
   findById,
   roleForEmail,
   create,
+  findOrCreateGoogleUser,
   updateCity,
   toggleFavorite,
   saveScentPreferences,

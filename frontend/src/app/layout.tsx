@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
+import { ThemeProvider } from "@/shared/theme/ThemeContext";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="es" data-scroll-behavior="smooth">
       <body>
-        <OptionalSessionProvider>{children}</OptionalSessionProvider>
+        <ThemeProvider>
+          <OptionalSessionProvider>{children}</OptionalSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
