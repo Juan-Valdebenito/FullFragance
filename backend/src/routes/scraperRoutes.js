@@ -24,6 +24,9 @@ router.post("/cosmetic/sync-perfumes", requireAdmin, scraperController.syncCosme
 router.get("/paris/products", requireAdmin, scraperController.listParis);
 router.post("/paris/sync", requireAdmin, scraperController.syncParis);
 router.post("/paris/sync-perfumes", requireAdmin, scraperController.syncParisPerfumeCatalog);
+router.get("/abc/products", requireAdmin, scraperController.listAbc);
+router.post("/abc/sync", requireAdmin, scraperController.syncAbc);
+router.post("/abc/sync-perfumes", requireAdmin, scraperController.syncAbcPerfumeCatalog);
 router.get("/sync-jobs/:jobId", requireAdmin, scraperController.getSyncJob);
 
 module.exports = router;

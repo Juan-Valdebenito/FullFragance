@@ -11,6 +11,7 @@ const SOURCE_STORES = {
   "elite-cl": { storeId: "elite-online", storeName: "Elite Perfumes" },
   "cosmetic-cl": { storeId: "cosmetic-online", storeName: "Cosmetic" },
   "paris-cl": { storeId: "paris-online", storeName: "Paris" },
+  "abc-cl": { storeId: "abc-online", storeName: "ABC" },
 };
 
 function priceFor(cityName, storeId, product) {

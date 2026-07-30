@@ -52,6 +52,133 @@ const IDENTITY_MODIFIERS = new Set([
   "green",
 ]);
 
+// Marcas que aparecen de forma consistente en los títulos de las tiendas. El
+// scraper no siempre entrega `brand` (en especial Shopify/UCP), por lo que esta
+// tabla permite normalizar también los registros históricos antes del matching.
+const BRAND_ALIASES = [
+  ["Adolfo Dominguez", ["adolfo dominguez"]],
+  ["Afnan", ["afnan"]],
+  ["Al Haramain", ["al haramain"]],
+  ["Antonio Banderas", ["antonio banderas"]],
+  ["Ariana Grande", ["ariana grande"]],
+  ["Armaf", ["armaf"]],
+  ["Armaan Luxe", ["armaan luxe"]],
+  ["Asdaaf", ["asdaaf"]],
+  ["Athoor al Alam", ["athoor al alam"]],
+  ["Attri", ["attri"]],
+  ["Azzaro", ["azzaro"]],
+  ["Anfar", ["anfar"]],
+  ["Auraa", ["auraa"]],
+  ["Bentley", ["bentley"]],
+  ["Bharara", ["bharara"]],
+  ["Boucheron", ["boucheron"]],
+  ["Bvlgari", ["bvlgari", "bulgari"]],
+  ["Burberry", ["burberry"]],
+  ["Calvin Klein", ["calvin klein"]],
+  ["Carolina Herrera", ["carolina herrera"]],
+  ["Cacharel", ["cacharel"]],
+  ["Coach", ["coach"]],
+  ["Clinique", ["clinique"]],
+  ["Davidoff", ["davidoff"]],
+  ["Diesel", ["diesel"]],
+  ["Dolce & Gabbana", ["dolce gabbana", "dolce and gabbana"]],
+  ["Dumont", ["dumont"]],
+  ["DKNY", ["dkny"]],
+  ["Elivi", ["elivi"]],
+  ["Emir", ["emir"]],
+  ["Flavia", ["flavia"]],
+  ["Fragrance World", ["fragrance world", "fragrance worldoud"]],
+  ["French Avenue", ["french avenue"]],
+  ["Fomo", ["fomo"]],
+  ["Giorgio Armani", ["giorgio armani", "armani"]],
+  ["Givenchy", ["givenchy"]],
+  ["Gisada", ["gisada"]],
+  ["Grandeur", ["grandeur"]],
+  ["Gucci", ["gucci"]],
+  ["Guy Laroche", ["guy laroche"]],
+  ["Halloween", ["halloween", "hallowen"]],
+  ["Hamidi", ["hamidi"]],
+  ["Hermès", ["hermes"]],
+  ["Hugo Boss", ["hugo boss", "boss"]],
+  ["Issey Miyake", ["issey miyake"]],
+  ["Jaguar", ["jaguar"]],
+  ["Jean Paul Gaultier", ["jean paul gaultier", "jpg"]],
+  ["Jenny Glow", ["jenny glow"]],
+  ["Jessica Twain", ["jessica twain"]],
+  ["Jesus del Pozo", ["jesus del pozo"]],
+  ["Jivi Parfums", ["jivi parfums"]],
+  ["Jo Milano", ["jo milano"]],
+  ["Jimmy Choo", ["jimmy choo"]],
+  ["Karl Lagerfeld", ["karl lagerfeld"]],
+  ["Lacoste", ["lacoste"]],
+  ["Lalique", ["lalique"]],
+  ["Lancôme", ["lancome"]],
+  ["Lattafa", ["lattafa"]],
+  ["Loewe", ["loewe"]],
+  ["Lorenzo Pazzaglia", ["lorenzo pazzaglia"]],
+  ["Moschino", ["moschino"]],
+  ["Maison Alhambra", ["maison alhambra"]],
+  ["Maison Asrar", ["maison asrar"]],
+  ["Matin Martin", ["matin martin"]],
+  ["Memwa", ["memwa"]],
+  ["Mercedes-Benz", ["mercedes benz"]],
+  ["Ministry of Gourmand", ["ministry of gourmand"]],
+  ["Moncler", ["moncler"]],
+  ["Montblanc", ["montblanc"]],
+  ["Mugler", ["mugler"]],
+  ["Narciso Rodriguez", ["narciso rodriguez"]],
+  ["Nautica", ["nautica"]],
+  ["Nina Ricci", ["nina ricci"]],
+  ["Paco Rabanne", ["paco rabanne", "rabanne"]],
+  ["Paris Corner", ["paris corner"]],
+  ["Perry Ellis", ["perry ellis"]],
+  ["Pendora", ["pendora"]],
+  ["Paloma Picasso", ["paloma picasso"]],
+  ["Ralph Lauren", ["ralph lauren"]],
+  ["Rasasi", ["rasasi"]],
+  ["Rave", ["rave"]],
+  ["Rayhaan", ["rayhaan"]],
+  ["Riviera Privé", ["riviera prive"]],
+  ["Risala", ["risala"]],
+  ["Salvatore Ferragamo", ["salvatore ferragamo"]],
+  ["Sabrina Carpenter", ["sabrina carpenter"]],
+  ["Shakira", ["shakira"]],
+  ["Sospiro", ["sospiro"]],
+  ["Tom Ford", ["tom ford"]],
+  ["Tommy Hilfiger", ["tommy hilfiger"]],
+  ["Tubbees", ["tubbees"]],
+  ["Tous", ["tous"]],
+  ["Valentino", ["valentino"]],
+  ["Versace", ["versace"]],
+  ["Viktor & Rolf", ["viktor rolf", "viktor and rolf"]],
+  ["Yves Saint Laurent", ["yves saint laurent", "ysl"]],
+  ["Xerjoff", ["xerjoff"]],
+  ["Zakat Parfums", ["zakat parfums"]],
+  ["Zimaya", ["zimaya"]],
+];
+
+// Algunos títulos históricos sólo incluyen el nombre de la fragancia. Son
+// referencias inequívocas y se mantienen separadas de los aliases de marca.
+const TITLE_BRAND_PATTERNS = [
+  [/\blegend spirit\b/, "Montblanc"],
+  [/\bmont blanc explorer\b/, "Montblanc"],
+  [/\bbig pony\b/, "Ralph Lauren"],
+  [/\blady million\b|\bmillion gold\b/, "Paco Rabanne"],
+  [/\bangel stellar\b/, "Mugler"],
+  [/\bacqua di gio\b/, "Giorgio Armani"],
+  [/\bnitro pour homme\b/, "Dumont"],
+  [/\bodyssey\b/, "Armaf"],
+  [/\bblack opium\b|\blibre\b/, "Yves Saint Laurent"],
+  [/\btouch of pink\b/, "Lacoste"],
+  [/\bperfume asad\b/, "Lattafa"],
+  [/\bstarwalker\b/, "Montblanc"],
+  [/\bh24\b/, "Hermès"],
+  [/\btommy men\b/, "Tommy Hilfiger"],
+  [/\bkarl ikonik\b|\bkarl paris\b/, "Karl Lagerfeld"],
+  [/\bacqua di parisis\b/, "Acqua di Parisis"],
+  [/\blucky number 6\b/, "Liz Claiborne"],
+];
+
 function normalize(value) {
   return String(value || "")
     .normalize("NFD")
@@ -61,6 +188,27 @@ function normalize(value) {
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function inferBrandFromName(name) {
+  const value = normalize(name);
+  if (!value) return null;
+
+  for (const [brand, aliases] of BRAND_ALIASES) {
+    if (aliases.some((alias) => new RegExp(`(?:^| )${alias}(?: |$)`).test(value))) {
+      return brand;
+    }
+  }
+  const titlePattern = TITLE_BRAND_PATTERNS.find(([pattern]) => pattern.test(value));
+  if (titlePattern) return titlePattern[1];
+  return null;
+}
+
+function brandOf(product) {
+  const declared = String(product?.brand || "").trim();
+  return declared && normalize(declared) !== "sin marca"
+    ? declared
+    : inferBrandFromName(product?.name);
 }
 
 function normalizeBrand(value) {
@@ -129,7 +277,7 @@ function isSet(product) {
 }
 
 function identityTokens(product) {
-  const brandTokens = new Set(normalizeBrand(product.brand).split(" ").filter(Boolean));
+  const brandTokens = new Set(normalizeBrand(brandOf(product)).split(" ").filter(Boolean));
   return normalize(product.name)
     .split(" ")
     .filter(
@@ -168,8 +316,8 @@ function samePerfume(left, right) {
   // Un set/kit NO es el mismo producto que un perfume individual
   if (isSet(left) !== isSet(right)) return false;
 
-  const leftBrand = normalizeBrand(left.brand);
-  const rightBrand = normalizeBrand(right.brand);
+  const leftBrand = normalizeBrand(brandOf(left));
+  const rightBrand = normalizeBrand(brandOf(right));
   if (!leftBrand || !rightBrand || leftBrand !== rightBrand) return false;
 
   // Verificar volumen
@@ -218,6 +366,7 @@ function samePerfume(left, right) {
 module.exports = {
   normalize,
   normalizeBrand,
+  inferBrandFromName,
   volumeOf,
   concentrationOf,
   modifierOf,

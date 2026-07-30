@@ -31,7 +31,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingAlisha,    setSyncingAlisha]    = useState(false);
   const [syncingSilk,      setSyncingSilk]      = useState(false);
   const [syncingElite,     setSyncingElite]     = useState(false);
+  const [syncingCosmetic,  setSyncingCosmetic]  = useState(false);
   const [syncingParis,     setSyncingParis]     = useState(false);
+  const [syncingAbc,       setSyncingAbc]       = useState(false);
   const [syncingAll,       setSyncingAll]       = useState(false);
 
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
@@ -39,14 +41,18 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [alishaJob,    setAlishaJob]    = useState<SyncJob | null>(null);
   const [silkJob,      setSilkJob]      = useState<SyncJob | null>(null);
   const [eliteJob,     setEliteJob]     = useState<SyncJob | null>(null);
+  const [cosmeticJob,  setCosmeticJob]  = useState<SyncJob | null>(null);
   const [parisJob,     setParisJob]     = useState<SyncJob | null>(null);
+  const [abcJob,       setAbcJob]       = useState<SyncJob | null>(null);
 
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
   const [alishaMsg,    setAlishaMsg]    = useState("");
   const [silkMsg,      setSilkMsg]      = useState("");
   const [eliteMsg,     setEliteMsg]     = useState("");
+  const [cosmeticMsg,  setCosmeticMsg]  = useState("");
   const [parisMsg,     setParisMsg]     = useState("");
+  const [abcMsg,       setAbcMsg]       = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -168,6 +174,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingElite(false); }
   }
 
+  async function handleSyncCosmetic() {
+    setSyncingCosmetic(true); setCosmeticMsg("Iniciando catálogo UCP de Cosmetic...");
+    addActivity("Sincronización de Cosmetic iniciada", "Sync", styles.tagSync, "#059669");
+    try {
+      const { job } = await api.syncCosmeticPerfumes();
+      await waitForSync(job, "Cosmetic", setCosmeticJob, setCosmeticMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Cosmetic.";
+      setCosmeticMsg(msg);
+      addActivity(`Error Cosmetic: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingCosmetic(false); }
+  }
+
   async function handleSyncParis() {
     setSyncingParis(true); setParisMsg("Iniciando conexión con Paris...");
     addActivity("Sincronización de Paris iniciada", "Sync", styles.tagSync, "#e11d48");
@@ -181,6 +200,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingParis(false); }
   }
 
+  async function handleSyncAbc() {
+    setSyncingAbc(true); setAbcMsg("Iniciando conexión con ABC...");
+    addActivity("Sincronización de ABC iniciada", "Sync", styles.tagSync, "#0b4ea2");
+    try {
+      const { job } = await api.syncAbcPerfumes();
+      await waitForSync(job, "ABC", setAbcJob, setAbcMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar ABC.";
+      setAbcMsg(msg);
+      addActivity(`Error ABC: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingAbc(false); }
+  }
+
   async function handleSyncAll() {
     setSyncingAll(true);
     addActivity("Sincronización masiva de todas las tiendas iniciada", "Sync", styles.tagSync, "#3b82f6");
@@ -190,7 +222,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       await handleSyncAlisha();
       await handleSyncSilk();
       await handleSyncElite();
+      await handleSyncCosmetic();
       await handleSyncParis();
+      await handleSyncAbc();
     } finally {
       setSyncingAll(false);
     }
@@ -204,7 +238,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const alishaCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
   const silkCount      = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
   const eliteCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
+  const cosmeticCount  = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
   const parisCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Paris")).length, [items]);
+  const abcCount       = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "ABC")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
@@ -243,8 +279,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Base de datos (SQLite)", sub: "catalog.sqlite · Catálogo en memoria", status: totalProducts > 0 ? "Activa" : "Vacía", cls: totalProducts > 0 ? styles.healthOk : styles.healthWarning, icon: "🗄️" },
     { label: "Scraper Falabella", sub: "falabella-cl · JSON API", status: syncingFalabella ? "Ejecutando..." : falabellaJob?.status === "failed" ? "Error" : "Listo", cls: falabellaJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
     { label: "Scraper Ripley", sub: "ripley-cl · REST Client", status: syncingRipley ? "Ejecutando..." : ripleyJob?.status === "failed" ? "Error" : "Listo", cls: ripleyJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🏬" },
-    { label: "Scrapers Shopify (3)", sub: "Alisha, Silk, Elite · JSON API", status: (syncingAlisha || syncingSilk || syncingElite) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },
+    { label: "Scrapers Shopify / UCP (4)", sub: "Alisha, Silk, Elite y Cosmetic", status: (syncingAlisha || syncingSilk || syncingElite || syncingCosmetic) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },
     { label: "Scraper Paris", sub: "paris.cl · Catálogo SSR", status: syncingParis ? "Ejecutando..." : parisJob?.status === "failed" ? "Error" : "Listo", cls: parisJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
+    { label: "Scraper ABC", sub: "abc.cl · Catálogo SSR", status: syncingAbc ? "Ejecutando..." : abcJob?.status === "failed" ? "Error" : "Listo", cls: abcJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛒" },
   ];
 
   // ── HEADER CONTROL BAR ──────────────────────────────────
@@ -341,8 +378,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <span>Tiendas Conectadas</span>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
-          <strong className={styles.kpiValue}>6</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite y Paris</p>
+          <strong className={styles.kpiValue}>8</strong>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris y ABC</p>
         </article>
       </section>
 
@@ -350,7 +387,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.panelCard}>
         <div className={styles.panelHeader}>
           <h3>Distribución por Tienda Verificada</h3>
-          <span className={styles.panelHeaderBadge}>6 Fuentes de origen</span>
+          <span className={styles.panelHeaderBadge}>8 Fuentes de origen</span>
         </div>
         <div className={styles.storePillsRow}>
           {[
@@ -359,7 +396,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             { name: "Alisha",    count: alishaCount,    color: "#ec4899", tag: "alisha-cl" },
             { name: "Silk",      count: silkCount,      color: "#2563eb", tag: "silk-cl" },
             { name: "Elite",     count: eliteCount,     color: "#d97706", tag: "elite-cl" },
+            { name: "Cosmetic",  count: cosmeticCount,  color: "#059669", tag: "cosmetic-cl" },
             { name: "Paris",     count: parisCount,     color: "#e11d48", tag: "paris-cl" },
+            { name: "ABC",       count: abcCount,       color: "#0b4ea2", tag: "abc-cl" },
           ].map(s => {
             const pct = totalProducts > 0 ? Math.round((s.count / totalProducts) * 100) : 0;
             return (
@@ -452,13 +491,13 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.syncHeaderRow}>
         <div>
           <h2>Centro de Sincronización</h2>
-          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 5 tiendas.</p>
+          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 8 tiendas.</p>
         </div>
         <button
           type="button"
           className={styles.syncAllBtn}
           onClick={handleSyncAll}
-          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingParis}
+          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc}
         >
           {syncingAll ? "⏳ Sincronizando Todo..." : "⚡ Sincronizar Todo el Catálogo"}
         </button>
@@ -605,6 +644,34 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           {eliteMsg && <p className={styles.syncMsg}>{eliteMsg}</p>}
         </article>
 
+        {/* Cosmetic */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(5, 150, 105, 0.1)", color: "#059669" }}>
+              ✨
+            </div>
+            <div>
+              <h3>Cosmetic.cl</h3>
+              <small>cosmetic-cl · Catálogo Shopify UCP/MCP</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingCosmetic ? styles.stateRunning : cosmeticJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingCosmetic ? "Ejecutando..." : cosmeticJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {cosmeticJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${cosmeticJob.targetProducts ? Math.min(100, Math.round((cosmeticJob.imported / cosmeticJob.targetProducts) * 100)) : (cosmeticJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{cosmeticJob.imported} productos importados · pág {cosmeticJob.currentPage}/{cosmeticJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncCosmetic} disabled={syncingCosmetic || syncingAll}>
+            {syncingCosmetic ? "Iniciando scraper..." : "🔄 Sincronizar Cosmetic"}
+          </button>
+          {cosmeticMsg && <p className={styles.syncMsg}>{cosmeticMsg}</p>}
+        </article>
+
         {/* Paris */}
         <article className={styles.syncCard}>
           <div className={styles.syncCardTop}>
@@ -631,6 +698,34 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             {syncingParis ? "Iniciando scraper..." : "🔄 Sincronizar Paris"}
           </button>
           {parisMsg && <p className={styles.syncMsg}>{parisMsg}</p>}
+        </article>
+
+        {/* ABC */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(11, 78, 162, 0.1)", color: "#0b4ea2" }}>
+              🛒
+            </div>
+            <div>
+              <h3>ABC.cl</h3>
+              <small>abc-cl · Catálogo de perfumería</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingAbc ? styles.stateRunning : abcJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingAbc ? "Ejecutando..." : abcJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {abcJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${abcJob.targetProducts ? Math.min(100, Math.round((abcJob.imported / abcJob.targetProducts) * 100)) : (abcJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{abcJob.imported} productos importados · página permitida</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncAbc} disabled={syncingAbc || syncingAll}>
+            {syncingAbc ? "Iniciando scraper..." : "🔄 Sincronizar ABC"}
+          </button>
+          {abcMsg && <p className={styles.syncMsg}>{abcMsg}</p>}
         </article>
       </div>
 
@@ -689,7 +784,9 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="alisha">Alisha</option>
               <option value="silk">Silk</option>
               <option value="elite">Elite</option>
+              <option value="cosmetic">Cosmetic</option>
               <option value="paris">Paris</option>
+              <option value="abc">ABC</option>
             </select>
           </div>
         </div>
@@ -712,8 +809,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "paris-cl" ? styles.badgeParis : styles.badgeMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "paris-cl" ? "Paris" : "Multi-tienda";
+                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : styles.badgeMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : "Multi-tienda";
                 const avail = item.product.available !== false;
                 const matchedCount = item.product.matchedStores ?? 1;
 

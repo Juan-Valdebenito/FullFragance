@@ -24,6 +24,9 @@ const {
 const {
   scrapePerfumeCatalog: scrapeParisPerfumeCatalog,
 } = require("../services/parisScraper");
+const {
+  scrapePerfumeCatalog: scrapeAbcPerfumeCatalog,
+} = require("../services/abcScraper");
 
 async function syncFalabella(req, res, next) {
   try {
@@ -320,6 +323,36 @@ function listParis(_req, res) {
   res.json({ products: listProducts("paris-cl") });
 }
 
+async function syncAbc(req, res, next) {
+  try {
+    const maxProducts = Number(req.body?.maxProducts || 12);
+    if (!Number.isInteger(maxProducts) || maxProducts < 1 || maxProducts > 48) {
+      return res.status(400).json({ error: "maxProducts debe ser un entero entre 1 y 48." });
+    }
+    const results = await scrapeAbcPerfumeCatalog(maxProducts);
+    const products = results.filter((result) => result.ok).map((result) => result.product);
+    if (products.length) replaceProducts("abc-cl", products);
+    res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function syncAbcPerfumeCatalog(req, res, next) {
+  try {
+    if (req.body?.fullCatalog) {
+      return res.status(202).json({ job: startCatalogSync("abc-cl") });
+    }
+    return syncAbc(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function listAbc(_req, res) {
+  res.json({ products: listProducts("abc-cl") });
+}
+
 module.exports = {
   syncFalabella,
   syncPerfumeCatalog,
@@ -342,5 +375,8 @@ module.exports = {
   syncParis,
   syncParisPerfumeCatalog,
   listParis,
+  syncAbc,
+  syncAbcPerfumeCatalog,
+  listAbc,
   getSyncJob,
 };

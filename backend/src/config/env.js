@@ -73,10 +73,12 @@ module.exports = {
   cosmeticMinDelayMs: Number(process.env.COSMETIC_MIN_DELAY_MS || 500),
   cosmeticMaxDelayMs: Number(process.env.COSMETIC_MAX_DELAY_MS || 1000),
   cosmeticRequestTimeoutMs: Number(process.env.COSMETIC_REQUEST_TIMEOUT_MS || 20000),
-  cosmeticFixtureDir: process.env.COSMETIC_FIXTURE_DIR || "",
-  cosmeticCollectionUrl:
-    process.env.COSMETIC_COLLECTION_URL ||
-    "https://cosmetic.cl/collections/perfumes/products.json",
+  cosmeticUcpEndpoint:
+    process.env.COSMETIC_UCP_ENDPOINT ||
+    "https://cosmetic-chile.myshopify.com/api/ucp/mcp",
+  cosmeticUcpAgentProfile:
+    process.env.COSMETIC_UCP_AGENT_PROFILE ||
+    "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json",
   parisUserAgent:
     process.env.PARIS_USER_AGENT ||
     "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
@@ -93,5 +95,19 @@ module.exports = {
   parisApplicationId:
     process.env.PARIS_APPLICATION_ID ||
     "34bb8686968a85a272a6c546ddcb9860db1ea14ee72f5207ef0c028280a6e7bc",
+  abcUserAgent:
+    process.env.ABC_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  abcMinDelayMs: Number(process.env.ABC_MIN_DELAY_MS || 1500),
+  abcMaxDelayMs: Number(process.env.ABC_MAX_DELAY_MS || 3000),
+  abcRequestTimeoutMs: Number(process.env.ABC_REQUEST_TIMEOUT_MS || 20000),
+  abcFixtureDir: process.env.ABC_FIXTURE_DIR || "",
+  abcPerfumesUrl:
+    process.env.ABC_PERFUMES_URL ||
+    "https://www.abc.cl/belleza/perfumes/",
+  abcSitemapIndexUrl:
+    process.env.ABC_SITEMAP_INDEX_URL ||
+    "https://www.abc.cl/sitemap_index.xml",
+  abcSitemapCacheTtlMs: Number(process.env.ABC_SITEMAP_CACHE_TTL_MS || 900000),
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

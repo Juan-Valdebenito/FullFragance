@@ -20,6 +20,7 @@ const sourceBadges: Record<string, string> = {
   "elite-cl": "Elite",
   "cosmetic-cl": "Cosmetic",
   "paris-cl": "Paris",
+  "abc-cl": "ABC",
 };
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
@@ -98,6 +99,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [syncingAlisha, setSyncingAlisha] = useState(false);
   const [syncingSilk, setSyncingSilk] = useState(false);
   const [syncingElite, setSyncingElite] = useState(false);
+  const [syncingCosmetic, setSyncingCosmetic] = useState(false);
+  const [syncingParis, setSyncingParis] = useState(false);
+  const [syncingAbc, setSyncingAbc] = useState(false);
   const [error, setError] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -217,6 +221,27 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     finally { setSyncingElite(false); }
   }
 
+  async function updateCosmetic() {
+    setSyncingCosmetic(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncCosmeticPerfumes(); await waitForSync(job, "Cosmetic"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Cosmetic."); }
+    finally { setSyncingCosmetic(false); }
+  }
+
+  async function updateParis() {
+    setSyncingParis(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncParisPerfumes(); await waitForSync(job, "Paris"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Paris."); }
+    finally { setSyncingParis(false); }
+  }
+
+  async function updateAbc() {
+    setSyncingAbc(true); setError(""); setSyncMessage("");
+    try { const { job } = await api.syncAbcPerfumes(); await waitForSync(job, "ABC"); await loadCatalog(); }
+    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar ABC."); }
+    finally { setSyncingAbc(false); }
+  }
+
   // ── Filtrado y paginación (client-side, instantáneo) ────────────────────
   const brands     = useMemo(() => [...new Set(items.map(i => i.product.brand))].sort(), [items]);
   const categories = useMemo(() => [...new Set(items.map(i => i.product.category))].sort(), [items]);
@@ -268,6 +293,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const eliteCount     = useMemo(() => items.filter(i => i.product.source === "elite-cl"     || i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
   const cosmeticCount  = useMemo(() => items.filter(i => i.product.source === "cosmetic-cl"  || i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
   const parisCount     = useMemo(() => items.filter(i => i.product.source === "paris-cl"     || i.prices.some(p => p.storeName === "Paris")).length, [items]);
+  const abcCount       = useMemo(() => items.filter(i => i.product.source === "abc-cl"       || i.prices.some(p => p.storeName === "ABC")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -317,6 +343,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
             <button onClick={updateAlisha}    disabled={syncingAlisha}>{syncingAlisha ? "Actualizando…" : "Actualizar Alisha"}</button>
             <button onClick={updateSilk}      disabled={syncingSilk}>{syncingSilk ? "Actualizando…" : "Actualizar Silk"}</button>
             <button onClick={updateElite}     disabled={syncingElite}>{syncingElite ? "Actualizando…" : "Actualizar Elite"}</button>
+            <button onClick={updateCosmetic}  disabled={syncingCosmetic}>{syncingCosmetic ? "Actualizando…" : "Actualizar Cosmetic"}</button>
+            <button onClick={updateParis}     disabled={syncingParis}>{syncingParis ? "Actualizando…" : "Actualizar Paris"}</button>
+            <button onClick={updateAbc}       disabled={syncingAbc}>{syncingAbc ? "Actualizando…" : "Actualizar ABC"}</button>
           </>
         )}
       </div>
@@ -345,6 +374,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               <span><strong>{alishaCount}</strong> Alisha</span>
               <span><strong>{silkCount}</strong> Silk</span>
               <span><strong>{eliteCount}</strong> Elite</span>
+              <span><strong>{cosmeticCount}</strong> Cosmetic</span>
+              <span><strong>{parisCount}</strong> Paris</span>
+              <span><strong>{abcCount}</strong> ABC</span>
             </div>
             <div className={styles.filters}>
               <label>
