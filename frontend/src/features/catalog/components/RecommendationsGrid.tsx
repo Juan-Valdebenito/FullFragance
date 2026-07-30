@@ -14,6 +14,7 @@ const stores: Record<string, string> = {
   "elite-cl": "Elite Perfumes",
   "cosmetic-cl": "Cosmetic",
   "paris-cl": "Paris",
+  "abc-cl": "ABC",
 };
 function adapt(item: Recommendation): Product {
   const prices = (item.product.offers || [])

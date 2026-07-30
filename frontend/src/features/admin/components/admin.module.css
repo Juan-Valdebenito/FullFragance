@@ -805,7 +805,9 @@
 .badgeAlisha    { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
 .badgeSilk      { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
 .badgeElite     { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+.badgeCosmetic  { background: rgba(5, 150, 105, 0.1); color: #059669; }
 .badgeParis     { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
+.badgeAbc       { background: rgba(11, 78, 162, 0.1); color: #0b4ea2; }
 .badgeMulti     { background: rgba(197, 160, 89, 0.15); color: var(--gold-dark); }
 
 .priceText {

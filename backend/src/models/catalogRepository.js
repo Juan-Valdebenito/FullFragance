@@ -1,6 +1,6 @@
 const { readDb } = require("../data/database");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { normalizeBrand, samePerfume, tokenScore, isSet } = require("./productMatcher");
+const { normalizeBrand, inferBrandFromName, samePerfume, tokenScore, isSet } = require("./productMatcher");
 
 let cachedProducts = null;
 
@@ -13,6 +13,13 @@ function inferGender(name) {
   if (/mujer|femenin|woman|lady|her\b/.test(value)) return "Femenino";
   if (/hombre|masculin|man\b|him\b/.test(value)) return "Masculino";
   return "Unisex";
+}
+
+function resolvedBrand(product) {
+  const declared = String(product?.brand || "").trim();
+  return declared && normalizeBrand(declared) !== "sin marca"
+    ? declared
+    : inferBrandFromName(product?.name);
 }
 
 const NOTE_PATTERNS = [
@@ -85,36 +92,38 @@ function scentProfileFor(product, profiles) {
 }
 
 function toCatalogProduct(product, profiles = getDbData().products, allNotes = getDbData().olfactoryNotes) {
-  const profile = scentProfileFor(product, profiles);
-  const gender = inferGender(product.name);
-  const rawNotes = profile?.notes && profile.notes.length ? profile.notes : inferOlfactoryNotes(product, gender);
+  const inferredBrand = resolvedBrand(product);
+  const enrichedProduct = inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
+  const profile = scentProfileFor(enrichedProduct, profiles);
+  const gender = inferGender(enrichedProduct.name);
+  const rawNotes = profile?.notes && profile.notes.length ? profile.notes : inferOlfactoryNotes(enrichedProduct, gender);
   const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
-  const description = profile?.description || inferDescription(product, gender, olfactoryNotes);
+  const description = profile?.description || inferDescription(enrichedProduct, gender, olfactoryNotes);
 
   return {
-    id: `${product.source.replace(/-cl$/, "")}-${product.sku.toLowerCase()}`,
-    name: product.name,
-    brand: product.brand || "Sin marca",
-    unit: product.presentation || "Presentación no informada",
-    basePrice: product.price || 0,
+    id: `${enrichedProduct.source.replace(/-cl$/, "")}-${enrichedProduct.sku.toLowerCase()}`,
+    name: enrichedProduct.name,
+    brand: enrichedProduct.brand || "Sin marca",
+    unit: enrichedProduct.presentation || "Presentación no informada",
+    basePrice: enrichedProduct.price || 0,
     category: "Perfumes",
     gender,
     notes: rawNotes,
     olfactoryNotes,
     description,
-    source: product.source,
-    sourceUrl: product.url,
-    imageUrl: product.imageUrl || null,
-    available: product.available,
-    priceIsMock: Boolean(product.raw?.mockPrice),
-    isSet: isSet(product),
+    source: enrichedProduct.source,
+    sourceUrl: enrichedProduct.url,
+    imageUrl: enrichedProduct.imageUrl || null,
+    available: enrichedProduct.available,
+    priceIsMock: Boolean(enrichedProduct.raw?.mockPrice),
+    isSet: isSet(enrichedProduct),
     offers: [{
-      source: product.source,
-      sku: product.sku,
-      price: product.price || 0,
-      available: product.available,
-      productUrl: product.url,
-      priceIsMock: Boolean(product.raw?.mockPrice),
+      source: enrichedProduct.source,
+      sku: enrichedProduct.sku,
+      price: enrichedProduct.price || 0,
+      available: enrichedProduct.available,
+      productUrl: enrichedProduct.url,
+      priceIsMock: Boolean(enrichedProduct.raw?.mockPrice),
     }],
   };
 }
@@ -133,8 +142,12 @@ function mergeScrapedProducts(products) {
   const allNotes = dbData.olfactoryNotes;
 
   // 1. Agrupar por marca normalizada para evitar comparaciones N^2 entre marcas distintas
+  const enrichedProducts = products.map((product) => {
+    const inferredBrand = resolvedBrand(product);
+    return inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
+  });
   const byBrand = new Map();
-  for (const product of products) {
+  for (const product of enrichedProducts) {
     const brandKey = normalizeBrand(product.brand) || "unknown";
     let list = byBrand.get(brandKey);
     if (!list) {
@@ -196,7 +209,7 @@ function mergeScrapedProducts(products) {
 
 function getProducts() {
   if (cachedProducts) return cachedProducts;
-  const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl"].flatMap((source) => listScrapedProducts(source));
+  const rawScraped = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl"].flatMap((source) => listScrapedProducts(source));
   const scraped = mergeScrapedProducts(rawScraped);
   const dbData = getDbData();
   const allNotes = dbData.olfactoryNotes;

@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { samePerfume, isSet } = require("../src/models/productMatcher");
+const { inferBrandFromName, samePerfume, isSet } = require("../src/models/productMatcher");
 const { mergeScrapedProducts } = require("../src/models/catalogRepository");
 
 function perfume(source, overrides = {}) {
@@ -42,6 +42,20 @@ test("reconoce variantes habituales del nombre de una marca", () => {
     perfume("falabella-cl", { brand: "Armani", name: "My Way EDP 90 ml" }),
     perfume("ripley-cl", { brand: "GIORGIO ARMANI", name: "Perfume My Way mujer EDP 90 ML" })
   ), true);
+});
+
+test("infiere marcas desde títulos de Cosmetic y permite matchear registros históricos", () => {
+  assert.equal(inferBrandFromName("Perfume Sospiro Liberto EDP 100 ml Unisex"), "Sospiro");
+  assert.equal(inferBrandFromName("Perfume Verbena EDT 120ml Hombre de Adolfo Dominguez"), "Adolfo Dominguez");
+  assert.equal(inferBrandFromName("Si Giorgio Armani EDP 30 ml"), "Giorgio Armani");
+
+  const products = mergeScrapedProducts([
+    perfume("cosmetic-cl", { brand: "Sin marca", name: "Perfume Sospiro Liberto EDP 100 ml Unisex" }),
+    perfume("falabella-cl", { brand: "Sospiro", name: "Sospiro Liberto EDP 100 ml Unisex" }),
+  ]);
+  assert.equal(products.length, 1);
+  assert.equal(products[0].brand, "Sospiro");
+  assert.equal(products[0].matchedStores, 2);
 });
 
 test("agrupa ofertas de Falabella y Ripley y conserva ambos precios", () => {
