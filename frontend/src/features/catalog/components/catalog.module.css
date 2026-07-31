@@ -231,34 +231,6 @@
   text-decoration: none;
 }
 
-.storeStats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.storeStats span {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border: 1px solid var(--surface-container);
-  border-radius: 10px;
-  background: var(--surface-low);
-  padding: 8px 6px;
-  color: var(--on-surface-muted);
-  font-size: 0.68rem;
-  text-align: center;
-}
-
-.storeStats strong {
-  color: var(--on-surface);
-  font-family: "Space Grotesk", monospace;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
 .filters {
   display: grid;
   gap: 14px;
@@ -277,6 +249,7 @@
 }
 
 .filters select,
+.filters input,
 .catalogToolbar select {
   min-width: 0;
   border: 1px solid var(--outline-variant);
@@ -290,8 +263,42 @@
 }
 
 .filters select:focus,
+.filters input:focus,
 .catalogToolbar select:focus {
   border-color: var(--gold);
+}
+
+.priceRange {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.priceRange legend {
+  margin-bottom: 6px;
+  color: var(--on-surface);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.priceRange > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.priceRange label {
+  gap: 5px;
+  color: var(--on-surface-muted);
+  font-size: 0.62rem;
+}
+
+.priceRange input {
+  width: 100%;
+  padding: 10px 8px;
+  font-size: 0.78rem;
 }
 
 .filterNote {

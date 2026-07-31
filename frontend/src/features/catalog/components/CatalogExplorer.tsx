@@ -77,6 +77,13 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const brand       = searchParams.get("brand")  ?? "";
   const category    = searchParams.get("cat")    ?? "";
   const gender      = searchParams.get("gender") ?? "";
+  const minPriceParam = searchParams.get("minPrice") ?? "";
+  const maxPriceParam = searchParams.get("maxPrice") ?? "";
+  const minPrice = Number(minPriceParam) > 0 ? Number(minPriceParam) : null;
+  const maxPrice = Number(maxPriceParam) > 0 ? Number(maxPriceParam) : null;
+  const store = searchParams.get("store") ?? "";
+  const presentation = searchParams.get("presentation") ?? "";
+  const comparison = searchParams.get("comparison") ?? "";
   const segmentParam = searchParams.get("segment") ?? "";
   const segment = isPerfumeSegment(segmentParam) ? segmentParam : "";
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
@@ -153,7 +160,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
   /** Reset de todos los filtros en una sola llamada */
   function resetFilters() {
-    startTransition(() => applyParams({ brand: null, cat: null, gender: null, segment: null, sort: null, page: null }));
+    startTransition(() => applyParams({ brand: null, cat: null, gender: null, minPrice: null, maxPrice: null, store: null, presentation: null, comparison: null, segment: null, sort: null, page: null }));
   }
 
   /** Input de búsqueda: actualización local inmediata + debounce a URL */
@@ -245,6 +252,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   // ── Filtrado y paginación (client-side, instantáneo) ────────────────────
   const brands     = useMemo(() => [...new Set(items.map(i => i.product.brand))].sort(), [items]);
   const categories = useMemo(() => [...new Set(items.map(i => i.product.category))].sort(), [items]);
+  const stores = useMemo(() => [...new Set(items.flatMap(item => item.prices.map(price => price.storeName)))].sort(), [items]);
 
   const filteredItems = useMemo(() =>
     items
@@ -252,6 +260,11 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         (!brand    || item.product.brand    === brand)    &&
         (!category || item.product.category === category) &&
         (!gender   || item.product.gender   === gender)   &&
+        (!minPrice || (item.minPrice ?? item.product.basePrice) >= minPrice) &&
+        (!maxPrice || (item.minPrice ?? item.product.basePrice) <= maxPrice) &&
+        (!store || item.prices.some(price => price.storeName === store)) &&
+        (!presentation || (presentation === "set" ? item.product.isSet : !item.product.isSet)) &&
+        (!comparison || (item.product.matchedStores ?? item.prices.length) >= 2) &&
         (!segment  || perfumeSegmentForBrand(item.product.brand) === segment)
       )
       .sort((a, b) => {
@@ -272,7 +285,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         const diff = (b.product.matchedStores ?? 0) - (a.product.matchedStores ?? 0);
         return diff || (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
       }),
-    [items, brand, category, gender, segment, sort]
+    [items, brand, category, gender, minPrice, maxPrice, store, presentation, comparison, segment, sort]
   );
 
   const totalPages   = Math.max(1, Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE));
@@ -282,18 +295,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     [filteredItems, currentPage]
   );
   const products     = useMemo(() => visibleItems.map(toProduct), [visibleItems]);
-  const filterCount  = [brand, category, gender, segment].filter(Boolean).length;
+  const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison, segment].filter(Boolean).length;
   const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
-
-  const comparedCount  = useMemo(() => items.filter(i => (i.product.matchedStores ?? 0) > 1).length, [items]);
-  const falabellaCount = useMemo(() => items.filter(i => i.product.source === "falabella-cl" || i.prices.some(p => p.storeName === "Falabella")).length, [items]);
-  const ripleyCount    = useMemo(() => items.filter(i => i.product.source === "ripley-cl"    || i.prices.some(p => p.storeName === "Ripley")).length,    [items]);
-  const alishaCount    = useMemo(() => items.filter(i => i.product.source === "alisha-cl"    || i.prices.some(p => p.storeName === "Alisha Perfumes")).length, [items]);
-  const silkCount      = useMemo(() => items.filter(i => i.product.source === "silk-cl"      || i.prices.some(p => p.storeName === "Silk Perfumes")).length, [items]);
-  const eliteCount     = useMemo(() => items.filter(i => i.product.source === "elite-cl"     || i.prices.some(p => p.storeName === "Elite Perfumes")).length, [items]);
-  const cosmeticCount  = useMemo(() => items.filter(i => i.product.source === "cosmetic-cl"  || i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
-  const parisCount     = useMemo(() => items.filter(i => i.product.source === "paris-cl"     || i.prices.some(p => p.storeName === "Paris")).length, [items]);
-  const abcCount       = useMemo(() => items.filter(i => i.product.source === "abc-cl"       || i.prices.some(p => p.storeName === "ABC")).length, [items]);
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -367,23 +370,48 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               </div>
               <button onClick={resetFilters} disabled={!filterCount}>Borrar filtros</button>
             </div>
-            <div className={styles.storeStats}>
-              <span><strong>{comparedCount}</strong> comparados</span>
-              <span><strong>{falabellaCount}</strong> Falabella</span>
-              <span><strong>{ripleyCount}</strong> Ripley</span>
-              <span><strong>{alishaCount}</strong> Alisha</span>
-              <span><strong>{silkCount}</strong> Silk</span>
-              <span><strong>{eliteCount}</strong> Elite</span>
-              <span><strong>{cosmeticCount}</strong> Cosmetic</span>
-              <span><strong>{parisCount}</strong> Paris</span>
-              <span><strong>{abcCount}</strong> ABC</span>
-            </div>
             <div className={styles.filters}>
+              <fieldset className={styles.priceRange}>
+                <legend>Rango de precio</legend>
+                <div>
+                  <label>
+                    Desde
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      step="1000"
+                      value={minPriceParam}
+                      onChange={e => setFilter("minPrice", e.target.value)}
+                      placeholder="$1.000"
+                    />
+                  </label>
+                  <label>
+                    Hasta
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      step="1000"
+                      value={maxPriceParam}
+                      onChange={e => setFilter("maxPrice", e.target.value)}
+                      placeholder="$10.000"
+                    />
+                  </label>
+                </div>
+              </fieldset>
               <label>
                 Marca
                 <select value={brand} onChange={e => setFilter("brand", e.target.value)}>
                   <option value="">Todas</option>
                   {brands.map(v => <option key={v}>{v}</option>)}
+                </select>
+              </label>
+              <label>
+                Disponible en
+                <select value={store} onChange={e => setFilter("store", e.target.value)}>
+                  <option value="">Todas las tiendas</option>
+                  {stores.map(value => <option key={value}>{value}</option>)}
                 </select>
               </label>
               <label>
@@ -400,6 +428,21 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                   <option>Masculino</option>
                   <option>Femenino</option>
                   <option>Unisex</option>
+                </select>
+              </label>
+              <label>
+                Presentación
+                <select value={presentation} onChange={e => setFilter("presentation", e.target.value)}>
+                  <option value="">Todas</option>
+                  <option value="individual">Perfume individual</option>
+                  <option value="set">Set o kit</option>
+                </select>
+              </label>
+              <label>
+                Comparación de precios
+                <select value={comparison} onChange={e => setFilter("comparison", e.target.value)}>
+                  <option value="">Cualquier disponibilidad</option>
+                  <option value="multiple">Disponible en 2 o más tiendas</option>
                 </select>
               </label>
             </div>

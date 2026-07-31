@@ -132,7 +132,7 @@ export function DealOfDay() {
           <p className="eyebrow">{deal.brand}</p>
           <h2>{deal.name} · {deal.unit}</h2>
           <p className={styles.dealSub}>
-            Comparamos {deal.matchedStores ?? deal.offers?.length ?? 1} tienda{deal.matchedStores !== 1 ? "s" : ""} en vivo.
+            Destacamos esta oferta según su precio histórico y su valor actual.
             {storeNames.length > 0 && ` Disponible en ${storeNames.join(", ")}.`}
           </p>
           <div className={styles.dealPrices}>
