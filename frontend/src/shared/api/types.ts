@@ -23,6 +23,13 @@ export type ApiProduct = {
   aliases?: string[];
   offers?: ApiOffer[];
 };
+export type DealOfDay = {
+  deal: ApiProduct;
+  minPrice: number;
+  maxPrice: number;
+  savings: number;
+  savingsPct: number;
+};
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
 
 export type PriceHistoryPoint = { date: string; price: number };

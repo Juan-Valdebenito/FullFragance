@@ -4,19 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { api, productImageUrl } from "@/shared/api/client";
-import type { ApiProduct } from "@/shared/api/types";
+import type { DealOfDay as DealData } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import styles from "@/app/home.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-
-interface DealData {
-  deal: ApiProduct;
-  minPrice: number;
-  maxPrice: number;
-  savings: number;
-  savingsPct: number;
-}
 
 function DealSkeleton() {
   return (
@@ -42,20 +34,32 @@ function DealSkeleton() {
 }
 
 export function DealOfDay() {
-  const [data, setData] = useState<DealData | null>(null);
+  const [deals, setDeals] = useState<DealData[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    api.dealOfDay()
-      .then(res => setData(res))
+    api.dealsOfDay()
+      .then(setDeals)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (deals.length < 2 || isPaused) return;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex(current => (current + 1) % deals.length);
+    }, 6000);
+
+    return () => window.clearInterval(timer);
+  }, [deals.length, isPaused]);
+
   if (loading) return <DealSkeleton />;
 
-  if (error || !data?.deal) {
+  if (error || !deals.length) {
     return (
       <div className={styles.dealCard}>
         <div className={styles.dealBadgeContainer}>
@@ -77,12 +81,21 @@ export function DealOfDay() {
     );
   }
 
-  const { deal, minPrice, maxPrice, savings, savingsPct } = data;
+  const { deal, minPrice, maxPrice, savings, savingsPct } = deals[activeIndex];
   const image = productImageUrl(deal.imageUrl);
   const storeNames = deal.offers?.map(o => o.source.replace(/-cl$/, "")).filter(Boolean) ?? [];
+  const selectDeal = (index: number) => setActiveIndex((index + deals.length) % deals.length);
 
   return (
-    <div className={styles.dealCard}>
+    <div
+      className={styles.dealCard}
+      aria-roledescription="carrusel"
+      aria-label="Mejores ofertas del día"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
+    >
       <div className={styles.dealBadgeContainer}>
         <span className={styles.dealPill}>🔥 Oferta destacada del día</span>
         {savings > 0 && (
@@ -90,8 +103,31 @@ export function DealOfDay() {
             Ahorra {savingsPct}% · {money.format(savings)} entre tiendas
           </span>
         )}
+        {deals.length > 1 && (
+          <div className={styles.dealCarouselControls} aria-label="Navegación de ofertas">
+            <button
+              className={styles.dealCarouselButton}
+              type="button"
+              onClick={() => selectDeal(activeIndex - 1)}
+              aria-label="Ver oferta anterior"
+            >
+              ‹
+            </button>
+            <span className={styles.dealCarouselStatus} aria-live="polite">
+              {activeIndex + 1} de {deals.length}
+            </span>
+            <button
+              className={styles.dealCarouselButton}
+              type="button"
+              onClick={() => selectDeal(activeIndex + 1)}
+              aria-label="Ver siguiente oferta"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
-      <div className={styles.dealContent}>
+      <div className={styles.dealContent} key={deal.id}>
         <div className={styles.dealInfo}>
           <p className="eyebrow">{deal.brand}</p>
           <h2>{deal.name} · {deal.unit}</h2>

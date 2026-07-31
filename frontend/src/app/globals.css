@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
+  color-scheme: light;
   /* Surfaces */
   --surface:          #f8f7f5;
   --surface-dim:      #dadada;
@@ -59,6 +60,7 @@
 
 /* ─── Warm Dark Theme (Espresso & Champagne Gold) ─────── */
 [data-theme="dark"] {
+  color-scheme: dark;
   --surface:          #161412;
   --surface-dim:      #110f0e;
   --surface-bright:   #23201d;
@@ -94,6 +96,7 @@
 
 /* ─── Pitch Black Theme (Pure OLED Black) ─────────────── */
 [data-theme="pitch-black"] {
+  color-scheme: dark;
   --surface:          #000000;
   --surface-dim:      #050505;
   --surface-bright:   #181818;
