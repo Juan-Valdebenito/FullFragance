@@ -175,8 +175,12 @@ export default function HomePage() {
 
         {/* Anuncio Strip — entre secciones de alto tráfico */}
         <div className={`container ${styles.adStripSection}`}>
-          <AdBanner format="strip" slotId="home-strip-1" />
+          <AdBanner
+            format="strip"
+            slotId={process.env.NEXT_PUBLIC_AD_SLOT_HOME_STRIP}
+          />
         </div>
+
 
         {/* Cómo funciona */}
         <section className={styles.process}>

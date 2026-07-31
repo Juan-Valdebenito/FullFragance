@@ -15,10 +15,11 @@ interface AdSidebarLayoutProps {
  * Wrapper que envuelve cualquier page con sidebars de anuncios.
  * Los sidebars solo aparecen en pantallas >= 1200px (controlado por CSS).
  *
- * Uso:
- *   <AdSidebarLayout>
- *     <YourPageContent />
- *   </AdSidebarLayout>
+ * Los Slot IDs se leen desde las variables de entorno:
+ *   NEXT_PUBLIC_AD_SLOT_SIDEBAR_LEFT
+ *   NEXT_PUBLIC_AD_SLOT_SIDEBAR_RIGHT
+ *
+ * Si no están configuradas → muestra anuncios demo.
  */
 export function AdSidebarLayout({
   children,
@@ -30,7 +31,10 @@ export function AdSidebarLayout({
       {left && (
         <aside className={styles.sidebarLeft} aria-label="Anuncio izquierdo">
           <div className={styles.stickyAd}>
-            <AdBanner format="sidebar" slotId="sidebar-left" />
+            <AdBanner
+              format="sidebar"
+              slotId={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR_LEFT}
+            />
           </div>
         </aside>
       )}
@@ -40,10 +44,14 @@ export function AdSidebarLayout({
       {right && (
         <aside className={styles.sidebarRight} aria-label="Anuncio derecho">
           <div className={styles.stickyAd}>
-            <AdBanner format="sidebar" slotId="sidebar-right" />
+            <AdBanner
+              format="sidebar"
+              slotId={process.env.NEXT_PUBLIC_AD_SLOT_SIDEBAR_RIGHT}
+            />
           </div>
         </aside>
       )}
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AdSlot } from "./AdSlot";
 import styles from "./AdBanner.module.css";
 
 /* ─── Tipos ─────────────────────────────────────────────────── */
@@ -8,17 +9,22 @@ import styles from "./AdBanner.module.css";
 type AdFormat = "sidebar" | "strip" | "square";
 
 interface AdBannerProps {
-  /** Formato del anuncio: lateral, tira horizontal o cuadrado */
+  /** Formato del contenedor: sidebar, strip o square */
   format?: AdFormat;
-  /** ID único del slot (para cuando integres AdSense real) */
+  /**
+   * ID del bloque de anuncio de Google AdSense.
+   * Lo encuentras en: AdSense → Anuncios → Por bloque de anuncios.
+   * Ejemplo: "1234567890"
+   *
+   * Si no se proporciona Y no hay NEXT_PUBLIC_ADSENSE_ID,
+   * se muestra el anuncio demo del propio sitio.
+   */
   slotId?: string;
   /** Clase CSS adicional */
   className?: string;
 }
 
-/* ─── Anuncios propios de demostración ──────────────────────── */
-// Reemplaza estos por tu código de Google AdSense cuando estés listo.
-// Para AdSense: elimina el div .adMock y descomenta el <ins> de abajo.
+/* ─── Anuncios demo (se muestran sin AdSense configurado) ───── */
 
 const DEMO_ADS = [
   {
@@ -53,6 +59,14 @@ const DEMO_ADS = [
   },
 ];
 
+/* ─── Formatos AdSense según el formato del banner ──────────── */
+
+const ADSENSE_FORMAT: Record<AdFormat, "auto" | "rectangle" | "vertical" | "horizontal"> = {
+  sidebar: "vertical",
+  strip:   "horizontal",
+  square:  "rectangle",
+};
+
 /* ─── Componente ─────────────────────────────────────────────── */
 
 export function AdBanner({
@@ -65,8 +79,11 @@ export function AdBanner({
   const [entered, setEntered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  /* Rotación de anuncio cada 8 segundos */
+  const hasAdsense = Boolean(process.env.NEXT_PUBLIC_ADSENSE_ID && slotId);
+
+  /* Rotación de anuncio demo cada 8 segundos */
   useEffect(() => {
+    if (hasAdsense) return; // AdSense maneja sus propias rotaciones
     const iv = setInterval(() => {
       setEntered(false);
       setTimeout(() => {
@@ -75,7 +92,7 @@ export function AdBanner({
       }, 350);
     }, 8000);
     return () => clearInterval(iv);
-  }, []);
+  }, [hasAdsense]);
 
   /* Aparecer al entrar en viewport */
   useEffect(() => {
@@ -109,47 +126,50 @@ export function AdBanner({
       aria-label="Publicidad"
       role="complementary"
     >
-      <span className={styles.adLabel}>Publicidad</span>
+      {/* ── Modo AdSense real: cuando hay Publisher ID + slotId ── */}
+      {hasAdsense && slotId ? (
+        <AdSlot slotId={slotId} adFormat={ADSENSE_FORMAT[format]} />
+      ) : (
+        /* ── Modo demo: anuncios propios del sitio ─────────────── */
+        <>
+          <span className={styles.adLabel}>Publicidad</span>
+          <a
+            href={ad.href}
+            className={styles.adMock}
+            style={{ background: ad.bg } as React.CSSProperties}
+            target="_self"
+            rel="noopener"
+            aria-label={`Anuncio: ${ad.headline}`}
+          >
+            {/* Partículas decorativas */}
+            <span className={styles.particle} style={{ "--i": 0 } as React.CSSProperties} />
+            <span className={styles.particle} style={{ "--i": 1 } as React.CSSProperties} />
+            <span className={styles.particle} style={{ "--i": 2 } as React.CSSProperties} />
 
-      <a
-        href={ad.href}
-        className={styles.adMock}
-        style={{ background: ad.bg } as React.CSSProperties}
-        target="_self"
-        rel="noopener"
-        aria-label={`Anuncio: ${ad.headline}`}
-      >
-        {/* Partículas decorativas */}
-        <span className={styles.particle} style={{ "--i": 0 } as React.CSSProperties} />
-        <span className={styles.particle} style={{ "--i": 1 } as React.CSSProperties} />
-        <span className={styles.particle} style={{ "--i": 2 } as React.CSSProperties} />
+            <span
+              className={styles.adBadge}
+              style={{ color: ad.color, borderColor: `${ad.color}40` }}
+            >
+              {ad.badge}
+            </span>
+            <p className={styles.adBrand}>{ad.brand}</p>
+            <p className={styles.adHeadline}>{ad.headline}</p>
+            <p className={styles.adSub}>{ad.sub}</p>
+            <span className={styles.adCta} style={{ color: ad.color }}>
+              {ad.cta}
+            </span>
 
-        <span
-          className={styles.adBadge}
-          style={{ color: ad.color, borderColor: `${ad.color}40` }}
-        >
-          {ad.badge}
-        </span>
-        <p className={styles.adBrand}>{ad.brand}</p>
-        <p className={styles.adHeadline}>{ad.headline}</p>
-        <p className={styles.adSub}>{ad.sub}</p>
-        <span className={styles.adCta} style={{ color: ad.color }}>
-          {ad.cta}
-        </span>
-
-        {/* Ícono de perfume SVG decorativo */}
-        <svg
-          className={styles.adBottle}
-          viewBox="0 0 60 100"
-          aria-hidden="true"
-        >
-          <rect x="22" y="8" width="16" height="8" rx="3" fill="currentColor" opacity=".3" />
-          <rect x="18" y="16" width="24" height="6" rx="2" fill="currentColor" opacity=".25" />
-          <rect x="10" y="22" width="40" height="70" rx="12" fill="currentColor" opacity=".15" />
-          <rect x="10" y="22" width="40" height="70" rx="12" stroke="currentColor" strokeWidth="1.5" fill="none" opacity=".4" />
-          <ellipse cx="30" cy="48" rx="10" ry="14" fill="currentColor" opacity=".08" />
-        </svg>
-      </a>
+            {/* Ícono de perfume SVG decorativo */}
+            <svg className={styles.adBottle} viewBox="0 0 60 100" aria-hidden="true">
+              <rect x="22" y="8" width="16" height="8" rx="3" fill="currentColor" opacity=".3" />
+              <rect x="18" y="16" width="24" height="6" rx="2" fill="currentColor" opacity=".25" />
+              <rect x="10" y="22" width="40" height="70" rx="12" fill="currentColor" opacity=".15" />
+              <rect x="10" y="22" width="40" height="70" rx="12" stroke="currentColor" strokeWidth="1.5" fill="none" opacity=".4" />
+              <ellipse cx="30" cy="48" rx="10" ry="14" fill="currentColor" opacity=".08" />
+            </svg>
+          </a>
+        </>
+      )}
     </div>
   );
 }
