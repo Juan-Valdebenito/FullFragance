@@ -1,0 +1,247 @@
+/* ══════════════════════════════════════════════════════════════
+   AdBanner — Sistema de Anuncios FullFragance
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper base ───────────────────────────────────────────── */
+.adWrapper {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.adWrapper.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.adWrapper.entered .adMock {
+  animation: adPulse 0.4s ease;
+}
+
+@keyframes adPulse {
+  0%   { opacity: 0; transform: scale(0.96) translateY(8px); }
+  100% { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+/* ── Etiqueta "Publicidad" ──────────────────────────────────── */
+.adLabel {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+  margin-bottom: 6px;
+  padding-left: 2px;
+  opacity: 0.55;
+}
+
+/* ── Contenido del anuncio ──────────────────────────────────── */
+.adMock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 18px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  text-decoration: none;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.adMock:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Partículas flotantes decorativas ───────────────────────── */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  animation: float calc(5s + calc(var(--i) * 2s)) ease-in-out infinite alternate;
+}
+
+.particle:nth-child(1) { width: 60px; height: 60px; top: -20px; right: -10px; }
+.particle:nth-child(2) { width: 40px; height: 40px; bottom: 10px; left: -15px; }
+.particle:nth-child(3) { width: 80px; height: 80px; bottom: -30px; right: 20px; }
+
+@keyframes float {
+  from { transform: translateY(0) rotate(0deg); }
+  to   { transform: translateY(-12px) rotate(15deg); }
+}
+
+/* ── SVG botella decorativa ─────────────────────────────────── */
+.adBottle {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  width: 38px;
+  opacity: 0.25;
+  color: #fff;
+  pointer-events: none;
+  animation: bottleSway 6s ease-in-out infinite alternate;
+}
+
+@keyframes bottleSway {
+  from { transform: rotate(-4deg) translateY(0); }
+  to   { transform: rotate(4deg) translateY(-6px); }
+}
+
+/* ── Tipografía del anuncio ─────────────────────────────────── */
+.adBadge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 2px 7px;
+  width: fit-content;
+  backdrop-filter: blur(4px);
+}
+
+.adBrand {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin: 2px 0 0;
+}
+
+.adHeadline {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  margin: 0;
+}
+
+.adSub {
+  font-size: 0.78rem;
+  opacity: 0.7;
+  line-height: 1.45;
+  margin: 2px 0 6px;
+}
+
+.adCta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: auto;
+  transition: gap 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.adMock:hover .adCta {
+  gap: 8px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FORMATOS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── sidebar: 160px de ancho, columna vertical ──────────────── */
+.sidebar {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.sidebar .adMock {
+  min-height: 280px;
+}
+
+.sidebar .adHeadline {
+  font-size: 0.88rem;
+}
+
+/* ── strip: banner horizontal full-width ────────────────────── */
+.strip {
+  width: 100%;
+  margin: 0;
+}
+
+.strip .adLabel {
+  display: none; /* label va inline en el strip */
+}
+
+.strip .adMock {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+}
+
+.strip .adBrand,
+.strip .adSub {
+  display: none;
+}
+
+.strip .adHeadline {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.strip .adBadge {
+  flex-shrink: 0;
+}
+
+.strip .adCta {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.strip .adBottle {
+  position: static;
+  width: 28px;
+  opacity: 0.3;
+  flex-shrink: 0;
+}
+
+/* ── square: 250x250, cuadrado compacto ─────────────────────── */
+.square {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.square .adMock {
+  min-height: 200px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+  .sidebar {
+    display: none; /* ocultar sidebars en pantallas medianas */
+  }
+}
+
+@media (max-width: 900px) {
+  .square {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .strip .adMock {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 16px;
+  }
+
+  .strip .adCta {
+    margin-left: 0;
+  }
+}

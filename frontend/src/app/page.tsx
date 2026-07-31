@@ -6,6 +6,7 @@ import { HeroActions } from "@/shared/components/HeroActions";
 import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
+import { AdBanner } from "@/shared/components/AdBanner";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = {
@@ -171,6 +172,11 @@ export default function HomePage() {
             </article>
           ))}
         </section>
+
+        {/* Anuncio Strip — entre secciones de alto tráfico */}
+        <div className={`container ${styles.adStripSection}`}>
+          <AdBanner format="strip" slotId="home-strip-1" />
+        </div>
 
         {/* Cómo funciona */}
         <section className={styles.process}>
