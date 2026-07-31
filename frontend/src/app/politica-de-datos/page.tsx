@@ -32,7 +32,7 @@ export default function DataPolicyPage() {
             <li><strong>Datos de cuenta:</strong> nombre, correo electrónico y una contraseña protegida mediante un hash; no guardamos contraseñas en texto plano.</li>
             <li><strong>Datos de Google, si eliges ese acceso:</strong> nombre, correo electrónico verificado, identificador de Google y, cuando esté disponible, imagen de perfil.</li>
             <li><strong>Preferencias que eliges guardar:</strong> ciudad, perfumes favoritos y respuestas o puntajes del test olfativo.</li>
-            <li><strong>Datos técnicos mínimos:</strong> token de sesión, registros técnicos necesarios para seguridad, prevención de abuso y diagnóstico de errores.</li>
+            <li><strong>Datos técnicos y métricas agregadas:</strong> token de sesión, registros necesarios para seguridad, prevención de abuso, diagnóstico de errores y conteos de páginas consultadas. Estas métricas no se vinculan a un perfil publicitario y respetan la señal “Do Not Track” del navegador.</li>
           </ul>
         </article>
 
@@ -42,6 +42,7 @@ export default function DataPolicyPage() {
             <li>Crear y administrar tu cuenta, autenticar tu acceso y proteger la plataforma.</li>
             <li>Guardar tus favoritos, ciudad y preferencias para entregarte funciones personalizadas que solicitas.</li>
             <li>Responder consultas, atender solicitudes sobre tus datos y detectar usos fraudulentos o contrarios a la seguridad.</li>
+            <li>Entender de forma agregada qué secciones de la plataforma son más consultadas para mejorar el servicio.</li>
             <li>Cumplir obligaciones legales y ejercer o defender derechos cuando corresponda.</li>
           </ul>
           <p>Cuando una función requiera tu decisión, como crear una cuenta, iniciar sesión con Google o guardar preferencias, el tratamiento se realiza para prestar esa función y conforme a la autorización que entregas al usarla. Puedes dejar de usar funciones opcionales o pedir la eliminación de los datos asociados.</p>

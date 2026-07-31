@@ -227,6 +227,85 @@
   font-weight: 700;
 }
 
+/* ─── Monitoreo de usuarios y monetización ─────────────── */
+
+.monitoringIntro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.monitoringIntro h2 {
+  margin: 6px 0;
+  color: var(--on-surface);
+  font: 700 1.5rem "Space Grotesk", sans-serif;
+}
+
+.monitoringIntro p:last-child {
+  color: var(--on-surface-muted);
+  font-size: .82rem;
+}
+
+.monitoringTag {
+  flex: none;
+  border-radius: 99px;
+  background: var(--gold-light);
+  padding: 7px 10px;
+  color: var(--gold-dark);
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.viewsChart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(32px, 1fr));
+  align-items: end;
+  gap: 12px;
+  min-height: 190px;
+  padding-top: 18px;
+}
+
+.viewBarItem {
+  display: grid;
+  grid-template-rows: auto 126px auto;
+  justify-items: center;
+  gap: 8px;
+}
+
+.viewBarItem strong { color: var(--on-surface); font-size: .76rem; }
+.viewBarItem span { color: var(--on-surface-muted); font-size: .65rem; text-transform: capitalize; }
+.viewBarTrack { display: flex; width: 100%; height: 126px; align-items: flex-end; border-radius: 8px; background: var(--surface-low); overflow: hidden; }
+.viewBarFill { width: 100%; min-height: 4px; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--gold), var(--primary)); transition: height .45s ease; }
+
+.pageViewsList { display: grid; gap: 9px; }
+.pageViewsRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--surface-container); padding: 10px 0; }
+.pageViewsRow:last-child { border-bottom: 0; }
+.pageViewsRow code { overflow: hidden; color: var(--on-surface-muted); font-family: ui-monospace, monospace; font-size: .73rem; text-overflow: ellipsis; white-space: nowrap; }
+.pageViewsRow strong { flex: none; color: var(--on-surface); font-size: .75rem; }
+
+.revenueCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, .7fr);
+  align-items: center;
+  gap: 28px;
+  border: 1px solid rgb(197 160 89 / 32%);
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--surface-bright), var(--gold-light));
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.revenueCard h3 { margin: 7px 0; color: var(--on-surface); font: 700 1.15rem "Space Grotesk", sans-serif; }
+.revenueCard > div > p:last-child { max-width: 650px; color: var(--on-surface-muted); font-size: .8rem; line-height: 1.5; }
+.revenueCard form { display: grid; gap: 10px; }
+.revenueCard label { display: grid; gap: 6px; color: var(--on-surface-muted); font-size: .68rem; font-weight: 700; text-transform: uppercase; }
+.revenueCard input { width: 100%; border: 1px solid var(--outline-variant); border-radius: 10px; background: var(--surface-bright); padding: 11px 12px; color: var(--on-surface); outline: 0; }
+.revenueCard input:focus { border-color: var(--gold); }
+.revenueCard button { justify-self: start; border: 1px solid var(--primary); border-radius: 10px; background: var(--primary); color: var(--on-primary); padding: 10px 14px; font-size: .74rem; font-weight: 700; cursor: pointer; }
+.revenueCard button:disabled { cursor: wait; opacity: .65; }
+.revenueCard form > p { color: var(--gold-dark); font-size: .72rem; line-height: 1.4; }
+
 /* ─── Panel Card Standard Container ─────────────────────── */
 
 .panelCard {
@@ -883,5 +962,15 @@
 
   .adminTabs {
     overflow-x: auto;
+  }
+
+  .monitoringIntro,
+  .revenueCard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .revenueCard {
+    grid-template-columns: 1fr;
   }
 }

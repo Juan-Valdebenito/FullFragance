@@ -80,6 +80,29 @@ async function updateCity(userId, city) {
   return user;
 }
 
+async function updateName(userId, name) {
+  const user = await findById(userId);
+  if (!user) return null;
+
+  await query("UPDATE users SET name = $2 WHERE id = $1", [userId, name]);
+  user.name = name;
+  return user;
+}
+
+async function updatePassword(userId, passwordHash) {
+  const user = await findById(userId);
+  if (!user) return null;
+
+  await query("UPDATE users SET password_hash = $2 WHERE id = $1", [userId, passwordHash]);
+  user.passwordHash = passwordHash;
+  return user;
+}
+
+async function deleteById(userId) {
+  const result = await query("DELETE FROM users WHERE id = $1", [userId]);
+  return result.rowCount > 0;
+}
+
 async function toggleFavorite(userId, productId, aliases = []) {
   const user = await findById(userId);
   if (!user) return null;
@@ -167,6 +190,7 @@ function toPublic(user) {
   const { passwordHash, ...publicUser } = user;
   return {
     ...publicUser,
+    hasPassword: Boolean(passwordHash),
     role: roleForEmail(publicUser.email) === "admin" ? "admin" : publicUser.role || "customer",
     favorites: publicUser.favorites || [],
     scentPreferences: publicUser.scentPreferences ?? null,
@@ -179,6 +203,9 @@ module.exports = {
   roleForEmail,
   create,
   findOrCreateGoogleUser,
+  updateName,
+  updatePassword,
+  deleteById,
   updateCity,
   toggleFavorite,
   saveScentPreferences,

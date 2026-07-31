@@ -1,4 +1,5 @@
 const userRepository = require("../models/userRepository");
+const bcrypt = require("bcryptjs");
 const { getRecommendationsForUser } = require("../models/recommendationService");
 const { getOlfactoryNotes, getProductById } = require("../models/catalogRepository");
 
@@ -14,6 +15,67 @@ async function setCity(req, res, next) {
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
     res.json({ user: userRepository.toPublic(user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateProfile(req, res, next) {
+  try {
+    const name = String(req.body?.name || "").trim().replace(/\s+/g, " ");
+    if (name.length < 2 || name.length > 80) {
+      return res.status(400).json({ error: "El nombre debe tener entre 2 y 80 caracteres." });
+    }
+
+    const user = await userRepository.updateName(req.userId, name);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+
+    res.json({ user: userRepository.toPublic(user) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function changePassword(req, res, next) {
+  try {
+    const currentPassword = String(req.body?.currentPassword || "");
+    const newPassword = String(req.body?.newPassword || "");
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Debes indicar tu contraseña actual y la nueva contraseña." });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: "La nueva contraseña debe tener al menos 8 caracteres." });
+    }
+
+    const user = await userRepository.findById(req.userId);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
+    if (!user.passwordHash) {
+      return res.status(400).json({ error: "Esta cuenta usa acceso con Google. Gestiona la contraseña desde Google." });
+    }
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ error: "La contraseña actual no es correcta." });
+    }
+    if (await bcrypt.compare(newPassword, user.passwordHash)) {
+      return res.status(400).json({ error: "La nueva contraseña debe ser diferente de la actual." });
+    }
+
+    await userRepository.updatePassword(user.id, await bcrypt.hash(newPassword, 10));
+    res.json({ message: "Contraseña actualizada correctamente." });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteAccount(req, res, next) {
+  try {
+    if (req.body?.confirmation !== "ELIMINAR MI CUENTA") {
+      return res.status(400).json({ error: "Escribe ELIMINAR MI CUENTA para confirmar la eliminación." });
+    }
+
+    const deleted = await userRepository.deleteById(req.userId);
+    if (!deleted) return res.status(404).json({ error: "Usuario no encontrado." });
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
@@ -91,4 +153,4 @@ async function getRecommendations(req, res, next) {
   }
 }
 
-module.exports = { setCity, getFavorites, toggleFavorite, saveScentQuiz, getRecommendations };
+module.exports = { updateProfile, changePassword, deleteAccount, setCity, getFavorites, toggleFavorite, saveScentQuiz, getRecommendations };

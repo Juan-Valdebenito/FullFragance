@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/shared/api/client";
-import type { City, Comparison, SyncJob, User } from "@/shared/api/types";
+import type { AdminMetrics, City, Comparison, SyncJob, User } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import { CatalogExplorer } from "@/features/catalog/components/CatalogExplorer";
 import styles from "./admin.module.css";
@@ -11,7 +11,7 @@ import styles from "./admin.module.css";
 const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
-type Section = "overview" | "sync" | "catalog";
+type Section = "overview" | "analytics" | "sync" | "catalog";
 
 interface AdminDashboardProps {
   user: User;
@@ -24,6 +24,11 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [section, setSection] = useState<Section | "client">("overview");
   const [items, setItems] = useState<Comparison[]>([]);
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const [revenueInput, setRevenueInput] = useState("");
+  const [revenueStatus, setRevenueStatus] = useState("");
+  const [savingRevenue, setSavingRevenue] = useState(false);
 
   // Sync state
   const [syncingFalabella, setSyncingFalabella] = useState(false);
@@ -85,6 +90,46 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     const timeout = window.setTimeout(() => { void loadCatalogData(); }, 0);
     return () => window.clearTimeout(timeout);
   }, [loadCatalogData]);
+
+  const loadMonitoringData = useCallback(async () => {
+    try {
+      setLoadingMetrics(true);
+      setMetrics(await api.adminMetrics());
+    } catch {
+      addActivity("Error al cargar métricas de usuarios y visitas", "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally {
+      setLoadingMetrics(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => { void loadMonitoringData(); }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadMonitoringData]);
+
+  async function reloadAdminData() {
+    await Promise.all([loadCatalogData(), loadMonitoringData()]);
+  }
+
+  async function saveAdRevenue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const revenue = Number(revenueInput);
+    if (!Number.isFinite(revenue) || revenue < 0) {
+      setRevenueStatus("Ingresa un monto válido en pesos chilenos.");
+      return;
+    }
+    setSavingRevenue(true);
+    setRevenueStatus("");
+    try {
+      setMetrics(await api.setAdRevenue(revenue));
+      setRevenueStatus("Ingreso publicitario actualizado para el mes actual.");
+      setRevenueInput("");
+    } catch (reason) {
+      setRevenueStatus(reason instanceof ApiError ? reason.message : "No se pudo actualizar el ingreso publicitario.");
+    } finally {
+      setSavingRevenue(false);
+    }
+  }
 
   // ── Sync helpers ────────────────────────────────────────
   async function waitForSync(
@@ -302,6 +347,13 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </button>
           <button
             type="button"
+            className={section === "analytics" ? styles.tabActive : ""}
+            onClick={() => setSection("analytics")}
+          >
+            👥 Monitoreo
+          </button>
+          <button
+            type="button"
             className={section === "sync" ? styles.tabActive : ""}
             onClick={() => setSection("sync")}
           >
@@ -321,11 +373,11 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
         <button
           type="button"
           className={styles.reloadBtn}
-          onClick={loadCatalogData}
-          disabled={loading}
+          onClick={reloadAdminData}
+          disabled={loading || loadingMetrics}
           title="Recargar datos del catálogo"
         >
-          {loading ? "Cargando..." : "↻ Recargar"}
+          {loading || loadingMetrics ? "Cargando..." : "↻ Recargar"}
         </button>
 
         <button
@@ -482,6 +534,82 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  // ── SECTION 2: USER & REVENUE MONITORING ────────────────
+  const viewsSeries = metrics?.views.series ?? [];
+  const maxViews = Math.max(1, ...viewsSeries.map(point => point.views));
+  const analyticsSection = (
+    <div className={styles.adminBody}>
+      <div className={styles.monitoringIntro}>
+        <div>
+          <p className="eyebrow">Métricas de la plataforma</p>
+          <h2>Usuarios y monetización</h2>
+          <p>Las visitas se registran de forma agregada y respetan la señal “Do Not Track” del navegador.</p>
+        </div>
+        <span className={styles.monitoringTag}>{loadingMetrics ? "Actualizando…" : "Últimos 7 días"}</span>
+      </div>
+
+      <section className={styles.kpiGrid}>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Usuarios registrados</span><div className={`${styles.kpiIcon} ${styles.iconPurple}`}>👤</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.users.total ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>{metrics?.users.newLast7Days ?? 0} cuentas creadas en los últimos 7 días</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Vistas hoy</span><div className={`${styles.kpiIcon} ${styles.iconBlue}`}>👁️</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.views.today ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>{metrics?.views.last7Days ?? 0} vistas de páginas en los últimos 7 días</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Nuevas cuentas hoy</span><div className={`${styles.kpiIcon} ${styles.iconGreen}`}>✦</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.users.newToday ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>Crecimiento de usuarios registrados</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Ingresos por anuncios</span><div className={`${styles.kpiIcon} ${styles.iconGold}`}>$</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : money.format(metrics?.ads.revenueCLP ?? 0)}</strong>
+          <p className={styles.kpiSub}>Monto reportado manualmente · {metrics?.ads.currentMonth ?? "mes actual"}</p>
+        </article>
+      </section>
+
+      <div className={styles.grid2Col}>
+        <section className={styles.panelCard}>
+          <div className={styles.panelHeader}><h3>Vistas por día</h3><span className={styles.panelHeaderBadge}>Sin datos personales</span></div>
+          <div className={styles.viewsChart}>
+            {viewsSeries.map(point => (
+              <div className={styles.viewBarItem} key={point.date}>
+                <strong>{point.views}</strong>
+                <div className={styles.viewBarTrack}><div className={styles.viewBarFill} style={{ height: `${Math.max(4, (point.views / maxViews) * 100)}%` }} /></div>
+                <span>{new Date(`${point.date}T12:00:00`).toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "")}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.panelCard}>
+          <div className={styles.panelHeader}><h3>Páginas más vistas</h3><span className={styles.panelHeaderBadge}>Últimos 7 días</span></div>
+          <div className={styles.pageViewsList}>
+            {metrics?.views.topPages.length ? metrics.views.topPages.map(page => (
+              <div className={styles.pageViewsRow} key={page.page}><code>{page.page}</code><strong>{page.views} vistas</strong></div>
+            )) : <p className={styles.emptyText}>Aún no hay visitas registradas.</p>}
+          </div>
+        </section>
+      </div>
+
+      <section className={styles.revenueCard}>
+        <div>
+          <p className="eyebrow">Monetización</p>
+          <h3>Actualiza el ingreso de anuncios</h3>
+          <p>No hay un proveedor publicitario conectado aún. Ingresa aquí el total del reporte mensual de tu plataforma de anuncios para monitorearlo sin mezclarlo con datos estimados.</p>
+        </div>
+        <form onSubmit={saveAdRevenue}>
+          <label>Ingreso del mes (CLP)<input type="number" min="0" step="1" value={revenueInput} onChange={event => setRevenueInput(event.target.value)} placeholder={metrics ? money.format(metrics.ads.revenueCLP) : "$0"} required /></label>
+          <button disabled={savingRevenue}>{savingRevenue ? "Guardando…" : "Guardar ingreso"}</button>
+          {revenueStatus && <p role="status">{revenueStatus}</p>}
+        </form>
+      </section>
     </div>
   );
 
@@ -867,6 +995,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       ) : (
         <>
           {section === "overview" && overviewSection}
+          {section === "analytics" && analyticsSection}
           {section === "sync"     && syncSection}
           {section === "catalog"  && catalogTableSection}
         </>

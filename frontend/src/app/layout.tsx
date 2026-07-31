@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
+import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -19,6 +20,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <OptionalSessionProvider>{children}</OptionalSessionProvider>
+          <PageViewTracker />
         </ThemeProvider>
       </body>
     </html>

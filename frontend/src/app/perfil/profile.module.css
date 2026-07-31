@@ -30,8 +30,16 @@
   margin-bottom: 22px;
 }
 
+.profileGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+  gap: 24px;
+  align-items: start;
+}
+
 /* ─── Responsive ─────────────────────────────────────── */
 
 @media (max-width: 600px) {
   .settings { padding: 20px; }
+  .profileGrid { grid-template-columns: 1fr; }
 }
