@@ -3,7 +3,6 @@ import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
 import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
 import "./globals.css";
-import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   title: "FullFragance",
