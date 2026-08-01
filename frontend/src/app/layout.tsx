@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
-import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
+import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
 import "./globals.css";
-import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   title: "FullFragance",
@@ -17,6 +16,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" data-scroll-behavior="smooth">
+      <head>
+        {/* Script de Google AdSense — solo activo con NEXT_PUBLIC_ADSENSE_ID */}
+        <GoogleAdsense />
+      </head>
       <body>
         <ThemeProvider>
           <OptionalSessionProvider>{children}</OptionalSessionProvider>

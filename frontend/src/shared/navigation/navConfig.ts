@@ -1,6 +1,7 @@
 import type { User } from "@/shared/api/types";
 
-export type FeatureTabId = "dashboard" | "tiendas" | "recomendaciones" | "test" | "favoritos";
+export type FeatureTabId = "dashboard" | "recomendaciones" | "test" | "favoritos";
+
 
 export type NavItem = {
   href: string;

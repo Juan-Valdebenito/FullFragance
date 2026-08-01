@@ -9,6 +9,7 @@
 .main {
   padding-top: 36px;
   padding-bottom: 64px;
+  min-width: 0; /* necesario dentro del grid de AdSidebarLayout */
 }
 
 /* ─── Tabs nav ───────────────────────────────────────── */

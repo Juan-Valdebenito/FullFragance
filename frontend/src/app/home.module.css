@@ -1459,3 +1459,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Sección strip de anuncio ─────────────────────────────────── */
+.adStripSection {
+  padding-block: 8px;
+  opacity: 0;
+  animation: fadeInAd 0.6s ease 0.3s forwards;
+}
+
+@keyframes fadeInAd {
+  to { opacity: 1; }
+}
