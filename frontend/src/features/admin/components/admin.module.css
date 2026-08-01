@@ -887,6 +887,7 @@
 .badgeCosmetic  { background: rgba(5, 150, 105, 0.1); color: #059669; }
 .badgeParis     { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
 .badgeAbc       { background: rgba(11, 78, 162, 0.1); color: #0b4ea2; }
+.badgePreunic   { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
 .badgeMulti     { background: rgba(197, 160, 89, 0.15); color: var(--gold-dark); }
 
 .priceText {

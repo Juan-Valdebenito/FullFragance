@@ -51,7 +51,10 @@ test("convierte precios chilenos de ABC", () => {
 test("normaliza una ficha pública descubierta desde el sitemap de ABC", () => {
   const html = `
     <div class="product-wrapper product-detail" data-pid="564885" data-gtm="{&quot;ecommerce&quot;:{&quot;detail&quot;:{&quot;products&quot;:[{&quot;name&quot;:&quot;Perfume Quorum EDT 100 ml&quot;,&quot;price&quot;:&quot;15.990&quot;,&quot;id&quot;:&quot;564885&quot;,&quot;brand&quot;:&quot;QUORUM&quot;,&quot;category&quot;:&quot;Sales Catalog &gt; Belleza &gt; Perfumes&quot;}]}}}">
-      <div class="primary-images pdp-carousel"><img src="https://www.abc.cl/images/564885.jpg" itemprop="image"></div>
+      <div class="primary-images-wrapper">
+        <img src="https://www.abc.cl/badges/cuotas.svg" alt="18 cuotas">
+        <div class="primary-images pdp-carousel"><img src="https://www.abc.cl/images/564885.jpg" itemprop="image"></div>
+      </div>
       <p class="internet price"><span class="price-value" data-value="15990.0">$15.990</span></p>
       <p class="normal price"><span class="price-value" data-value="19990.0">$19.990</span></p>
       <link itemprop="availability" href="http://schema.org/InStock" />
@@ -67,6 +70,9 @@ test("normaliza una ficha pública descubierta desde el sitemap de ABC", () => {
 
 test("selecciona sólo fichas públicas de perfumes desde el sitemap", () => {
   assert.equal(isPerfumeProductUrl("https://www.abc.cl/perfume-quorum-edt-100-ml/564885.html"), true);
+  assert.equal(isPerfumeProductUrl("https://www.abc.cl/fragancia-be-delicious-250-ml-dkny/29488118.html"), true);
+  assert.equal(isPerfumeProductUrl("https://www.abc.cl/cama-europea-flex-2-plazas-black-set--colonia/28970846.html"), false);
+  assert.equal(isPerfumeProductUrl("https://www.abc.cl/combo-cama-europea-flex-1.5-plazas-paradise-set-colonia/29152810.html"), false);
   assert.equal(isPerfumeProductUrl("https://www.abc.cl/celular-android/123.html"), false);
   assert.equal(isPerfumeProductUrl("https://www.abc.cl/perfume-quorum/564885.html?pid=564885"), false);
 });

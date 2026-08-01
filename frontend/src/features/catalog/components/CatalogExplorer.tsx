@@ -21,6 +21,7 @@ const sourceBadges: Record<string, string> = {
   "cosmetic-cl": "Cosmetic",
   "paris-cl": "Paris",
   "abc-cl": "ABC",
+  "preunic-cl": "Preunic",
 };
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";

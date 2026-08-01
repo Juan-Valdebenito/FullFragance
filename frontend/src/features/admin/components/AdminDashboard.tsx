@@ -39,6 +39,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingCosmetic,  setSyncingCosmetic]  = useState(false);
   const [syncingParis,     setSyncingParis]     = useState(false);
   const [syncingAbc,       setSyncingAbc]       = useState(false);
+  const [syncingPreunic,   setSyncingPreunic]   = useState(false);
   const [syncingAll,       setSyncingAll]       = useState(false);
 
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
@@ -49,6 +50,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [cosmeticJob,  setCosmeticJob]  = useState<SyncJob | null>(null);
   const [parisJob,     setParisJob]     = useState<SyncJob | null>(null);
   const [abcJob,       setAbcJob]       = useState<SyncJob | null>(null);
+  const [preunicJob,   setPreunicJob]   = useState<SyncJob | null>(null);
 
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
@@ -58,6 +60,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [cosmeticMsg,  setCosmeticMsg]  = useState("");
   const [parisMsg,     setParisMsg]     = useState("");
   const [abcMsg,       setAbcMsg]       = useState("");
+  const [preunicMsg,   setPreunicMsg]   = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -258,6 +261,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingAbc(false); }
   }
 
+  async function handleSyncPreunic() {
+    setSyncingPreunic(true); setPreunicMsg("Iniciando conexión con Preunic...");
+    addActivity("Sincronización de Preunic iniciada", "Sync", styles.tagSync, "#e11d48");
+    try {
+      const { job } = await api.syncPreunicPerfumes();
+      await waitForSync(job, "Preunic", setPreunicJob, setPreunicMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Preunic.";
+      setPreunicMsg(msg);
+      addActivity(`Error Preunic: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingPreunic(false); }
+  }
+
   async function handleSyncAll() {
     setSyncingAll(true);
     addActivity("Sincronización masiva de todas las tiendas iniciada", "Sync", styles.tagSync, "#3b82f6");
@@ -270,6 +286,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       await handleSyncCosmetic();
       await handleSyncParis();
       await handleSyncAbc();
+      await handleSyncPreunic();
     } finally {
       setSyncingAll(false);
     }
@@ -286,6 +303,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const cosmeticCount  = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
   const parisCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Paris")).length, [items]);
   const abcCount       = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "ABC")).length, [items]);
+  const preunicCount   = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Preunic")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
@@ -327,6 +345,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Scrapers Shopify / UCP (4)", sub: "Alisha, Silk, Elite y Cosmetic", status: (syncingAlisha || syncingSilk || syncingElite || syncingCosmetic) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },
     { label: "Scraper Paris", sub: "paris.cl · Catálogo SSR", status: syncingParis ? "Ejecutando..." : parisJob?.status === "failed" ? "Error" : "Listo", cls: parisJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
     { label: "Scraper ABC", sub: "abc.cl · Catálogo SSR", status: syncingAbc ? "Ejecutando..." : abcJob?.status === "failed" ? "Error" : "Listo", cls: abcJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛒" },
+    { label: "Scraper Preunic", sub: "preunic.cl · API de catálogo", status: syncingPreunic ? "Ejecutando..." : preunicJob?.status === "failed" ? "Error" : "Listo", cls: preunicJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🧴" },
   ];
 
   // ── HEADER CONTROL BAR ──────────────────────────────────
@@ -430,8 +449,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <span>Tiendas Conectadas</span>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
-          <strong className={styles.kpiValue}>8</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris y ABC</p>
+          <strong className={styles.kpiValue}>9</strong>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC y Preunic</p>
         </article>
       </section>
 
@@ -439,7 +458,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.panelCard}>
         <div className={styles.panelHeader}>
           <h3>Distribución por Tienda Verificada</h3>
-          <span className={styles.panelHeaderBadge}>8 Fuentes de origen</span>
+          <span className={styles.panelHeaderBadge}>9 Fuentes de origen</span>
         </div>
         <div className={styles.storePillsRow}>
           {[
@@ -451,6 +470,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             { name: "Cosmetic",  count: cosmeticCount,  color: "#059669", tag: "cosmetic-cl" },
             { name: "Paris",     count: parisCount,     color: "#e11d48", tag: "paris-cl" },
             { name: "ABC",       count: abcCount,       color: "#0b4ea2", tag: "abc-cl" },
+            { name: "Preunic",   count: preunicCount,   color: "#e11d48", tag: "preunic-cl" },
           ].map(s => {
             const pct = totalProducts > 0 ? Math.round((s.count / totalProducts) * 100) : 0;
             return (
@@ -619,13 +639,13 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.syncHeaderRow}>
         <div>
           <h2>Centro de Sincronización</h2>
-          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 8 tiendas.</p>
+          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 9 tiendas.</p>
         </div>
         <button
           type="button"
           className={styles.syncAllBtn}
           onClick={handleSyncAll}
-          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc}
+          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc || syncingPreunic}
         >
           {syncingAll ? "⏳ Sincronizando Todo..." : "⚡ Sincronizar Todo el Catálogo"}
         </button>
@@ -855,6 +875,34 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </button>
           {abcMsg && <p className={styles.syncMsg}>{abcMsg}</p>}
         </article>
+
+        {/* Preunic */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(225, 29, 72, 0.1)", color: "#e11d48" }}>
+              🧴
+            </div>
+            <div>
+              <h3>Preunic</h3>
+              <small>preunic-cl · Perfumes y fragancias</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingPreunic ? styles.stateRunning : preunicJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingPreunic ? "Ejecutando..." : preunicJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {preunicJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${preunicJob.targetProducts ? Math.min(100, Math.round((preunicJob.imported / preunicJob.targetProducts) * 100)) : (preunicJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{preunicJob.imported} productos importados · pág {preunicJob.currentPage}/{preunicJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncPreunic} disabled={syncingPreunic || syncingAll}>
+            {syncingPreunic ? "Iniciando scraper..." : "🔄 Sincronizar Preunic"}
+          </button>
+          {preunicMsg && <p className={styles.syncMsg}>{preunicMsg}</p>}
+        </article>
       </div>
 
       {/* Sync history timeline */}
@@ -915,6 +963,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="cosmetic">Cosmetic</option>
               <option value="paris">Paris</option>
               <option value="abc">ABC</option>
+              <option value="preunic">Preunic</option>
             </select>
           </div>
         </div>
@@ -937,8 +986,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : styles.badgeMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : "Multi-tienda";
+                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : src === "preunic-cl" ? styles.badgePreunic : styles.badgeMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : src === "preunic-cl" ? "Preunic" : "Multi-tienda";
                 const avail = item.product.available !== false;
                 const matchedCount = item.product.matchedStores ?? 1;
 

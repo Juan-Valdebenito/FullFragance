@@ -116,5 +116,18 @@ module.exports = {
     process.env.ABC_SITEMAP_INDEX_URL ||
     "https://www.abc.cl/sitemap_index.xml",
   abcSitemapCacheTtlMs: Number(process.env.ABC_SITEMAP_CACHE_TTL_MS || 900000),
+  preunicUserAgent:
+    process.env.PREUNIC_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  preunicMinDelayMs: Number(process.env.PREUNIC_MIN_DELAY_MS || 350),
+  preunicMaxDelayMs: Number(process.env.PREUNIC_MAX_DELAY_MS || 750),
+  preunicRequestTimeoutMs: Number(process.env.PREUNIC_REQUEST_TIMEOUT_MS || 20000),
+  preunicFixtureDir: process.env.PREUNIC_FIXTURE_DIR || "",
+  preunicPerfumesUrl:
+    process.env.PREUNIC_PERFUMES_URL ||
+    "https://preunic.cl/t/perfumes-y-fragancias",
+  preunicCatalogApiUrl:
+    process.env.PREUNIC_CATALOG_API_URL ||
+    "https://api.empathy.co/search/v1/query/preunic/browse",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };
