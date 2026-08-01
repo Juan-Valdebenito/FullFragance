@@ -4,12 +4,14 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 160px 1fr 160px;
+  /* El catálogo conserva un ancho legible y los anuncios quedan en una
+     franja periférica, con aire suficiente para no competir con las tarjetas. */
+  grid-template-columns: 170px minmax(0, 1180px) 170px;
   grid-template-areas: "left content right";
-  gap: 24px;
-  max-width: 1620px;
+  column-gap: clamp(48px, 4vw, 88px);
+  max-width: 1920px;
   margin-inline: auto;
-  padding-inline: 20px;
+  padding-inline: clamp(32px, 5vw, 96px);
   align-items: start;
 }
 
@@ -23,8 +25,8 @@
   top: 90px; /* debajo del header */
 }
 
-/* ── En pantallas menores a 1200px: colapsar sidebars ───────── */
-@media (max-width: 1200px) {
+/* ── En pantallas menores a 1280px: colapsar sidebars ───────── */
+@media (max-width: 1280px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas: "content";

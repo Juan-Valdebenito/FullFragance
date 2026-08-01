@@ -13,6 +13,7 @@ const SOURCE_STORES = {
   "paris-cl": { storeId: "paris-online", storeName: "Paris" },
   "abc-cl": { storeId: "abc-online", storeName: "ABC" },
   "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
+  "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
 };
 
 function priceFor(cityName, storeId, product) {

@@ -30,6 +30,9 @@ const {
 const {
   scrapePerfumeCatalog: scrapePreunicPerfumeCatalog,
 } = require("../services/preunicScraper");
+const {
+  scrapePerfumeCatalog: scrapeLodoroPerfumeCatalog,
+} = require("../services/lodoroScraper");
 
 async function syncFalabella(req, res, next) {
   try {
@@ -386,6 +389,36 @@ function listPreunic(_req, res) {
   res.json({ products: listProducts("preunic-cl") });
 }
 
+async function syncLodoro(req, res, next) {
+  try {
+    const maxProducts = Number(req.body?.maxProducts || 24);
+    if (!Number.isInteger(maxProducts) || maxProducts < 1 || maxProducts > 24) {
+      return res.status(400).json({ error: "maxProducts debe ser un entero entre 1 y 24." });
+    }
+    const results = await scrapeLodoroPerfumeCatalog(maxProducts);
+    const products = results.filter((result) => result.ok).map((result) => result.product);
+    if (products.length) replaceProducts("lodoro-cl", products);
+    res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function syncLodoroPerfumeCatalog(req, res, next) {
+  try {
+    if (req.body?.fullCatalog) {
+      return res.status(202).json({ job: startCatalogSync("lodoro-cl") });
+    }
+    return syncLodoro(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function listLodoro(_req, res) {
+  res.json({ products: listProducts("lodoro-cl") });
+}
+
 module.exports = {
   syncFalabella,
   syncPerfumeCatalog,
@@ -414,5 +447,8 @@ module.exports = {
   syncPreunic,
   syncPreunicPerfumeCatalog,
   listPreunic,
+  syncLodoro,
+  syncLodoroPerfumeCatalog,
+  listLodoro,
   getSyncJob,
 };

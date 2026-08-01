@@ -129,5 +129,17 @@ module.exports = {
   preunicCatalogApiUrl:
     process.env.PREUNIC_CATALOG_API_URL ||
     "https://api.empathy.co/search/v1/query/preunic/browse",
+  lodoroUserAgent:
+    process.env.LODORO_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  lodoroMinDelayMs: Number(process.env.LODORO_MIN_DELAY_MS || 500),
+  lodoroMaxDelayMs: Number(process.env.LODORO_MAX_DELAY_MS || 1000),
+  lodoroRequestTimeoutMs: Number(process.env.LODORO_REQUEST_TIMEOUT_MS || 20000),
+  lodoroUcpEndpoint:
+    process.env.LODORO_UCP_ENDPOINT ||
+    "https://lodoro.myshopify.com/api/ucp/mcp",
+  lodoroUcpAgentProfile:
+    process.env.LODORO_UCP_AGENT_PROFILE ||
+    "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };
