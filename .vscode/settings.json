@@ -1,3 +1,10 @@
 {
-    "liveServer.settings.port": 5501
+  "liveServer.settings.port": 5501,
+  "terminal.integrated.profiles.windows": {
+    "PowerShell (npm)": {
+      "source": "PowerShell",
+      "args": ["-NoLogo", "-ExecutionPolicy", "Bypass"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell (npm)"
 }
