@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
 import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
+import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <OptionalSessionProvider>{children}</OptionalSessionProvider>
+          <PageViewTracker />
         </ThemeProvider>
       </body>
     </html>

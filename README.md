@@ -195,7 +195,7 @@ La aplicación conserva los archivos legados como fuente de respaldo durante la 
 
    El proceso crea las tablas, importa usuarios, favoritos, preferencias, notas, productos, cadenas y el catálogo scraping disponible. Es idempotente: puede ejecutarse otra vez sin borrar ni duplicar la información ya migrada.
 
-4. Revisa los conteos que imprime el comando y valida la aplicación con una copia de seguridad de PostgreSQL antes de archivar los archivos legados.
+4. Revisa los conteos que imprime el comando y valida la aplicación con una copia de seguridad de PostgreSQL antes de archivar los archivos legados. La migración también añade automáticamente la versión de sesión que permite revocar tokens al cambiar la contraseña.
 5. Inicia el servidor:
 
    ```bash
@@ -240,13 +240,30 @@ El selector de tema está disponible en el encabezado. Incluye los modos claro, 
 └── /perfil
 ```
 
-## Documentación de la API
+## Seguridad y configuración de despliegue
 
-El backend expone la interfaz Swagger en:
+En desarrollo, la configuración por defecto permite iniciar la aplicación localmente. Antes de desplegar, configura explícitamente:
+
+```env
+NODE_ENV=production
+JWT_SECRET=un-secreto-unico-de-al-menos-32-caracteres
+JWT_EXPIRES_IN=1d
+ADMIN_EMAILS=cuenta-administradora@tu-dominio.cl
+FRONTEND_ORIGINS=https://app.tu-dominio.cl
+TRUST_PROXY=true
+```
+
+`JWT_SECRET` es obligatorio en producción y el backend no parte si es débil o falta. Los roles de administrador sólo se asignan a correos definidos en `ADMIN_EMAILS`; no existen credenciales administrativas por defecto.
+
+La API limita el volumen de solicitudes, con límites más estrictos para registro e inicio de sesión. Estos límites viven en memoria y funcionan para desarrollo o una instancia. Si se despliega más de una instancia, deben trasladarse a un almacenamiento compartido como Redis.
+
+## Documentación de la API (desarrollo)
+
+El backend expone la interfaz Swagger sólo fuera de producción en:
 
 `http://localhost:3000/api/docs`
 
-La especificación OpenAPI también está disponible como JSON en:
+La especificación OpenAPI también está disponible como JSON sólo fuera de producción en:
 
 `http://localhost:3000/api/openapi.json`
 

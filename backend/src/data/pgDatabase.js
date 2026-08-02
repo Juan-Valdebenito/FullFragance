@@ -16,6 +16,7 @@ const memoryStore = {
   chains: [],
   scrapedProducts: new Map(), // key: `${source}:${sku}`
   appMetadata: new Map(),
+  analyticsEvents: [],
 };
 
 function getPool() {
@@ -99,6 +100,7 @@ async function initDatabase() {
           google_id VARCHAR(255),
           picture TEXT,
           role VARCHAR(50) NOT NULL DEFAULT 'customer',
+          session_version INTEGER NOT NULL DEFAULT 0,
           city JSONB,
           favorites JSONB NOT NULL DEFAULT '[]'::jsonb,
           scent_preferences JSONB,
@@ -130,9 +132,22 @@ async function initDatabase() {
           value TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS analytics_events (
+          id BIGSERIAL PRIMARY KEY,
+          event_type VARCHAR(30) NOT NULL,
+          page VARCHAR(160) NOT NULL,
+          occurred_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_analytics_events_occurred_at
+          ON analytics_events(occurred_at DESC);
+
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
           ON users(google_id) WHERE google_id IS NOT NULL;
       `);
+
+      // Compatible con instalaciones creadas antes de la revocación de sesiones.
+      await p.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0");
 
       // Migrar datos legados desde db.json y catalog.sqlite si existen y la BD está limpia
       await seedAndMigrateFromLegacy(p);
@@ -322,6 +337,25 @@ function memoryQuery(text, params = []) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     return { rows: user ? [userToPgRow(user)] : [] };
   }
+  if (sql.includes("SELECT created_at FROM users")) {
+    return { rows: memoryStore.users.map(user => ({ created_at: user.created_at || user.createdAt || new Date().toISOString() })) };
+  }
+  if (sql.includes("INSERT INTO analytics_events")) {
+    memoryStore.analyticsEvents.push({ event_type: params[0], page: params[1], occurred_at: new Date().toISOString() });
+    return { rows: [] };
+  }
+  if (sql.includes("FROM analytics_events WHERE occurred_at")) {
+    const since = new Date(params[0]).getTime();
+    return { rows: memoryStore.analyticsEvents.filter(event => new Date(event.occurred_at).getTime() >= since) };
+  }
+  if (sql.includes("FROM app_metadata WHERE key = $1")) {
+    const value = memoryStore.appMetadata.get(params[0]);
+    return { rows: value === undefined ? [] : [{ value }] };
+  }
+  if (sql.includes("INSERT INTO app_metadata")) {
+    memoryStore.appMetadata.set(params[0], params[1]);
+    return { rows: [] };
+  }
   if (sql.includes("INSERT INTO users")) {
     const user = {
       id: params[0],
@@ -343,6 +377,26 @@ function memoryQuery(text, params = []) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.city = params[1] ? JSON.parse(params[1]) : null;
     return { rows: user ? [userToPgRow(user)] : [] };
+  }
+  if (sql.includes("UPDATE users SET name = $2 WHERE id = $1")) {
+    const user = memoryStore.users.find((u) => u.id === params[0]);
+    if (user) user.name = params[1];
+    return { rows: user ? [userToPgRow(user)] : [] };
+  }
+  if (sql.includes("UPDATE users SET password_hash = $2 WHERE id = $1")) {
+    const user = memoryStore.users.find((u) => u.id === params[0]);
+    if (user) user.password_hash = params[1];
+    return { rows: user ? [userToPgRow(user)] : [] };
+  }
+  if (sql.includes("UPDATE users SET session_version = session_version + 1 WHERE id = $1")) {
+    const user = memoryStore.users.find((u) => u.id === params[0]);
+    if (user) user.session_version = Number(user.session_version || user.sessionVersion || 0) + 1;
+    return { rows: user ? [{ session_version: user.session_version }] : [] };
+  }
+  if (sql.includes("DELETE FROM users WHERE id = $1")) {
+    const index = memoryStore.users.findIndex((u) => u.id === params[0]);
+    if (index >= 0) memoryStore.users.splice(index, 1);
+    return { rows: [], rowCount: index >= 0 ? 1 : 0 };
   }
   if (sql.includes("UPDATE users SET favorites = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
@@ -409,6 +463,7 @@ function userToPgRow(u) {
     google_id: u.google_id || u.googleId || null,
     picture: u.picture || null,
     role: u.role || "customer",
+    session_version: Number(u.session_version || u.sessionVersion || 0),
     city: typeof u.city === "string" ? JSON.parse(u.city) : u.city,
     favorites: typeof u.favorites === "string" ? JSON.parse(u.favorites) : (u.favorites || []),
     scent_preferences: typeof u.scent_preferences === "string" ? JSON.parse(u.scent_preferences) : (u.scent_preferences || u.scentPreferences || null),

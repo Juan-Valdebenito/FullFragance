@@ -4,15 +4,34 @@ try {
   if (error.code !== "MODULE_NOT_FOUND") throw error;
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+const configuredJwtSecret = process.env.JWT_SECRET || "";
+
+if (isProduction && configuredJwtSecret.length < 32) {
+  throw new Error("JWT_SECRET debe estar configurado y tener al menos 32 caracteres en producción.");
+}
+
+function parseOrigins(value) {
+  const defaults = ["http://localhost:3001", "http://127.0.0.1:3001"];
+  const origins = (value || "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  return origins.length ? origins : defaults;
+}
+
 module.exports = {
   port: process.env.PORT || 3000,
-  jwtSecret: process.env.JWT_SECRET || "dev-secret-no-usar-en-produccion",
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  isProduction,
+  jwtSecret: configuredJwtSecret || "dev-secret-no-usar-en-produccion",
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1d",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   adminEmails: (process.env.ADMIN_EMAILS || "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
+  frontendOrigins: parseOrigins(process.env.FRONTEND_ORIGINS),
+  trustProxy: process.env.TRUST_PROXY === "true" ? 1 : false,
   databaseUrl: process.env.DATABASE_URL || "",
   pgHost: process.env.PGHOST || "localhost",
   pgPort: Number(process.env.PGPORT || 5432),
@@ -116,5 +135,30 @@ module.exports = {
     process.env.ABC_SITEMAP_INDEX_URL ||
     "https://www.abc.cl/sitemap_index.xml",
   abcSitemapCacheTtlMs: Number(process.env.ABC_SITEMAP_CACHE_TTL_MS || 900000),
+  preunicUserAgent:
+    process.env.PREUNIC_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  preunicMinDelayMs: Number(process.env.PREUNIC_MIN_DELAY_MS || 350),
+  preunicMaxDelayMs: Number(process.env.PREUNIC_MAX_DELAY_MS || 750),
+  preunicRequestTimeoutMs: Number(process.env.PREUNIC_REQUEST_TIMEOUT_MS || 20000),
+  preunicFixtureDir: process.env.PREUNIC_FIXTURE_DIR || "",
+  preunicPerfumesUrl:
+    process.env.PREUNIC_PERFUMES_URL ||
+    "https://preunic.cl/t/perfumes-y-fragancias",
+  preunicCatalogApiUrl:
+    process.env.PREUNIC_CATALOG_API_URL ||
+    "https://api.empathy.co/search/v1/query/preunic/browse",
+  lodoroUserAgent:
+    process.env.LODORO_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  lodoroMinDelayMs: Number(process.env.LODORO_MIN_DELAY_MS || 500),
+  lodoroMaxDelayMs: Number(process.env.LODORO_MAX_DELAY_MS || 1000),
+  lodoroRequestTimeoutMs: Number(process.env.LODORO_REQUEST_TIMEOUT_MS || 20000),
+  lodoroUcpEndpoint:
+    process.env.LODORO_UCP_ENDPOINT ||
+    "https://lodoro.myshopify.com/api/ucp/mcp",
+  lodoroUcpAgentProfile:
+    process.env.LODORO_UCP_AGENT_PROFILE ||
+    "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 };

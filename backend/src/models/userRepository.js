@@ -2,12 +2,10 @@ const { v4: uuid } = require("uuid");
 const { query } = require("../data/pgDatabase");
 const { adminEmails } = require("../config/env");
 
-const DEFAULT_ADMIN_EMAILS = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
-
 function roleForEmail(email) {
   if (!email) return "customer";
   const normalized = String(email).toLowerCase();
-  return DEFAULT_ADMIN_EMAILS.includes(normalized) || adminEmails.includes(normalized) ? "admin" : "customer";
+  return adminEmails.includes(normalized) ? "admin" : "customer";
 }
 
 function rowToUser(row) {
@@ -20,6 +18,7 @@ function rowToUser(row) {
     googleId: row.google_id || null,
     picture: row.picture || null,
     role: row.role || roleForEmail(row.email),
+    sessionVersion: Number(row.session_version || 0),
     city: typeof row.city === "string" ? JSON.parse(row.city) : row.city,
     favorites: typeof row.favorites === "string" ? JSON.parse(row.favorites) : (row.favorites || []),
     scentPreferences: typeof row.scent_preferences === "string" ? JSON.parse(row.scent_preferences) : (row.scent_preferences || null),
@@ -46,6 +45,7 @@ async function create({ name, email, passwordHash }) {
     email,
     passwordHash: passwordHash || null,
     role: roleForEmail(email),
+    sessionVersion: 0,
     city: null,
     favorites: [],
     scentPreferences: null,
@@ -78,6 +78,37 @@ async function updateCity(userId, city) {
   await query("UPDATE users SET city = $2 WHERE id = $1", [userId, JSON.stringify(city)]);
   user.city = city;
   return user;
+}
+
+async function updateName(userId, name) {
+  const user = await findById(userId);
+  if (!user) return null;
+
+  await query("UPDATE users SET name = $2 WHERE id = $1", [userId, name]);
+  user.name = name;
+  return user;
+}
+
+async function updatePassword(userId, passwordHash) {
+  const user = await findById(userId);
+  if (!user) return null;
+
+  await query("UPDATE users SET password_hash = $2 WHERE id = $1", [userId, passwordHash]);
+  user.passwordHash = passwordHash;
+  return user;
+}
+
+async function invalidateSessions(userId) {
+  const result = await query(
+    "UPDATE users SET session_version = session_version + 1 WHERE id = $1 RETURNING session_version",
+    [userId]
+  );
+  return result.rows.length ? Number(result.rows[0].session_version) : null;
+}
+
+async function deleteById(userId) {
+  const result = await query("DELETE FROM users WHERE id = $1", [userId]);
+  return result.rowCount > 0;
 }
 
 async function toggleFavorite(userId, productId, aliases = []) {
@@ -135,6 +166,7 @@ async function findOrCreateGoogleUser({ name, email, googleId, picture }) {
     googleId: googleId || null,
     picture: picture || null,
     role: roleForEmail(email),
+    sessionVersion: 0,
     city: null,
     favorites: [],
     scentPreferences: null,
@@ -167,7 +199,8 @@ function toPublic(user) {
   const { passwordHash, ...publicUser } = user;
   return {
     ...publicUser,
-    role: roleForEmail(publicUser.email) === "admin" ? "admin" : publicUser.role || "customer",
+    hasPassword: Boolean(passwordHash),
+    role: publicUser.role || "customer",
     favorites: publicUser.favorites || [],
     scentPreferences: publicUser.scentPreferences ?? null,
   };
@@ -179,6 +212,10 @@ module.exports = {
   roleForEmail,
   create,
   findOrCreateGoogleUser,
+  updateName,
+  updatePassword,
+  invalidateSessions,
+  deleteById,
   updateCity,
   toggleFavorite,
   saveScentPreferences,

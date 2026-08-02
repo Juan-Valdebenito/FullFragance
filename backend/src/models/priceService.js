@@ -12,6 +12,8 @@ const SOURCE_STORES = {
   "cosmetic-cl": { storeId: "cosmetic-online", storeName: "Cosmetic" },
   "paris-cl": { storeId: "paris-online", storeName: "Paris" },
   "abc-cl": { storeId: "abc-online", storeName: "ABC" },
+  "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
+  "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
 };
 
 function priceFor(cityName, storeId, product) {
@@ -69,7 +71,8 @@ function pricesForProduct(cityName, stores, product) {
 }
 
 async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
-  const matches = getProducts().filter((product) => matchesProduct(product, productFilter));
+  const catalogProducts = await getProducts();
+  const matches = catalogProducts.filter((product) => matchesProduct(product, productFilter));
   // Al haber datos reales, el catálogo debe priorizarlos frente al demo simulado.
   const realProducts = matches.filter((product) => SOURCE_STORES[product.source] || product.source === "multi-store");
   const products = realProducts.length ? realProducts : matches;
@@ -158,7 +161,7 @@ function generatePriceHistory(productId, currentMinPrice) {
 }
 
 async function getComparisonForProduct({ cityName, lat, lon }, productId) {
-  const product = getProductById(productId);
+  const product = await getProductById(productId);
   if (!product) return null;
   let prices = [];
   if (SOURCE_STORES[product.source] || product.source === "multi-store") {

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/shared/api/client";
-import type { City, Comparison, SyncJob, User } from "@/shared/api/types";
+import type { AdminMetrics, City, Comparison, SyncJob, User } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import { CatalogExplorer } from "@/features/catalog/components/CatalogExplorer";
 import styles from "./admin.module.css";
@@ -11,7 +11,7 @@ import styles from "./admin.module.css";
 const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
-type Section = "overview" | "sync" | "catalog";
+type Section = "overview" | "analytics" | "sync" | "catalog";
 
 interface AdminDashboardProps {
   user: User;
@@ -19,11 +19,23 @@ interface AdminDashboardProps {
 }
 
 function now() { return new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }); }
+function normalizeStoreFilter(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
 
 export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps) {
   const [section, setSection] = useState<Section | "client">("overview");
   const [items, setItems] = useState<Comparison[]>([]);
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
+  const [revenueInput, setRevenueInput] = useState("");
+  const [revenueStatus, setRevenueStatus] = useState("");
+  const [savingRevenue, setSavingRevenue] = useState(false);
 
   // Sync state
   const [syncingFalabella, setSyncingFalabella] = useState(false);
@@ -34,6 +46,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingCosmetic,  setSyncingCosmetic]  = useState(false);
   const [syncingParis,     setSyncingParis]     = useState(false);
   const [syncingAbc,       setSyncingAbc]       = useState(false);
+  const [syncingPreunic,   setSyncingPreunic]   = useState(false);
+  const [syncingLodoro,    setSyncingLodoro]    = useState(false);
   const [syncingAll,       setSyncingAll]       = useState(false);
 
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
@@ -44,6 +58,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [cosmeticJob,  setCosmeticJob]  = useState<SyncJob | null>(null);
   const [parisJob,     setParisJob]     = useState<SyncJob | null>(null);
   const [abcJob,       setAbcJob]       = useState<SyncJob | null>(null);
+  const [preunicJob,   setPreunicJob]   = useState<SyncJob | null>(null);
+  const [lodoroJob,    setLodoroJob]    = useState<SyncJob | null>(null);
 
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
@@ -53,6 +69,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [cosmeticMsg,  setCosmeticMsg]  = useState("");
   const [parisMsg,     setParisMsg]     = useState("");
   const [abcMsg,       setAbcMsg]       = useState("");
+  const [preunicMsg,   setPreunicMsg]   = useState("");
+  const [lodoroMsg,    setLodoroMsg]    = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -85,6 +103,46 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     const timeout = window.setTimeout(() => { void loadCatalogData(); }, 0);
     return () => window.clearTimeout(timeout);
   }, [loadCatalogData]);
+
+  const loadMonitoringData = useCallback(async () => {
+    try {
+      setLoadingMetrics(true);
+      setMetrics(await api.adminMetrics());
+    } catch {
+      addActivity("Error al cargar métricas de usuarios y visitas", "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally {
+      setLoadingMetrics(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => { void loadMonitoringData(); }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [loadMonitoringData]);
+
+  async function reloadAdminData() {
+    await Promise.all([loadCatalogData(), loadMonitoringData()]);
+  }
+
+  async function saveAdRevenue(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const revenue = Number(revenueInput);
+    if (!Number.isFinite(revenue) || revenue < 0) {
+      setRevenueStatus("Ingresa un monto válido en pesos chilenos.");
+      return;
+    }
+    setSavingRevenue(true);
+    setRevenueStatus("");
+    try {
+      setMetrics(await api.setAdRevenue(revenue));
+      setRevenueStatus("Ingreso publicitario actualizado para el mes actual.");
+      setRevenueInput("");
+    } catch (reason) {
+      setRevenueStatus(reason instanceof ApiError ? reason.message : "No se pudo actualizar el ingreso publicitario.");
+    } finally {
+      setSavingRevenue(false);
+    }
+  }
 
   // ── Sync helpers ────────────────────────────────────────
   async function waitForSync(
@@ -213,6 +271,32 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingAbc(false); }
   }
 
+  async function handleSyncPreunic() {
+    setSyncingPreunic(true); setPreunicMsg("Iniciando conexión con Preunic...");
+    addActivity("Sincronización de Preunic iniciada", "Sync", styles.tagSync, "#e11d48");
+    try {
+      const { job } = await api.syncPreunicPerfumes();
+      await waitForSync(job, "Preunic", setPreunicJob, setPreunicMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Preunic.";
+      setPreunicMsg(msg);
+      addActivity(`Error Preunic: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingPreunic(false); }
+  }
+
+  async function handleSyncLodoro() {
+    setSyncingLodoro(true); setLodoroMsg("Iniciando conexión con L'Odoro...");
+    addActivity("Sincronización de L'Odoro iniciada", "Sync", styles.tagSync, "#7c3aed");
+    try {
+      const { job } = await api.syncLodoroPerfumes();
+      await waitForSync(job, "L'Odoro", setLodoroJob, setLodoroMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar L'Odoro.";
+      setLodoroMsg(msg);
+      addActivity(`Error L'Odoro: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingLodoro(false); }
+  }
+
   async function handleSyncAll() {
     setSyncingAll(true);
     addActivity("Sincronización masiva de todas las tiendas iniciada", "Sync", styles.tagSync, "#3b82f6");
@@ -225,6 +309,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       await handleSyncCosmetic();
       await handleSyncParis();
       await handleSyncAbc();
+      await handleSyncPreunic();
+      await handleSyncLodoro();
     } finally {
       setSyncingAll(false);
     }
@@ -241,6 +327,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const cosmeticCount  = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Cosmetic")).length, [items]);
   const parisCount     = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Paris")).length, [items]);
   const abcCount       = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "ABC")).length, [items]);
+  const preunicCount   = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Preunic")).length, [items]);
+  const lodoroCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "L'Odoro")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
@@ -267,7 +355,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       );
       const matchesStore = tableStoreFilter === "all" || (
         tableStoreFilter === "multi" ? (i.product.matchedStores ?? 0) > 1 :
-        i.prices.some(p => p.storeName.toLowerCase().includes(tableStoreFilter))
+        i.prices.some(p => normalizeStoreFilter(p.storeName).includes(normalizeStoreFilter(tableStoreFilter)))
       );
       return matchesText && matchesStore;
     }).slice(0, 60);
@@ -282,6 +370,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Scrapers Shopify / UCP (4)", sub: "Alisha, Silk, Elite y Cosmetic", status: (syncingAlisha || syncingSilk || syncingElite || syncingCosmetic) ? "Ejecutando..." : "Listos", cls: styles.healthOk, icon: "🌸" },
     { label: "Scraper Paris", sub: "paris.cl · Catálogo SSR", status: syncingParis ? "Ejecutando..." : parisJob?.status === "failed" ? "Error" : "Listo", cls: parisJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛍️" },
     { label: "Scraper ABC", sub: "abc.cl · Catálogo SSR", status: syncingAbc ? "Ejecutando..." : abcJob?.status === "failed" ? "Error" : "Listo", cls: abcJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🛒" },
+    { label: "Scraper Preunic", sub: "preunic.cl · API de catálogo", status: syncingPreunic ? "Ejecutando..." : preunicJob?.status === "failed" ? "Error" : "Listo", cls: preunicJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🧴" },
+    { label: "Scraper L'Odoro", sub: "lodoro.cl · UCP/MCP", status: syncingLodoro ? "Ejecutando..." : lodoroJob?.status === "failed" ? "Error" : "Listo", cls: lodoroJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🌺" },
   ];
 
   // ── HEADER CONTROL BAR ──────────────────────────────────
@@ -299,6 +389,13 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             onClick={() => setSection("overview")}
           >
             📊 Visión General
+          </button>
+          <button
+            type="button"
+            className={section === "analytics" ? styles.tabActive : ""}
+            onClick={() => setSection("analytics")}
+          >
+            👥 Monitoreo
           </button>
           <button
             type="button"
@@ -321,11 +418,11 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
         <button
           type="button"
           className={styles.reloadBtn}
-          onClick={loadCatalogData}
-          disabled={loading}
+          onClick={reloadAdminData}
+          disabled={loading || loadingMetrics}
           title="Recargar datos del catálogo"
         >
-          {loading ? "Cargando..." : "↻ Recargar"}
+          {loading || loadingMetrics ? "Cargando..." : "↻ Recargar"}
         </button>
 
         <button
@@ -378,8 +475,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <span>Tiendas Conectadas</span>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
-          <strong className={styles.kpiValue}>8</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris y ABC</p>
+          <strong className={styles.kpiValue}>10</strong>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC, Preunic y L'Odoro</p>
         </article>
       </section>
 
@@ -387,7 +484,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.panelCard}>
         <div className={styles.panelHeader}>
           <h3>Distribución por Tienda Verificada</h3>
-          <span className={styles.panelHeaderBadge}>8 Fuentes de origen</span>
+          <span className={styles.panelHeaderBadge}>10 Fuentes de origen</span>
         </div>
         <div className={styles.storePillsRow}>
           {[
@@ -399,6 +496,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             { name: "Cosmetic",  count: cosmeticCount,  color: "#059669", tag: "cosmetic-cl" },
             { name: "Paris",     count: parisCount,     color: "#e11d48", tag: "paris-cl" },
             { name: "ABC",       count: abcCount,       color: "#0b4ea2", tag: "abc-cl" },
+            { name: "Preunic",   count: preunicCount,   color: "#e11d48", tag: "preunic-cl" },
+            { name: "L'Odoro",   count: lodoroCount,    color: "#7c3aed", tag: "lodoro-cl" },
           ].map(s => {
             const pct = totalProducts > 0 ? Math.round((s.count / totalProducts) * 100) : 0;
             return (
@@ -485,19 +584,95 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     </div>
   );
 
+  // ── SECTION 2: USER & REVENUE MONITORING ────────────────
+  const viewsSeries = metrics?.views.series ?? [];
+  const maxViews = Math.max(1, ...viewsSeries.map(point => point.views));
+  const analyticsSection = (
+    <div className={styles.adminBody}>
+      <div className={styles.monitoringIntro}>
+        <div>
+          <p className="eyebrow">Métricas de la plataforma</p>
+          <h2>Usuarios y monetización</h2>
+          <p>Las visitas se registran de forma agregada y respetan la señal “Do Not Track” del navegador.</p>
+        </div>
+        <span className={styles.monitoringTag}>{loadingMetrics ? "Actualizando…" : "Últimos 7 días"}</span>
+      </div>
+
+      <section className={styles.kpiGrid}>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Usuarios registrados</span><div className={`${styles.kpiIcon} ${styles.iconPurple}`}>👤</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.users.total ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>{metrics?.users.newLast7Days ?? 0} cuentas creadas en los últimos 7 días</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Vistas hoy</span><div className={`${styles.kpiIcon} ${styles.iconBlue}`}>👁️</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.views.today ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>{metrics?.views.last7Days ?? 0} vistas de páginas en los últimos 7 días</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Nuevas cuentas hoy</span><div className={`${styles.kpiIcon} ${styles.iconGreen}`}>✦</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : (metrics?.users.newToday ?? 0).toLocaleString("es-CL")}</strong>
+          <p className={styles.kpiSub}>Crecimiento de usuarios registrados</p>
+        </article>
+        <article className={styles.kpiCard}>
+          <div className={styles.kpiHeader}><span>Ingresos por anuncios</span><div className={`${styles.kpiIcon} ${styles.iconGold}`}>$</div></div>
+          <strong className={styles.kpiValue}>{loadingMetrics ? "..." : money.format(metrics?.ads.revenueCLP ?? 0)}</strong>
+          <p className={styles.kpiSub}>Monto reportado manualmente · {metrics?.ads.currentMonth ?? "mes actual"}</p>
+        </article>
+      </section>
+
+      <div className={styles.grid2Col}>
+        <section className={styles.panelCard}>
+          <div className={styles.panelHeader}><h3>Vistas por día</h3><span className={styles.panelHeaderBadge}>Sin datos personales</span></div>
+          <div className={styles.viewsChart}>
+            {viewsSeries.map(point => (
+              <div className={styles.viewBarItem} key={point.date}>
+                <strong>{point.views}</strong>
+                <div className={styles.viewBarTrack}><div className={styles.viewBarFill} style={{ height: `${Math.max(4, (point.views / maxViews) * 100)}%` }} /></div>
+                <span>{new Date(`${point.date}T12:00:00`).toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "")}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.panelCard}>
+          <div className={styles.panelHeader}><h3>Páginas más vistas</h3><span className={styles.panelHeaderBadge}>Últimos 7 días</span></div>
+          <div className={styles.pageViewsList}>
+            {metrics?.views.topPages.length ? metrics.views.topPages.map(page => (
+              <div className={styles.pageViewsRow} key={page.page}><code>{page.page}</code><strong>{page.views} vistas</strong></div>
+            )) : <p className={styles.emptyText}>Aún no hay visitas registradas.</p>}
+          </div>
+        </section>
+      </div>
+
+      <section className={styles.revenueCard}>
+        <div>
+          <p className="eyebrow">Monetización</p>
+          <h3>Actualiza el ingreso de anuncios</h3>
+          <p>No hay un proveedor publicitario conectado aún. Ingresa aquí el total del reporte mensual de tu plataforma de anuncios para monitorearlo sin mezclarlo con datos estimados.</p>
+        </div>
+        <form onSubmit={saveAdRevenue}>
+          <label>Ingreso del mes (CLP)<input type="number" min="0" step="1" value={revenueInput} onChange={event => setRevenueInput(event.target.value)} placeholder={metrics ? money.format(metrics.ads.revenueCLP) : "$0"} required /></label>
+          <button disabled={savingRevenue}>{savingRevenue ? "Guardando…" : "Guardar ingreso"}</button>
+          {revenueStatus && <p role="status">{revenueStatus}</p>}
+        </form>
+      </section>
+    </div>
+  );
+
   // ── SECTION 2: SYNC CENTER ──────────────────────────────
   const syncSection = (
     <div className={styles.adminBody}>
       <div className={styles.syncHeaderRow}>
         <div>
           <h2>Centro de Sincronización</h2>
-          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 8 tiendas.</p>
+          <p className={styles.sectionDesc}>Ejecuta scrapers en vivo para mantener actualizados precios y stock de las 10 tiendas.</p>
         </div>
         <button
           type="button"
           className={styles.syncAllBtn}
           onClick={handleSyncAll}
-          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc}
+          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc || syncingPreunic || syncingLodoro}
         >
           {syncingAll ? "⏳ Sincronizando Todo..." : "⚡ Sincronizar Todo el Catálogo"}
         </button>
@@ -727,6 +902,62 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </button>
           {abcMsg && <p className={styles.syncMsg}>{abcMsg}</p>}
         </article>
+
+        {/* Preunic */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(225, 29, 72, 0.1)", color: "#e11d48" }}>
+              🧴
+            </div>
+            <div>
+              <h3>Preunic</h3>
+              <small>preunic-cl · Perfumes y fragancias</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingPreunic ? styles.stateRunning : preunicJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingPreunic ? "Ejecutando..." : preunicJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {preunicJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${preunicJob.targetProducts ? Math.min(100, Math.round((preunicJob.imported / preunicJob.targetProducts) * 100)) : (preunicJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{preunicJob.imported} productos importados · pág {preunicJob.currentPage}/{preunicJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncPreunic} disabled={syncingPreunic || syncingAll}>
+            {syncingPreunic ? "Iniciando scraper..." : "🔄 Sincronizar Preunic"}
+          </button>
+          {preunicMsg && <p className={styles.syncMsg}>{preunicMsg}</p>}
+        </article>
+
+        {/* L'Odoro */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed" }}>
+              🌺
+            </div>
+            <div>
+              <h3>L'Odoro</h3>
+              <small>lodoro-cl · Catálogo UCP/MCP</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingLodoro ? styles.stateRunning : lodoroJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingLodoro ? "Ejecutando..." : lodoroJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {lodoroJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${lodoroJob.targetProducts ? Math.min(100, Math.round((lodoroJob.imported / lodoroJob.targetProducts) * 100)) : (lodoroJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{lodoroJob.imported} productos importados · pág {lodoroJob.currentPage}/{lodoroJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncLodoro} disabled={syncingLodoro || syncingAll}>
+            {syncingLodoro ? "Iniciando scraper..." : "🔄 Sincronizar L'Odoro"}
+          </button>
+          {lodoroMsg && <p className={styles.syncMsg}>{lodoroMsg}</p>}
+        </article>
       </div>
 
       {/* Sync history timeline */}
@@ -787,6 +1018,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="cosmetic">Cosmetic</option>
               <option value="paris">Paris</option>
               <option value="abc">ABC</option>
+              <option value="preunic">Preunic</option>
+              <option value="lodoro">L'Odoro</option>
             </select>
           </div>
         </div>
@@ -809,8 +1042,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : styles.badgeMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : "Multi-tienda";
+                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : src === "preunic-cl" ? styles.badgePreunic : src === "lodoro-cl" ? styles.badgeLodoro : styles.badgeMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : src === "preunic-cl" ? "Preunic" : src === "lodoro-cl" ? "L'Odoro" : "Multi-tienda";
                 const avail = item.product.available !== false;
                 const matchedCount = item.product.matchedStores ?? 1;
 
@@ -867,6 +1100,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       ) : (
         <>
           {section === "overview" && overviewSection}
+          {section === "analytics" && analyticsSection}
           {section === "sync"     && syncSection}
           {section === "catalog"  && catalogTableSection}
         </>

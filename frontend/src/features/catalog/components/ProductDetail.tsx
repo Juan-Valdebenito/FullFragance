@@ -22,6 +22,8 @@ const stores: Record<string, string> = {
   Cosmetic: "https://cosmetic.cl",
   Paris: "https://www.paris.cl",
   ABC: "https://www.abc.cl",
+  Preunic: "https://preunic.cl",
+  "L'Odoro": "https://www.lodoro.cl",
   "La Polar": "https://www.lapolar.cl",
 };
 

@@ -6,6 +6,7 @@ const storeRoutes = require("./storeRoutes");
 const priceRoutes = require("./priceRoutes");
 const catalogRoutes = require("./catalogRoutes");
 const scraperRoutes = require("./scraperRoutes");
+const analyticsRoutes = require("./analyticsRoutes");
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.use("/users", userRoutes);
 router.use("/stores", storeRoutes);
 router.use("/catalog", catalogRoutes);
 router.use("/scrapers", scraperRoutes);
+router.use("/analytics", analyticsRoutes);
 router.use("/", priceRoutes); // expone /api/products, /api/prices
 
 module.exports = router;

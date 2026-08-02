@@ -165,7 +165,10 @@ function productUrlFromTile(tileHtml, baseUrl) {
 }
 
 function imageUrlFromTile(tileHtml) {
-  const match = tileHtml.match(/<img\b[^>]*\bsrc=["']([^"']+)["']/i);
+  // Las tarjetas incluyen badges (cuotas, despacho, etc.) antes de la imagen.
+  // itemprop=image identifica la foto comercial del producto y evita guardar
+  // los SVG de promoción como si fueran la imagen del perfume.
+  const match = tileHtml.match(/<img\b(?=[^>]*\bitemprop=["']image["'])[^>]*\bsrc=["']([^"']+)["']/i);
   return match ? decodeHtml(match[1]) : null;
 }
 
@@ -239,7 +242,12 @@ function isPerfumeProductUrl(value) {
     if (url.search || url.hash) return false;
     if (!/^\/[^/]+\/\d+\.html$/i.test(url.pathname)) return false;
     const pathname = decodeURIComponent(url.pathname).toLowerCase();
-    return /(?:^|[-/])(perfume|parfum|fragancia|colonia|eau)(?:[-/]|$)/i.test(pathname);
+    // “Colonia” también es el nombre de una línea de camas de ABC. No es una
+    // señal suficiente para descubrir perfumes desde un sitemap global.
+    if (/(?:^|-)(?:cama|colchon|respaldo|velador|cabecera|sommier|dormitorio|sofa|sillon|living|comedor|closet|ropero)(?:-|$)/i.test(pathname)) {
+      return false;
+    }
+    return /(?:^|[-/])(perfume|parfum|fragancia|eau)(?:[-/]|$)/i.test(pathname);
   } catch {
     return false;
   }
@@ -286,7 +294,9 @@ function productBrandFromPage(html) {
 }
 
 function productImageFromPage(html) {
-  const match = String(html || "").match(/<div\b[^>]*\bclass=["'][^"']*\bprimary-images\b[^"']*["'][^>]*>[\s\S]*?<img\b[^>]*\bsrc=["']([^"']+)["']/i);
+  // primary-images-wrapper contiene primero los badges promocionales. La foto
+  // del producto es el único img semántico con itemprop=image.
+  const match = String(html || "").match(/<img\b(?=[^>]*\bitemprop=["']image["'])[^>]*\bsrc=["']([^"']+)["']/i);
   return match ? decodeHtml(match[1]) : null;
 }
 

@@ -3,7 +3,7 @@
 const STOP_WORDS = new Set([
   "perfume", "fragancia", "hombre", "mujer", "masculino", "femenino", "unisex",
   "eau", "de", "pour", "toilette", "parfum", "edp", "edt", "extract", "extrait",
-  "spray", "vaporizador", "ml", "original",
+  "spray", "vaporizador", "ml", "cl", "oz", "original",
 ]);
 
 /**
@@ -11,6 +11,23 @@ const STOP_WORDS = new Set([
  * No deben ser stop words — son indicadores de tipo de producto.
  */
 const SET_KEYWORDS = new Set(["set", "pack", "kit", "estuche", "cofre", "coffret"]);
+
+// No son perfumes intercambiables con una botella individual. Detectarlos evita
+// comparar, por ejemplo, una loción Sauvage con el Eau de Toilette Sauvage.
+const PRODUCT_TYPES = [
+  ["deodorant", /\b(?:deodorant|desodorante)\b/],
+  ["body-mist", /\b(?:body mist|body spray|bruma corporal)\b/],
+  ["lotion", /\b(?:body lotion|locion corporal|crema corporal)\b/],
+  ["shower-gel", /\b(?:shower gel|gel de ducha|gel ducha)\b/],
+  ["after-shave", /\b(?:after shave|aftershave)\b/],
+];
+
+// Estas presentaciones pueden llevar el mismo líquido, pero no representan la
+// misma oferta comercial. Se mantienen separadas para no comparar precios que
+// no son equivalentes.
+const COMMERCIAL_VARIANTS = new Set([
+  "tester", "probador", "decant", "muestra", "sample", "refill", "recarga",
+]);
 
 /**
  * Modificadores que forman parte de la identidad del perfume.
@@ -184,8 +201,20 @@ function normalize(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\bn[º°]\s*(\d+)/g, " numero $1 ")
+    .replace(/\bno\.?\s*(\d+)/g, " numero $1 ")
     .replace(/&/g, " y ")
     .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizedProductName(product) {
+  return normalize(product?.name)
+    // Variaciones ortográficas y comerciales frecuentes entre catálogos.
+    .replace(/\bborn in rome\b/g, "born in roma")
+    .replace(/\bone million\b/g, "1 million")
+    .replace(/\bnumero\s*5\b/g, "numero cinco")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -237,19 +266,36 @@ function volumeOf(product) {
     product.size,
   ].filter(Boolean).join(" ");
 
-  const presentationMatch = normalize(presentationFields).match(/\b(\d+(?:[.,]\d+)?)\s*ml\b/);
-  if (presentationMatch) return Number(presentationMatch[1].replace(",", "."));
+  const presentationMatch = extractVolumes(presentationFields)[0];
+  if (presentationMatch !== undefined) return presentationMatch;
 
   // Fallback: buscar ml en el nombre
-  const nameMatch = normalize(product.name || "").match(/\b(\d+(?:[.,]\d+)?)\s*ml\b/);
-  return nameMatch ? Number(nameMatch[1].replace(",", ".")) : null;
+  return extractVolumes(product.name)[0] ?? null;
+}
+
+function extractVolumes(value) {
+  const volumes = [];
+  const text = normalize(value);
+  for (const match of text.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(ml|cl|l|oz)\b/g)) {
+    const amount = Number(match[1].replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) continue;
+    const unit = match[2];
+    const milliliters = unit === "oz" ? amount * 29.5735 : unit === "cl" ? amount * 10 : unit === "l" ? amount * 1000 : amount;
+    volumes.push(Math.round(milliliters * 100) / 100);
+  }
+  return volumes;
+}
+
+function sameVolume(left, right) {
+  return Math.abs(left - right) <= Math.max(1, Math.max(left, right) * 0.03);
 }
 
 function concentrationOf(product) {
-  const value = normalize(product.name);
+  const value = normalize([product?.name, product?.presentation, product?.unit, product?.description].filter(Boolean).join(" "));
   if (/\b(edp|eau de parfum)\b/.test(value)) return "edp";
   if (/\b(edt|eau de toilette)\b/.test(value)) return "edt";
   if (/\b(extrait|extracto)\b/.test(value)) return "extrait";
+  if (/\bparfum\b/.test(value)) return "parfum";
   if (/\b(colonia|edc|eau de cologne)\b/.test(value)) return "edc";
   return null;
 }
@@ -259,7 +305,7 @@ function concentrationOf(product) {
  * Dos productos con distinto conjunto de modificadores NO son el mismo perfume.
  */
 function modifierOf(product) {
-  const tokens = new Set(normalize(product.name).split(" ").filter(Boolean));
+  const tokens = new Set(normalizedProductName(product).split(" ").filter(Boolean));
   return new Set([...tokens].filter((token) => IDENTITY_MODIFIERS.has(token)));
 }
 
@@ -271,14 +317,31 @@ function isSet(product) {
   const tokens = normalize(product.name).split(" ").filter(Boolean);
   if (tokens.some((token) => SET_KEYWORDS.has(token))) return true;
   // Patrón de múltiples volúmenes unidos con + o separados
-  const name = normalize(product.name);
-  const volumeMatches = name.match(/\d+\s*ml/g);
-  return volumeMatches !== null && volumeMatches.length >= 2;
+  const volumes = extractVolumes([product?.name, product?.presentation, product?.unit].filter(Boolean).join(" "));
+  return volumes.length >= 2;
+}
+
+function setSignature(product) {
+  if (!isSet(product)) return null;
+  return extractVolumes([product?.name, product?.presentation, product?.unit].filter(Boolean).join(" "))
+    .sort((left, right) => left - right)
+    .map((volume) => Math.round(volume))
+    .join("+");
+}
+
+function productTypeOf(product) {
+  const value = normalizedProductName(product);
+  return PRODUCT_TYPES.find(([, pattern]) => pattern.test(value))?.[0] || null;
+}
+
+function commercialVariantOf(product) {
+  const tokens = new Set(normalizedProductName(product).split(" ").filter(Boolean));
+  return new Set([...tokens].filter((token) => COMMERCIAL_VARIANTS.has(token)));
 }
 
 function identityTokens(product) {
   const brandTokens = new Set(normalizeBrand(brandOf(product)).split(" ").filter(Boolean));
-  return normalize(product.name)
+  return normalizedProductName(product)
     .split(" ")
     .filter(
       (token) =>
@@ -297,16 +360,22 @@ function tokenScore(left, right) {
   return common / Math.max(a.size, b.size);
 }
 
+function sameTokenSet(left, right) {
+  if (left.size !== right.size) return false;
+  return [...left].every((token) => right.has(token));
+}
+
 /**
  * Determina si dos productos del catálogo son el mismo perfume.
  *
  * Reglas (en orden de precedencia):
  * 1. No pueden ser de la misma fuente (ya se habría deduplicado).
  * 2. La marca normalizada debe coincidir exactamente.
- * 3. Si ambos tienen volumen definido, deben ser iguales.
+ * 3. Si ambos tienen volumen definido, deben ser equivalentes (ml, cl y oz).
  * 4. Si ambos tienen concentración definida, deben ser iguales.
  * 5. Los modificadores de identidad deben ser iguales (ej. "intense" vs sin intense → NO es el mismo).
- * 6. El score de tokens debe superar el umbral de 0.72.
+ * 6. El tipo de producto y la condición comercial deben ser equivalentes.
+ * 7. El score de tokens debe superar el umbral de 0.72.
  *    Si cualquiera de los productos tiene ≤ 1 token relevante, se requiere score = 1.0
  *    (coincidencia exacta) para evitar falsos positivos en nombres genéricos.
  */
@@ -315,6 +384,7 @@ function samePerfume(left, right) {
 
   // Un set/kit NO es el mismo producto que un perfume individual
   if (isSet(left) !== isSet(right)) return false;
+  if (isSet(left) && setSignature(left) !== setSignature(right)) return false;
 
   const leftBrand = normalizeBrand(brandOf(left));
   const rightBrand = normalizeBrand(brandOf(right));
@@ -323,7 +393,7 @@ function samePerfume(left, right) {
   // Verificar volumen
   const leftVolume = volumeOf(left);
   const rightVolume = volumeOf(right);
-  if (leftVolume && rightVolume && leftVolume !== rightVolume) return false;
+  if (leftVolume && rightVolume && !sameVolume(leftVolume, rightVolume)) return false;
 
   // Verificar concentración
   const leftConcentration = concentrationOf(left);
@@ -344,6 +414,14 @@ function samePerfume(left, right) {
   for (const mod of rightModifiers) {
     if (!leftModifiers.has(mod)) return false;
   }
+
+  const leftType = productTypeOf(left);
+  const rightType = productTypeOf(right);
+  if (leftType !== rightType && (leftType || rightType)) return false;
+
+  const leftCommercialVariant = commercialVariantOf(left);
+  const rightCommercialVariant = commercialVariantOf(right);
+  if (!sameTokenSet(leftCommercialVariant, rightCommercialVariant)) return false;
 
   // Calcular score de tokens
   const score = tokenScore(left, right);
@@ -368,9 +446,13 @@ module.exports = {
   normalizeBrand,
   inferBrandFromName,
   volumeOf,
+  extractVolumes,
   concentrationOf,
   modifierOf,
   isSet,
+  setSignature,
+  productTypeOf,
+  commercialVariantOf,
   identityTokens,
   tokenScore,
   samePerfume,

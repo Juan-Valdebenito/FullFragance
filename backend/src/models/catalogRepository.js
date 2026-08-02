@@ -179,6 +179,7 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
     source: enrichedProduct.source,
     sourceUrl: enrichedProduct.url,
     imageUrl: enrichedProduct.imageUrl || null,
+    imageUrls: enrichedProduct.imageUrl ? [enrichedProduct.imageUrl] : [],
     available: enrichedProduct.available,
     priceIsMock: Boolean(enrichedProduct.raw?.mockPrice),
     isSet: isSet(enrichedProduct),
@@ -217,7 +218,13 @@ function mergeScrapedProducts(products) {
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
     for (const product of brandProducts) {
-      const group = brandGroups.find((candidate) => candidate.some((item) => samePerfume(item, product)));
+      // Un producto sólo puede unirse si es compatible con todo el grupo y no
+      // duplica la misma tienda. Evita el "encadenamiento" A≈B y B≈C cuando
+      // A y C son variantes distintas, un problema más visible al sumar fuentes.
+      const group = brandGroups.find((candidate) =>
+        !candidate.some((item) => item.source === product.source)
+        && candidate.every((item) => samePerfume(item, product))
+      );
       if (group) group.push(product);
       else brandGroups.push([product]);
     }
@@ -227,6 +234,15 @@ function mergeScrapedProducts(products) {
   return groups.map((group) => {
     const converted = group.map((product) => toCatalogProduct(product, profiles, allNotes));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
+    // La tienda representante puede no entregar imagen, aunque otra oferta del
+    // mismo perfume sí. El card debe aprovechar cualquier imagen válida del
+    // grupo, sin alterar la oferta o el precio que se usa como representante.
+    const imageUrls = [...new Set(
+      converted
+        .map((product) => typeof product.imageUrl === "string" ? product.imageUrl.trim() : "")
+        .filter(Boolean)
+    )];
+    const imageUrl = imageUrls[0] || null;
     const offersBySource = new Map();
     for (const offer of converted.flatMap((product) => product.offers)) {
       const current = offersBySource.get(offer.source);
@@ -244,6 +260,8 @@ function mergeScrapedProducts(products) {
 
     return {
       ...representative,
+      imageUrl,
+      imageUrls,
       gender,
       notes,
       olfactoryNotes,
@@ -266,7 +284,7 @@ async function getProducts() {
   await loadOlfactoryNotesFromDb();
   await loadBaseProductsFromDb();
 
-  const sources = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl"];
+  const sources = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl", "preunic-cl", "lodoro-cl"];
   const scrapedLists = await Promise.all(sources.map((source) => listScrapedProducts(source)));
   const rawScraped = scrapedLists.flat();
 

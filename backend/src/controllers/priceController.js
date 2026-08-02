@@ -1,8 +1,12 @@
 const { getComparisonForCity, getComparisonForProduct } = require("../models/priceService");
 const { getProducts } = require("../models/catalogRepository");
 
-function listProducts(req, res) {
-  res.json({ products: getProducts() });
+async function listProducts(req, res, next) {
+  try {
+    res.json({ products: await getProducts() });
+  } catch (err) {
+    next(err);
+  }
 }
 
 async function comparePrices(req, res, next) {

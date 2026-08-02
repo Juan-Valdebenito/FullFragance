@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "../domain/product";
@@ -17,20 +17,28 @@ interface ProductCardProps {
 
 export function ProductCard({ product, recommendation = false, href }: ProductCardProps) {
   const detailHref = href ?? `/perfumes/${product.id}`;
-  const [imgError, setImgError] = useState(false);
+  const imageCandidates = useMemo(
+    () => [...new Set(product.imageCandidates?.filter(Boolean) || (product.image ? [product.image] : []))],
+    [product.image, product.imageCandidates]
+  );
+  const [failedImages, setFailedImages] = useState<string[]>([]);
+  const image = imageCandidates.find((candidate) => !failedImages.includes(candidate));
+
+  // Al recibir nuevos datos para el mismo producto, vuelve a intentar las URLs.
+  useEffect(() => setFailedImages([]), [product.id, imageCandidates]);
 
   return (
     <article className={`${styles.card} ${recommendation ? styles.recommendation : ""}`}>
       <div className={styles.imageWrap}>
         <Link href={detailHref} aria-label={`Ver ${product.name}`}>
-          {product.image && !imgError ? (
+          {image ? (
             <Image
-              src={product.image}
+              src={image}
               unoptimized
               alt={`Perfume ${product.name} de ${product.brand}`}
               fill
               sizes="(max-width: 700px) 100vw, 400px"
-              onError={() => setImgError(true)}
+              onError={() => setFailedImages((failed) => failed.includes(image) ? failed : [...failed, image])}
             />
           ) : (
             <span className={styles.imagePlaceholder}>FF</span>
@@ -47,18 +55,23 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
         </div>
         <div className={styles.prices}>
           {product.prices.length ? (
-            product.prices.map((price, index) => (
-              <div
-                className={`${styles.priceRow} ${index === 0 ? styles.bestPriceRow : ""}`}
-                key={price.id ?? `${price.store}-${price.price}-${index}`}
-              >
-                <span className={styles.storeName}>
-                  {price.store}
-                  {index === 0 ? <em className={styles.bestBadge}>Mejor precio</em> : price.offer && <em>Oferta</em>}
-                </span>
-                <strong>{price.price}</strong>
-              </div>
-            ))
+            <>
+              {product.prices.map((price, index) => (
+                <div
+                  className={`${styles.priceRow} ${index === 0 ? styles.bestPriceRow : ""}`}
+                  key={price.id ?? `${price.store}-${price.price}-${index}`}
+                >
+                  <span className={styles.storeName}>
+                    {price.store}
+                    {index === 0 ? <em className={styles.bestBadge}>Mejor precio</em> : price.offer && <em>Oferta</em>}
+                  </span>
+                  <strong>{price.price}</strong>
+                </div>
+              ))}
+              {product.extraStoreCount ? (
+                <p className={styles.moreStores}>+{product.extraStoreCount} {product.extraStoreCount === 1 ? "tienda más" : "tiendas más"} en el detalle</p>
+              ) : null}
+            </>
           ) : (
             <div className={styles.priceRow}><span>Tienda</span><strong>Precio pendiente</strong></div>
           )}

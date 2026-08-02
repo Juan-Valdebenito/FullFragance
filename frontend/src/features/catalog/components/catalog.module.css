@@ -12,7 +12,7 @@
   margin-bottom: 24px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--surface-bright);
   padding: 8px 12px 8px 18px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -50,7 +50,7 @@
   gap: 8px;
   border: 1px solid var(--outline-variant);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--surface-bright);
   color: var(--on-surface);
   padding: 8px 16px;
   font-size: 0.72rem;
@@ -64,7 +64,7 @@
 .search button:hover:not(:disabled) {
   border-color: var(--primary);
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   transform: translateY(-1px);
 }
 
@@ -77,7 +77,7 @@
 .empty {
   border: 1px solid rgba(197, 160, 89, 0.25);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--surface-bright);
   padding: 34px 20px;
   color: var(--on-surface-muted);
   text-align: center;
@@ -108,7 +108,7 @@
   min-height: 52px;
   border: 1px solid rgba(0, 0, 0, 0.07);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface-bright);
   color: var(--on-surface);
   padding: 12px 18px;
   font-weight: 700;
@@ -135,7 +135,7 @@
 .segmentNav .activeSegment {
   border-color: var(--primary);
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -174,7 +174,7 @@
   gap: 20px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--surface-bright);
   padding: 22px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
@@ -231,34 +231,6 @@
   text-decoration: none;
 }
 
-.storeStats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.storeStats span {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border: 1px solid var(--surface-container);
-  border-radius: 10px;
-  background: var(--surface-low);
-  padding: 8px 6px;
-  color: var(--on-surface-muted);
-  font-size: 0.68rem;
-  text-align: center;
-}
-
-.storeStats strong {
-  color: var(--on-surface);
-  font-family: "Space Grotesk", monospace;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
 .filters {
   display: grid;
   gap: 14px;
@@ -277,11 +249,12 @@
 }
 
 .filters select,
+.filters input,
 .catalogToolbar select {
   min-width: 0;
   border: 1px solid var(--outline-variant);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--surface-bright);
   color: var(--on-surface);
   padding: 10px 12px;
   font-size: 0.85rem;
@@ -290,8 +263,42 @@
 }
 
 .filters select:focus,
+.filters input:focus,
 .catalogToolbar select:focus {
   border-color: var(--gold);
+}
+
+.priceRange {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.priceRange legend {
+  margin-bottom: 6px;
+  color: var(--on-surface);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.priceRange > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.priceRange label {
+  gap: 5px;
+  color: var(--on-surface-muted);
+  font-size: 0.62rem;
+}
+
+.priceRange input {
+  width: 100%;
+  padding: 10px 8px;
+  font-size: 0.78rem;
 }
 
 .filterNote {
@@ -364,7 +371,7 @@
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.07);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--surface-bright);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
 }
@@ -526,6 +533,7 @@
 
 .priceRow {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -546,6 +554,7 @@
 
 .storeName {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -580,16 +589,28 @@
 }
 
 .priceRow strong {
+  flex: 0 0 auto;
+  min-width: max-content;
   color: var(--on-surface);
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.02rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .bestPriceRow strong {
   color: var(--primary);
   font-size: 1.1rem;
+}
+
+.moreStores {
+  margin: 2px 0 0;
+  color: var(--gold-dark);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
 }
 
 .storeButton {
@@ -602,7 +623,7 @@
   border: 1px solid var(--primary);
   border-radius: 10px;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   padding: 10px 16px;
   text-align: center;
   font-size: 0.72rem;
@@ -658,7 +679,7 @@
   justify-content: center;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface-bright);
   color: var(--on-surface-muted);
   padding: 0 12px;
   font-size: 0.8rem;
@@ -675,7 +696,7 @@
 .pagination .activePage {
   border-color: var(--primary);
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
 }
 
 .pagination button:disabled {
@@ -726,7 +747,7 @@
   margin-top: 20px;
   border-radius: 10px;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   padding: 12px 22px;
   font-weight: 700;
 }

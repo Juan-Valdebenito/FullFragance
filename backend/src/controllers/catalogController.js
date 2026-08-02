@@ -36,30 +36,9 @@ async function featuredProducts(_req, res, next) {
 
 async function dealOfDay(_req, res, next) {
   try {
-    const allProducts = await catalogRepository.getProducts();
-    const products = allProducts
-      .filter((p) => p.available && p.basePrice > 0 && p.offers && p.offers.length > 1);
+    const best = (await getBestDeals())[0];
 
-    if (!products.length) {
-      // Fallback: producto disponible con mayor basePrice (más exclusivo)
-      const fallback = allProducts
-        .filter((p) => p.available && p.basePrice > 0)
-        .sort((a, b) => b.matchedStores - a.matchedStores || a.basePrice - b.basePrice)
-        .slice(0, 1)[0] || null;
-      return res.json({ deal: fallback });
-    }
-
-    // Elige el producto con mayor diferencia de precio entre tiendas
-    const best = products
-      .map((p) => {
-        const prices = p.offers.map((o) => o.price).filter((price) => price > 0);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const savings = maxPrice - minPrice;
-        const savingsPct = minPrice > 0 ? Math.round((savings / maxPrice) * 100) : 0;
-        return { product: p, minPrice, maxPrice, savings, savingsPct };
-      })
-      .sort((a, b) => b.savings - a.savings)[0];
+    if (!best) return res.json({ deal: null });
 
     res.json({
       deal: best.product,
@@ -73,4 +52,53 @@ async function dealOfDay(_req, res, next) {
   }
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay };
+async function dealsOfDay(_req, res, next) {
+  try {
+    const deals = await getBestDeals();
+    res.json({
+      deals: deals.map(({ product, minPrice, maxPrice, savings, savingsPct }) => ({
+        deal: product,
+        minPrice,
+        maxPrice,
+        savings,
+        savingsPct,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getBestDeals() {
+  const allProducts = await catalogRepository.getProducts();
+  const products = allProducts
+    .filter((product) => product.available && product.basePrice > 0 && product.offers?.length > 1)
+    .map((product) => {
+      const prices = product.offers.map((offer) => offer.price).filter((price) => price > 0);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const savings = maxPrice - minPrice;
+      const savingsPct = maxPrice > 0 ? Math.round((savings / maxPrice) * 100) : 0;
+      return { product, minPrice, maxPrice, savings, savingsPct };
+    })
+    .filter((deal) => Number.isFinite(deal.minPrice) && Number.isFinite(deal.maxPrice))
+    .sort((first, second) => second.savings - first.savings || second.savingsPct - first.savingsPct);
+
+  if (products.length) return products.slice(0, 5);
+
+  const fallback = allProducts
+    .filter((product) => product.available && product.basePrice > 0)
+    .sort((first, second) => (second.matchedStores || 0) - (first.matchedStores || 0) || first.basePrice - second.basePrice)
+    .slice(0, 5)
+    .map((product) => ({
+      product,
+      minPrice: product.basePrice,
+      maxPrice: product.basePrice,
+      savings: 0,
+      savingsPct: 0,
+    }));
+
+  return fallback;
+}
+
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay };
