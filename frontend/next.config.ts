@@ -1,11 +1,25 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") || "";
-const connectSources = ["'self'", "http://localhost:3000", "http://127.0.0.1:3000", apiOrigin].filter(Boolean).join(" ");
+
+// La URL del backend en producción puede venir de NEXT_PUBLIC_API_URL.
+// Extraemos el origen (protocolo + host) para usarlo en la CSP.
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "").replace(/\/$/, "") || "";
+
+// En producción también permitimos pagead2 y otros dominios de AdSense en connect-src
+const connectSources = [
+  "'self'",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  apiOrigin,
+  "https://overpass-api.de",
+  "https://overpass.kumi.systems",
+  "https://nominatim.openstreetmap.org",
+].filter(Boolean).join(" ");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com https://pagead2.googlesyndication.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com https://pagead2.googlesyndication.com https://partner.googleadservices.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
@@ -27,6 +41,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Necesario para que Vercel identifique correctamente el proyecto Next.js
+  output: undefined,
   async headers() {
     return [{
       source: "/:path*",
