@@ -100,6 +100,7 @@ async function initDatabase() {
           google_id VARCHAR(255),
           picture TEXT,
           role VARCHAR(50) NOT NULL DEFAULT 'customer',
+          session_version INTEGER NOT NULL DEFAULT 0,
           city JSONB,
           favorites JSONB NOT NULL DEFAULT '[]'::jsonb,
           scent_preferences JSONB,
@@ -144,6 +145,9 @@ async function initDatabase() {
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
           ON users(google_id) WHERE google_id IS NOT NULL;
       `);
+
+      // Compatible con instalaciones creadas antes de la revocación de sesiones.
+      await p.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0");
 
       // Migrar datos legados desde db.json y catalog.sqlite si existen y la BD está limpia
       await seedAndMigrateFromLegacy(p);
@@ -384,6 +388,11 @@ function memoryQuery(text, params = []) {
     if (user) user.password_hash = params[1];
     return { rows: user ? [userToPgRow(user)] : [] };
   }
+  if (sql.includes("UPDATE users SET session_version = session_version + 1 WHERE id = $1")) {
+    const user = memoryStore.users.find((u) => u.id === params[0]);
+    if (user) user.session_version = Number(user.session_version || user.sessionVersion || 0) + 1;
+    return { rows: user ? [{ session_version: user.session_version }] : [] };
+  }
   if (sql.includes("DELETE FROM users WHERE id = $1")) {
     const index = memoryStore.users.findIndex((u) => u.id === params[0]);
     if (index >= 0) memoryStore.users.splice(index, 1);
@@ -454,6 +463,7 @@ function userToPgRow(u) {
     google_id: u.google_id || u.googleId || null,
     picture: u.picture || null,
     role: u.role || "customer",
+    session_version: Number(u.session_version || u.sessionVersion || 0),
     city: typeof u.city === "string" ? JSON.parse(u.city) : u.city,
     favorites: typeof u.favorites === "string" ? JSON.parse(u.favorites) : (u.favorites || []),
     scent_preferences: typeof u.scent_preferences === "string" ? JSON.parse(u.scent_preferences) : (u.scent_preferences || u.scentPreferences || null),

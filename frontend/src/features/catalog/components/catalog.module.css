@@ -533,6 +533,7 @@
 
 .priceRow {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -553,6 +554,7 @@
 
 .storeName {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: 6px;
   min-width: 0;
@@ -587,16 +589,28 @@
 }
 
 .priceRow strong {
+  flex: 0 0 auto;
+  min-width: max-content;
   color: var(--on-surface);
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.02rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .bestPriceRow strong {
   color: var(--primary);
   font-size: 1.1rem;
+}
+
+.moreStores {
+  margin: 2px 0 0;
+  color: var(--gold-dark);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
 }
 
 .storeButton {

@@ -2,15 +2,22 @@ const userRepository = require("../models/userRepository");
 const bcrypt = require("bcryptjs");
 const { getRecommendationsForUser } = require("../models/recommendationService");
 const { getOlfactoryNotes, getProductById } = require("../models/catalogRepository");
+const { isPlainObject, normalizedName, validPassword } = require("../utils/validation");
+const { signToken } = require("../utils/jwt");
 
 async function setCity(req, res, next) {
   try {
+    if (!isPlainObject(req.body)) return res.status(400).json({ error: "El cuerpo de la solicitud no es válido." });
     const { name, country, lat, lon } = req.body;
-    if (!name || lat === undefined || lon === undefined) {
+    const cityName = typeof name === "string" ? name.trim().replace(/\s+/g, " ") : "";
+    const countryName = typeof country === "string" ? country.trim().replace(/\s+/g, " ") : "";
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+    if (!cityName || cityName.length > 100 || countryName.length > 100 || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
       return res.status(400).json({ error: "Se requiere name, lat y lon de la ciudad." });
     }
 
-    const city = { name, country: country || "", lat: Number(lat), lon: Number(lon) };
+    const city = { name: cityName, country: countryName, lat: latitude, lon: longitude };
     const user = await userRepository.updateCity(req.userId, city);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
 
@@ -22,8 +29,8 @@ async function setCity(req, res, next) {
 
 async function updateProfile(req, res, next) {
   try {
-    const name = String(req.body?.name || "").trim().replace(/\s+/g, " ");
-    if (name.length < 2 || name.length > 80) {
+    const name = normalizedName(req.body?.name);
+    if (!name) {
       return res.status(400).json({ error: "El nombre debe tener entre 2 y 80 caracteres." });
     }
 
@@ -38,13 +45,13 @@ async function updateProfile(req, res, next) {
 
 async function changePassword(req, res, next) {
   try {
-    const currentPassword = String(req.body?.currentPassword || "");
-    const newPassword = String(req.body?.newPassword || "");
-    if (!currentPassword || !newPassword) {
+    const currentPassword = typeof req.body?.currentPassword === "string" ? req.body.currentPassword : "";
+    const newPassword = req.body?.newPassword;
+    if (!currentPassword || typeof newPassword !== "string") {
       return res.status(400).json({ error: "Debes indicar tu contraseña actual y la nueva contraseña." });
     }
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: "La nueva contraseña debe tener al menos 8 caracteres." });
+    if (!validPassword(newPassword)) {
+      return res.status(400).json({ error: "La nueva contraseña debe tener 10 a 128 caracteres e incluir letras y números." });
     }
 
     const user = await userRepository.findById(req.userId);
@@ -59,8 +66,9 @@ async function changePassword(req, res, next) {
       return res.status(400).json({ error: "La nueva contraseña debe ser diferente de la actual." });
     }
 
-    await userRepository.updatePassword(user.id, await bcrypt.hash(newPassword, 10));
-    res.json({ message: "Contraseña actualizada correctamente." });
+    await userRepository.updatePassword(user.id, await bcrypt.hash(newPassword, 12));
+    const sessionVersion = await userRepository.invalidateSessions(user.id);
+    res.json({ message: "Contraseña actualizada correctamente.", token: signToken({ sub: user.id, sv: sessionVersion }) });
   } catch (err) {
     next(err);
   }
@@ -68,7 +76,7 @@ async function changePassword(req, res, next) {
 
 async function deleteAccount(req, res, next) {
   try {
-    if (req.body?.confirmation !== "ELIMINAR MI CUENTA") {
+    if (!isPlainObject(req.body) || req.body.confirmation !== "ELIMINAR MI CUENTA") {
       return res.status(400).json({ error: "Escribe ELIMINAR MI CUENTA para confirmar la eliminación." });
     }
 
@@ -110,7 +118,7 @@ async function toggleFavorite(req, res, next) {
 async function saveScentQuiz(req, res, next) {
   try {
     const { scores } = req.body;
-    if (!scores || typeof scores !== "object") {
+    if (!isPlainObject(scores) || Object.keys(scores).length > 50) {
       return res.status(400).json({ error: "Se requieren las puntuaciones del test (scores)." });
     }
 

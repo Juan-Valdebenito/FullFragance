@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { inferBrandFromName, samePerfume, isSet } = require("../src/models/productMatcher");
+const { inferBrandFromName, samePerfume, isSet, volumeOf } = require("../src/models/productMatcher");
 const { mergeScrapedProducts } = require("../src/models/catalogRepository");
 
 function perfume(source, overrides = {}) {
@@ -64,6 +64,20 @@ test("agrupa ofertas de Falabella y Ripley y conserva ambos precios", () => {
   assert.equal(products[0].source, "multi-store");
   assert.equal(products[0].matchedStores, 2);
   assert.deepEqual(products[0].offers.map((offer) => offer.price), [129990, 119990]);
+});
+
+test("usa la imagen de otra tienda cuando la oferta representante no la tiene", () => {
+  const products = mergeScrapedProducts([
+    perfume("falabella-cl", { imageUrl: null }),
+    perfume("ripley-cl", { imageUrl: "https://rimage.ripley.cl/producto.jpg" }),
+    perfume("silk-cl", { imageUrl: "https://cdn.shopify.com/producto.jpg" }),
+  ]);
+  assert.equal(products.length, 1);
+  assert.equal(products[0].imageUrl, "https://rimage.ripley.cl/producto.jpg");
+  assert.deepEqual(products[0].imageUrls, [
+    "https://rimage.ripley.cl/producto.jpg",
+    "https://cdn.shopify.com/producto.jpg",
+  ]);
 });
 
 // ── Fix 1: Set vs individual ──────────────────────────────────────────────
@@ -150,6 +164,45 @@ test("isSet devuelve false para perfumes individuales", () => {
   assert.equal(isSet({ name: "PERFUME VALENTINO BORN IN ROMA UOMO HOMBRE EDT 50 ML" }), false);
 });
 
+// ── Nuevas fuentes: unidades, tipos y condiciones comerciales ─────────────
+
+test("reconoce equivalencias entre onzas y mililitros", () => {
+  assert.equal(volumeOf(perfume("alisha-cl", { name: "Dior Homme EDT 1 oz", presentation: "1 oz" })), 29.57);
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { name: "Dior Homme EDT 1 oz", presentation: "1 oz" }),
+    perfume("silk-cl", { name: "Dior Homme EDT 30 ml", presentation: "30 ml" })
+  ), true);
+});
+
+test("no mezcla sets con composiciones diferentes", () => {
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { name: "Set Dior Homme EDT 100 ml + 10 ml" }),
+    perfume("silk-cl", { name: "Set Dior Homme EDT 100 ml + 5 ml" })
+  ), false);
+});
+
+test("no mezcla perfume, desodorante ni tester", () => {
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { name: "Dior Homme EDT 100 ml" }),
+    perfume("silk-cl", { name: "Dior Homme Deodorant 100 ml" })
+  ), false);
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { name: "Dior Homme EDT 100 ml" }),
+    perfume("silk-cl", { name: "Dior Homme EDT Tester 100 ml" })
+  ), false);
+});
+
+test("normaliza aliases de nombres entre tiendas", () => {
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { brand: "Valentino", name: "Born in Roma Uomo EDT 100 ml" }),
+    perfume("silk-cl", { brand: "Valentino", name: "Born in Rome Uomo EDT 100 ml" })
+  ), true);
+  assert.equal(samePerfume(
+    perfume("alisha-cl", { brand: "Paco Rabanne", name: "One Million EDT 100 ml" }),
+    perfume("silk-cl", { brand: "Rabanne", name: "1 Million EDT 100 ml" })
+  ), true);
+});
+
 // ── Merge: productos se mantienen separados ───────────────────────────────
 
 test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", () => {
@@ -166,4 +219,14 @@ test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", 
   // El perfume individual de Falabella y Ripley deben poder matchear entre sí
   const matchedIndividual = individualProducts.find((p) => p.source === "multi-store");
   assert.ok(matchedIndividual, "Los perfumes individuales de distintas tiendas deben matchear");
+});
+
+test("mergeScrapedProducts no une dos productos de la misma tienda por una coincidencia intermedia", () => {
+  const products = mergeScrapedProducts([
+    perfume("alisha-cl", { brand: "Dior", name: "Dior Homme EDT 100 ml", sku: "alisha-1" }),
+    perfume("silk-cl", { brand: "Dior", name: "Dior Homme EDT 100 ml", sku: "silk-1" }),
+    perfume("alisha-cl", { brand: "Dior", name: "Dior Homme Parfum 100 ml", sku: "alisha-2" }),
+  ]);
+  assert.equal(products.length, 2);
+  assert.equal(products.find((product) => product.source === "multi-store")?.matchedStores, 2);
 });

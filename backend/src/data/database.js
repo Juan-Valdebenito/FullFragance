@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 
-const bcrypt = require("bcryptjs");
 
 const DB_PATH = path.join(__dirname, "db.json");
 const CATALOG_VERSION = 3;
@@ -101,32 +100,6 @@ function ensureDbFile() {
       role: user.role || "customer",
     }));
     changed = true;
-  }
-
-  // Garantizar usuarios administradores por defecto
-  const adminEmails = ["admin@gmial.com", "admin@gmail.com", "fullfragance@gmail.com"];
-  db.users = db.users || [];
-
-  for (const adminEmail of adminEmails) {
-    const existingAdmin = db.users.find((u) => u.email.toLowerCase() === adminEmail.toLowerCase());
-    if (!existingAdmin) {
-      const adminPasswordHash = bcrypt.hashSync("123456", 10);
-      db.users.push({
-        id: `admin-${adminEmail.replace(/[@.]/g, "-")}`,
-        name: "Administrador FullFragrance",
-        email: adminEmail,
-        passwordHash: adminPasswordHash,
-        role: "admin",
-        city: null,
-        favorites: [],
-        scentPreferences: null,
-        createdAt: new Date().toISOString(),
-      });
-      changed = true;
-    } else if (existingAdmin.role !== "admin") {
-      existingAdmin.role = "admin";
-      changed = true;
-    }
   }
 
   if (changed) {

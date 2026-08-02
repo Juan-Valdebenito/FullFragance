@@ -16,6 +16,7 @@ export type ApiProduct = {
   source?: string;
   sourceUrl?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
   available?: boolean;
   priceIsMock?: boolean;
   isSet?: boolean;

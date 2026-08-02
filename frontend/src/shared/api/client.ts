@@ -37,7 +37,7 @@ export const api = {
   loginWithGoogle: (payload: { credential: string }) => request<{ token: string; user: User }>("/auth/google", { method: "POST", body: JSON.stringify(payload), authenticated: false }).then(saveSession),
   me: () => request<{ user: User }>("/auth/me").then(data => data.user),
   updateProfile: (body: { name: string }) => request<{ user: User }>("/users/me/profile", { method: "PUT", body: JSON.stringify(body) }).then(data => data.user),
-  changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }),
+  changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string; token: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }).then(data => { localStorage.setItem(TOKEN_KEY, data.token); return { message: data.message }; }),
   deleteAccount: (confirmation: string) => request<void>("/users/me", { method: "DELETE", body: JSON.stringify({ confirmation }) }),
   setCity: (city: City) => request<{ user: User }>("/users/me/city", { method: "PUT", body: JSON.stringify(city) }).then(data => data.user),
   comparisons: (city: City, query = "") => request<{ comparison: Comparison[] }>(`/prices?${cityQuery(city)}&q=${encodeURIComponent(query)}`).then(data => data.comparison),

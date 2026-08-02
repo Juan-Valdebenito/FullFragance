@@ -28,12 +28,14 @@ const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
 export function toProduct(item: Comparison): Product {
-  const cheapestByChain = [...item.prices]
+  const pricesByChain = [...item.prices]
     .sort((a, b) => a.price - b.price)
     .filter((price, priceIndex, prices) =>
       prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex
-    )
-    .slice(0, 5);
+    );
+  // El card muestra cinco precios para mantener una altura legible. Conservamos
+  // el conteo restante para no dar la impresión de que el distintivo es erróneo.
+  const cheapestByChain = pricesByChain.slice(0, 5);
   const badge =
     item.product.matchedStores && item.product.matchedStores > 1
       ? `Comparado en ${item.product.matchedStores} tiendas`
@@ -54,12 +56,17 @@ export function toProduct(item: Comparison): Product {
     size: item.product.unit,
     notes: [item.product.category],
     image: productImageUrl(item.product.imageUrl),
+    imageCandidates: [...new Set((item.product.imageUrls || [item.product.imageUrl])
+      .filter((imageUrl): imageUrl is string => Boolean(imageUrl))
+      .map(productImageUrl)
+      .filter((imageUrl): imageUrl is string => Boolean(imageUrl)))],
     prices: cheapestByChain.map((price, priceIndex) => ({
       id: price.storeId,
       store: price.storeName,
       price: money.format(price.price),
       offer: priceIndex === 0,
     })),
+    extraStoreCount: Math.max(0, pricesByChain.length - cheapestByChain.length),
     badge,
   };
 }

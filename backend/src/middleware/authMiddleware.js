@@ -1,7 +1,7 @@
 const { verifyToken } = require("../utils/jwt");
 const userRepository = require("../models/userRepository");
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
@@ -9,24 +9,32 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: "No autenticado. Falta el token." });
   }
 
+  let payload;
   try {
-    const payload = verifyToken(token);
-    req.userId = payload.sub;
-    next();
+    payload = verifyToken(token);
   } catch (err) {
     return res.status(401).json({ error: "Token inválido o expirado." });
+  }
+
+  try {
+    const user = await userRepository.findById(payload.sub);
+    if (!user || Number(payload.sv || 0) !== user.sessionVersion) {
+      return res.status(401).json({ error: "La sesión ya no es válida. Inicia sesión nuevamente." });
+    }
+    req.userId = payload.sub;
+    req.user = userRepository.toPublic(user);
+    next();
+  } catch (err) {
+    next(err);
   }
 }
 
 function requireAdmin(req, res, next) {
   requireAuth(req, res, async () => {
     try {
-      const user = await userRepository.findById(req.userId);
-      const publicUser = userRepository.toPublic(user);
-      if (!publicUser || publicUser.role !== "admin") {
+      if (!req.user || req.user.role !== "admin") {
         return res.status(403).json({ error: "Se requiere rol administrador." });
       }
-      req.user = publicUser;
       next();
     } catch (err) {
       next(err);

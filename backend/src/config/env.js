@@ -4,15 +4,34 @@ try {
   if (error.code !== "MODULE_NOT_FOUND") throw error;
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+const configuredJwtSecret = process.env.JWT_SECRET || "";
+
+if (isProduction && configuredJwtSecret.length < 32) {
+  throw new Error("JWT_SECRET debe estar configurado y tener al menos 32 caracteres en producción.");
+}
+
+function parseOrigins(value) {
+  const defaults = ["http://localhost:3001", "http://127.0.0.1:3001"];
+  const origins = (value || "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  return origins.length ? origins : defaults;
+}
+
 module.exports = {
   port: process.env.PORT || 3000,
-  jwtSecret: process.env.JWT_SECRET || "dev-secret-no-usar-en-produccion",
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  isProduction,
+  jwtSecret: configuredJwtSecret || "dev-secret-no-usar-en-produccion",
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "1d",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   adminEmails: (process.env.ADMIN_EMAILS || "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
+  frontendOrigins: parseOrigins(process.env.FRONTEND_ORIGINS),
+  trustProxy: process.env.TRUST_PROXY === "true" ? 1 : false,
   databaseUrl: process.env.DATABASE_URL || "",
   pgHost: process.env.PGHOST || "localhost",
   pgPort: Number(process.env.PGPORT || 5432),
