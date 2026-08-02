@@ -9,8 +9,8 @@ export function Footer({ compact = false }: { compact?: boolean }) {
       <Brand />
       <p>Comparador local de perfumes de tiendas verificadas. Ordenamos precios, detectamos coincidencias entre comercios y ayudamos a comprar con mejor información.</p>
       <div className={styles.footerContact}>
-        <a href="mailto:contacto@fullfragrance.cl">contacto@fullfragrance.cl</a>
-        <a href="tel:+56912345678">+56 9 1234 5678</a>
+        <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a>
+        <a href="tel:+56984616551">+56 9 8461 6551</a>
         <span>Santiago, Chile</span>
       </div>
     </section>
@@ -20,8 +20,8 @@ export function Footer({ compact = false }: { compact?: boolean }) {
     </section>
     <section className={styles.footerColumn}>
       <h2>Contacto</h2>
-      <Link href="mailto:contacto@fullfragrance.cl">Soporte comercial</Link>
-      <Link href="mailto:datos@fullfragrance.cl">Correcciones de datos</Link>
+      <Link href="mailto:fullfragance67@gmail.com">Soporte comercial</Link>
+      <Link href="mailto:fullfragance67@gmail.com">Correcciones de datos</Link>
       <Link href="/politica-de-datos">Política de datos</Link>
       <Link href="/politica-de-uso">Política de uso</Link>
     </section>
