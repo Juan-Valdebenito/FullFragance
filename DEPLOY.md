@@ -22,13 +22,15 @@
 
 ### 1.2 Obtener la URL de conexión
 
-1. En tu proyecto Supabase → **Settings** (ícono de engranaje) → **Database**
-2. Baja hasta **Connection string** → selecciona la pestaña **URI**
+1. En tu proyecto Supabase, abre **Connect**.
+2. Copia la URL de **Session pooler** (puerto `5432`), no la de **Direct connection**.
 3. Copia la URL que tiene este formato:
    ```
-   postgresql://postgres:[TU-PASSWORD]@db.[REF].supabase.co:5432/postgres
+   postgresql://postgres.[REF]:[TU-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
    ```
-   > ⚠️ Reemplaza `[TU-PASSWORD]` con la contraseña que elegiste en el paso anterior.
+   > ⚠️ Reemplaza `[TU-PASSWORD]` con la contraseña que elegiste en el paso anterior. Conserva `postgres.[REF]` como usuario: el pooler lo requiere.
+
+   > El host directo `db.[REF].supabase.co` normalmente solo expone IPv6. En una red sin salida IPv6 el backend termina antes del healthcheck con `connect ENETUNREACH`. El Session pooler usa IPv4.
 
 ### 1.3 Poblar la base de datos
 
@@ -36,10 +38,10 @@ Desde tu terminal, en la carpeta `backend/`:
 
 ```bash
 # Opción A: Usando la variable directamente
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres" npm run seed:supabase
+DATABASE_URL="postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres" npm run seed:supabase
 
 # Opción B: Creando un archivo .env temporal
-echo 'DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres' > .env.supabase
+echo 'DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres' > .env.supabase
 cp .env.supabase .env   # sobreescribe temporalmente
 npm run seed:supabase
 ```
