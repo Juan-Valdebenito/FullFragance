@@ -5,28 +5,6 @@ const { getOlfactoryNotes, getProductById } = require("../models/catalogReposito
 const { isPlainObject, normalizedName, validPassword } = require("../utils/validation");
 const { signToken } = require("../utils/jwt");
 
-async function setCity(req, res, next) {
-  try {
-    if (!isPlainObject(req.body)) return res.status(400).json({ error: "El cuerpo de la solicitud no es válido." });
-    const { name, country, lat, lon } = req.body;
-    const cityName = typeof name === "string" ? name.trim().replace(/\s+/g, " ") : "";
-    const countryName = typeof country === "string" ? country.trim().replace(/\s+/g, " ") : "";
-    const latitude = Number(lat);
-    const longitude = Number(lon);
-    if (!cityName || cityName.length > 100 || countryName.length > 100 || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-      return res.status(400).json({ error: "Se requiere name, lat y lon de la ciudad." });
-    }
-
-    const city = { name: cityName, country: countryName, lat: latitude, lon: longitude };
-    const user = await userRepository.updateCity(req.userId, city);
-    if (!user) return res.status(404).json({ error: "Usuario no encontrado." });
-
-    res.json({ user: userRepository.toPublic(user) });
-  } catch (err) {
-    next(err);
-  }
-}
-
 async function updateProfile(req, res, next) {
   try {
     const name = normalizedName(req.body?.name);
@@ -161,4 +139,4 @@ async function getRecommendations(req, res, next) {
   }
 }
 
-module.exports = { updateProfile, changePassword, deleteAccount, setCity, getFavorites, toggleFavorite, saveScentQuiz, getRecommendations };
+module.exports = { updateProfile, changePassword, deleteAccount, getFavorites, toggleFavorite, saveScentQuiz, getRecommendations };

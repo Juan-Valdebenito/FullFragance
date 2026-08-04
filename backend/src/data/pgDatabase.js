@@ -101,11 +101,11 @@ async function initDatabase() {
           picture TEXT,
           role VARCHAR(50) NOT NULL DEFAULT 'customer',
           session_version INTEGER NOT NULL DEFAULT 0,
-          city JSONB,
           favorites JSONB NOT NULL DEFAULT '[]'::jsonb,
           scent_preferences JSONB,
           created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        ALTER TABLE users DROP COLUMN IF EXISTS city;
 
         CREATE TABLE IF NOT EXISTS scraped_products (
           source VARCHAR(100) NOT NULL,
@@ -219,8 +219,8 @@ async function seedAndMigrateFromLegacy(p) {
       // Migrar usuarios si existen en db.json
       for (const user of legacyData.users || []) {
         await p.query(
-          `INSERT INTO users (id, name, email, password_hash, google_id, picture, role, city, favorites, scent_preferences, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          `INSERT INTO users (id, name, email, password_hash, google_id, picture, role, favorites, scent_preferences, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            ON CONFLICT (email) DO NOTHING`,
           [
             user.id,
@@ -230,7 +230,6 @@ async function seedAndMigrateFromLegacy(p) {
             user.googleId || null,
             user.picture || null,
             user.role || "customer",
-            user.city ? JSON.stringify(user.city) : null,
             JSON.stringify(user.favorites || []),
             user.scentPreferences ? JSON.stringify(user.scentPreferences) : null,
             user.createdAt || new Date().toISOString(),
@@ -357,26 +356,21 @@ function memoryQuery(text, params = []) {
     return { rows: [] };
   }
   if (sql.includes("INSERT INTO users")) {
+    const hasGoogleFields = sql.includes("google_id");
     const user = {
       id: params[0],
       name: params[1],
       email: params[2],
       password_hash: params[3],
-      google_id: params[4],
-      picture: params[5],
-      role: params[6],
-      city: params[7] ? JSON.parse(params[7]) : null,
-      favorites: params[8] ? JSON.parse(params[8]) : [],
-      scent_preferences: params[9] ? JSON.parse(params[9]) : null,
-      created_at: params[10],
+      google_id: hasGoogleFields ? params[4] : null,
+      picture: hasGoogleFields ? params[5] : null,
+      role: hasGoogleFields ? params[6] : params[4],
+      favorites: hasGoogleFields ? (params[7] ? JSON.parse(params[7]) : []) : (params[5] ? JSON.parse(params[5]) : []),
+      scent_preferences: hasGoogleFields ? (params[8] ? JSON.parse(params[8]) : null) : (params[6] ? JSON.parse(params[6]) : null),
+      created_at: hasGoogleFields ? params[9] : params[7],
     };
     memoryStore.users.push(user);
     return { rows: [userToPgRow(user)] };
-  }
-  if (sql.includes("UPDATE users SET city = $2 WHERE id = $1")) {
-    const user = memoryStore.users.find((u) => u.id === params[0]);
-    if (user) user.city = params[1] ? JSON.parse(params[1]) : null;
-    return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET name = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
@@ -464,7 +458,6 @@ function userToPgRow(u) {
     picture: u.picture || null,
     role: u.role || "customer",
     session_version: Number(u.session_version || u.sessionVersion || 0),
-    city: typeof u.city === "string" ? JSON.parse(u.city) : u.city,
     favorites: typeof u.favorites === "string" ? JSON.parse(u.favorites) : (u.favorites || []),
     scent_preferences: typeof u.scent_preferences === "string" ? JSON.parse(u.scent_preferences) : (u.scent_preferences || u.scentPreferences || null),
     created_at: u.created_at || u.createdAt || new Date().toISOString(),

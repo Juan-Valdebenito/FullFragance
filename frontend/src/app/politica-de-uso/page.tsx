@@ -30,7 +30,7 @@ export default function UsePolicyPage() {
           <h2>2. Precios, stock y decisiones de compra</h2>
           <ul>
             <li>Los precios, disponibilidad, promociones, imágenes y descripciones pueden cambiar sin aviso por decisión de cada tienda.</li>
-            <li>La información mostrada es referencial y puede contener retrasos, errores de captura o diferencias por sucursal, ciudad, despacho, medios de pago o condiciones de una promoción.</li>
+            <li>La información mostrada es referencial y puede contener retrasos, errores de captura, despacho, medios de pago o condiciones de una promoción.</li>
             <li>Antes de comprar, debes confirmar el precio final, stock, costos de envío, condiciones de venta, garantía y características directamente en el sitio o canal oficial de la tienda.</li>
             <li>La decisión de compra y cualquier contrato celebrado con una tienda son exclusivamente entre la persona compradora y esa tienda.</li>
           </ul>

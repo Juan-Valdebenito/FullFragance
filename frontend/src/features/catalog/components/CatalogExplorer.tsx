@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
-import type { City, Comparison, SyncJob } from "@/shared/api/types";
+import type { Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
 import { isPerfumeSegment, perfumeSegmentForBrand, perfumeSegments } from "../domain/segment";
@@ -10,7 +10,6 @@ import { ProductCard } from "./ProductCard";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./catalog.module.css";
 
-const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const sourceBadges: Record<string, string> = {
   "falabella-cl": "Falabella",
@@ -123,9 +122,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const loadCatalog = useCallback(async (search = urlQuery) => {
-    const city = user?.city ?? SANTIAGO;
-    setItems(await api.comparisons(city, search));
-  }, [urlQuery, user?.city]);
+    setItems(await api.comparisons(search));
+  }, [urlQuery]);
 
   useEffect(() => {
     const timeout = window.setTimeout(async () => {

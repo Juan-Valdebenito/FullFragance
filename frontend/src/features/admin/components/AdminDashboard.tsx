@@ -3,13 +3,13 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/shared/api/client";
-import type { AdminMetrics, City, Comparison, SyncJob, User } from "@/shared/api/types";
+import type { AdminMetrics, Comparison, SyncJob, User } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import { CatalogExplorer } from "@/features/catalog/components/CatalogExplorer";
 import styles from "./admin.module.css";
 
-const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const BRANDS_PER_PAGE = 8;
 
 type Section = "overview" | "analytics" | "sync" | "catalog";
 
@@ -86,18 +86,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   // Table filter
   const [tableSearch, setTableSearch] = useState("");
   const [tableStoreFilter, setTableStoreFilter] = useState("all");
+  const [brandPage, setBrandPage] = useState(0);
 
   const loadCatalogData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.comparisons(user.city ?? SANTIAGO, "");
+      const data = await api.comparisons("");
       setItems(data);
     } catch {
       addActivity("Error al consultar la base de datos de catálogo", "Advertencia", styles.tagWarning, "#f59e0b");
     } finally {
       setLoading(false);
     }
-  }, [user.city]);
+  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => { void loadCatalogData(); }, 0);
@@ -333,16 +334,22 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
 
-  // Top brands
-  const topBrands = useMemo(() => {
+  // All brands available in the catalog, ordered by product count.
+  const catalogBrands = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of items) {
       const b = item.product.brand || "Sin marca";
       map.set(b, (map.get(b) ?? 0) + 1);
     }
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    return [...map.entries()].sort((a, b) => b[1] - a[1]);
   }, [items]);
-  const maxBrandCount = topBrands[0]?.[1] ?? 1;
+  const maxBrandCount = catalogBrands[0]?.[1] ?? 1;
+  const brandPageCount = Math.max(Math.ceil(catalogBrands.length / BRANDS_PER_PAGE), 1);
+  const currentBrandPage = Math.min(brandPage, brandPageCount - 1);
+  const visibleBrands = catalogBrands.slice(
+    currentBrandPage * BRANDS_PER_PAGE,
+    (currentBrandPage + 1) * BRANDS_PER_PAGE,
+  );
 
   // Table filter
   const filteredTableItems = useMemo(() => {
@@ -521,15 +528,15 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
         {/* Brand chart */}
         <div className={styles.panelCard}>
           <div className={styles.panelHeader}>
-            <h3>Top Marcas en Catálogo</h3>
-            <small>{topBrands.length} marcas líderes</small>
+            <h3>Marcas en Catálogo</h3>
+            <small>{catalogBrands.length} marcas disponibles</small>
           </div>
           <div className={styles.brandList}>
             {loading ? (
               [1, 2, 3, 4, 5].map(i => (
                 <div key={i} className={styles.brandSkeleton} />
               ))
-            ) : topBrands.map(([brandName, count]) => {
+            ) : visibleBrands.map(([brandName, count]) => {
               const pct = Math.round((count / maxBrandCount) * 100);
               return (
                 <div key={brandName} className={styles.brandRow}>
@@ -542,6 +549,25 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               );
             })}
           </div>
+          {!loading && catalogBrands.length > BRANDS_PER_PAGE && (
+            <nav className={styles.brandPagination} aria-label="Paginación de marcas">
+              <button
+                type="button"
+                onClick={() => setBrandPage(currentBrandPage - 1)}
+                disabled={currentBrandPage === 0}
+              >
+                Anterior
+              </button>
+              <span>Página {currentBrandPage + 1} de {brandPageCount}</span>
+              <button
+                type="button"
+                onClick={() => setBrandPage(currentBrandPage + 1)}
+                disabled={currentBrandPage === brandPageCount - 1}
+              >
+                Siguiente
+              </button>
+            </nav>
+          )}
         </div>
 
         {/* System Health & Activity */}

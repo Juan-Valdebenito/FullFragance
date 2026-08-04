@@ -198,12 +198,9 @@ const openapi = {
     "/prices": {
       get: {
         tags: ["Precios"],
-        summary: "Comparar precios por ciudad o ubicacion",
+        summary: "Comparar precios online",
         security: bearerAuth,
         parameters: [
-          { $ref: "#/components/parameters/CityName" },
-          { $ref: "#/components/parameters/Latitude" },
-          { $ref: "#/components/parameters/Longitude" },
           {
             name: "q",
             in: "query",
@@ -244,9 +241,6 @@ const openapi = {
             required: true,
             schema: { type: "string" },
           },
-          { $ref: "#/components/parameters/CityName" },
-          { $ref: "#/components/parameters/Latitude" },
-          { $ref: "#/components/parameters/Longitude" },
         ],
         responses: {
           200: {
@@ -254,32 +248,6 @@ const openapi = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ProductPriceDetail" },
-              },
-            },
-          },
-          ...errorResponses,
-        },
-      },
-    },
-    "/users/me/city": {
-      put: {
-        tags: ["Usuarios"],
-        summary: "Actualizar ciudad del usuario",
-        security: bearerAuth,
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/CityRequest" },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: "Ciudad actualizada",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/UserResponse" },
               },
             },
           },
@@ -381,37 +349,6 @@ const openapi = {
                     recommendations: {
                       type: "array",
                       items: { $ref: "#/components/schemas/Recommendation" },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          ...errorResponses,
-        },
-      },
-    },
-    "/stores": {
-      get: {
-        tags: ["Tiendas"],
-        summary: "Listar tiendas cercanas",
-        security: bearerAuth,
-        parameters: [
-          { $ref: "#/components/parameters/CityName" },
-          { $ref: "#/components/parameters/Latitude" },
-          { $ref: "#/components/parameters/Longitude" },
-        ],
-        responses: {
-          200: {
-            description: "Tiendas disponibles",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    stores: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/Store" },
                     },
                   },
                 },
@@ -665,26 +602,6 @@ const openapi = {
         bearerFormat: "JWT",
       },
     },
-    parameters: {
-      CityName: {
-        name: "cityName",
-        in: "query",
-        schema: { type: "string" },
-        description: "Ciudad para ajustar tiendas y precios.",
-      },
-      Latitude: {
-        name: "lat",
-        in: "query",
-        schema: { type: "number" },
-        description: "Latitud para busqueda por cercania.",
-      },
-      Longitude: {
-        name: "lon",
-        in: "query",
-        schema: { type: "number" },
-        description: "Longitud para busqueda por cercania.",
-      },
-    },
     schemas: {
       ApiStatus: {
         type: "object",
@@ -736,16 +653,6 @@ const openapi = {
           id: { type: "string" },
           name: { type: "string" },
           email: { type: "string", format: "email" },
-          city: {
-            type: "object",
-            nullable: true,
-            properties: {
-              name: { type: "string" },
-              country: { type: "string" },
-              lat: { type: "number" },
-              lon: { type: "number" },
-            },
-          },
           favorites: {
             type: "array",
             items: { type: "string" },
@@ -826,16 +733,6 @@ const openapi = {
           },
         },
       },
-      CityRequest: {
-        type: "object",
-        required: ["name", "lat", "lon"],
-        properties: {
-          name: { type: "string", example: "Santiago" },
-          country: { type: "string", example: "Chile" },
-          lat: { type: "number", example: -33.4489 },
-          lon: { type: "number", example: -70.6693 },
-        },
-      },
       ScentQuizRequest: {
         type: "object",
         required: ["scores"],
@@ -880,21 +777,6 @@ const openapi = {
             items: { $ref: "#/components/schemas/ScentNote" },
           },
           reason: { type: "string" },
-        },
-      },
-      Store: {
-        type: "object",
-        properties: {
-          id: { type: "string" },
-          name: { type: "string" },
-          address: { type: "string" },
-          city: { type: "string" },
-          lat: { type: "number" },
-          lon: { type: "number" },
-          distanceKm: { type: "number" },
-          website: { type: "string", format: "uri" },
-          phone: { type: "string" },
-          openingHours: { type: "string" },
         },
       },
       ScrapedProduct: {

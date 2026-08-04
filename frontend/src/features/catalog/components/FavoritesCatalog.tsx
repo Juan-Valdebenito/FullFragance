@@ -8,8 +8,6 @@ import { ProductCard } from "./ProductCard";
 import { toProduct } from "./CatalogExplorer";
 import styles from "./catalog.module.css";
 
-const DEFAULT_CITY = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
-
 export function FavoritesCatalog({ className }: { className?: string }) {
   const session = useOptionalSession();
   const user = session?.user ?? null;
@@ -22,7 +20,7 @@ export function FavoritesCatalog({ className }: { className?: string }) {
       setLoading(false);
       return;
     }
-    api.comparisons(user.city ?? DEFAULT_CITY)
+    api.comparisons()
       .then(data => setItems(data.filter(item => [item.product.id, ...(item.product.aliases || [])].some(id => user.favorites.includes(id)))))
       .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar tus favoritos."))
       .finally(() => setLoading(false));

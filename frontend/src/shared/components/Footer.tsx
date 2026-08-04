@@ -7,11 +7,10 @@ export function Footer({ compact = false }: { compact?: boolean }) {
   return <footer className={`${styles.footer} ${compact ? styles.compact : ""}`}><div className={`container ${styles.footerInner}`}>
     <section className={styles.footerProfile}>
       <Brand />
-      <p>Comparador local de perfumes de tiendas verificadas. Ordenamos precios, detectamos coincidencias entre comercios y ayudamos a comprar con mejor información.</p>
+      <p>Comparador de perfumes de tiendas verificadas. Ordenamos precios, detectamos coincidencias entre comercios y ayudamos a comprar con mejor información.</p>
       <div className={styles.footerContact}>
         <a href="mailto:contacto@fullfragrance.cl">contacto@fullfragrance.cl</a>
         <a href="tel:+56912345678">+56 9 1234 5678</a>
-        <span>Santiago, Chile</span>
       </div>
     </section>
     <section className={styles.footerColumn}>

@@ -1,5 +1,4 @@
-export type City = { name: string; country: string; lat: number; lon: number };
-export type User = { id: string; name: string; email: string; role?: "admin" | "customer"; hasPassword?: boolean; city: City | null; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
+export type User = { id: string; name: string; email: string; role?: "admin" | "customer"; hasPassword?: boolean; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
 export type ApiOffer = { source: string; sku: string; price: number; available: boolean; productUrl: string; priceIsMock?: boolean };
 export type ApiNote = { id: string; name: string; family: string; description: string };
 export type ApiProduct = {
@@ -59,7 +58,6 @@ export type Comparison = {
   opportunity?: OpportunityTag;
 };
 
-export type Store = { id: string; chainId: string; name: string; address: string; lat: number; lon: number; website?: string | null; phone?: string | null; openingHours?: string | null; category?: string; osmUrl?: string; distanceKm?: number };
 export type Recommendation = { product: ApiProduct; score: number | null; matchedNotes: ApiNote[]; reason: string };
 export type SyncJob = { id: string; source: string; status: "running" | "completed" | "failed"; currentPage: number; totalPages: number; scanned: number; imported: number; targetProducts: number | null; error: string | null };
 export type AdminMetrics = {

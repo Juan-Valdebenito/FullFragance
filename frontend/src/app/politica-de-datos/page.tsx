@@ -23,7 +23,7 @@ export default function DataPolicyPage() {
       <section className={styles.content}>
         <article className={styles.section}>
           <h2>1. Responsable y alcance</h2>
-          <p>FullFragrance es responsable del tratamiento de los datos personales que recopila directamente a través de esta plataforma. Para consultas, solicitudes de privacidad o reclamos, puedes escribir a <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link>. Esta política cubre la navegación, las cuentas, favoritos, ciudad y preferencias del test olfativo.</p>
+          <p>FullFragrance es responsable del tratamiento de los datos personales que recopila directamente a través de esta plataforma. Para consultas, solicitudes de privacidad o reclamos, puedes escribir a <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link>. Esta política cubre la navegación, las cuentas, favoritos y preferencias del test olfativo.</p>
         </article>
 
         <article className={styles.section}>
@@ -31,7 +31,7 @@ export default function DataPolicyPage() {
           <ul>
             <li><strong>Datos de cuenta:</strong> nombre, correo electrónico y una contraseña protegida mediante un hash; no guardamos contraseñas en texto plano.</li>
             <li><strong>Datos de Google, si eliges ese acceso:</strong> nombre, correo electrónico verificado, identificador de Google y, cuando esté disponible, imagen de perfil.</li>
-            <li><strong>Preferencias que eliges guardar:</strong> ciudad, perfumes favoritos y respuestas o puntajes del test olfativo.</li>
+            <li><strong>Preferencias que eliges guardar:</strong> perfumes favoritos y respuestas o puntajes del test olfativo.</li>
             <li><strong>Datos técnicos y métricas agregadas:</strong> token de sesión, registros necesarios para seguridad, prevención de abuso, diagnóstico de errores y conteos de páginas consultadas. Estas métricas no se vinculan a un perfil publicitario y respetan la señal “Do Not Track” del navegador.</li>
           </ul>
         </article>
@@ -40,7 +40,7 @@ export default function DataPolicyPage() {
           <h2>3. Finalidades y fundamento del tratamiento</h2>
           <ul>
             <li>Crear y administrar tu cuenta, autenticar tu acceso y proteger la plataforma.</li>
-            <li>Guardar tus favoritos, ciudad y preferencias para entregarte funciones personalizadas que solicitas.</li>
+            <li>Guardar tus favoritos y preferencias para entregarte funciones personalizadas que solicitas.</li>
             <li>Responder consultas, atender solicitudes sobre tus datos y detectar usos fraudulentos o contrarios a la seguridad.</li>
             <li>Entender de forma agregada qué secciones de la plataforma son más consultadas para mejorar el servicio.</li>
             <li>Cumplir obligaciones legales y ejercer o defender derechos cuando corresponda.</li>

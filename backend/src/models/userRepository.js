@@ -19,7 +19,6 @@ function rowToUser(row) {
     picture: row.picture || null,
     role: row.role || roleForEmail(row.email),
     sessionVersion: Number(row.session_version || 0),
-    city: typeof row.city === "string" ? JSON.parse(row.city) : row.city,
     favorites: typeof row.favorites === "string" ? JSON.parse(row.favorites) : (row.favorites || []),
     scentPreferences: typeof row.scent_preferences === "string" ? JSON.parse(row.scent_preferences) : (row.scent_preferences || null),
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
@@ -46,37 +45,26 @@ async function create({ name, email, passwordHash }) {
     passwordHash: passwordHash || null,
     role: roleForEmail(email),
     sessionVersion: 0,
-    city: null,
     favorites: [],
     scentPreferences: null,
     createdAt: new Date().toISOString(),
   };
 
   await query(
-    `INSERT INTO users (id, name, email, password_hash, role, city, favorites, scent_preferences, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    `INSERT INTO users (id, name, email, password_hash, role, favorites, scent_preferences, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       user.id,
       user.name,
       user.email,
       user.passwordHash,
       user.role,
-      null,
       JSON.stringify(user.favorites),
       null,
       user.createdAt,
     ]
   );
 
-  return user;
-}
-
-async function updateCity(userId, city) {
-  const user = await findById(userId);
-  if (!user) return null;
-
-  await query("UPDATE users SET city = $2 WHERE id = $1", [userId, JSON.stringify(city)]);
-  user.city = city;
   return user;
 }
 
@@ -167,15 +155,14 @@ async function findOrCreateGoogleUser({ name, email, googleId, picture }) {
     picture: picture || null,
     role: roleForEmail(email),
     sessionVersion: 0,
-    city: null,
     favorites: [],
     scentPreferences: null,
     createdAt: new Date().toISOString(),
   };
 
   await query(
-    `INSERT INTO users (id, name, email, password_hash, google_id, picture, role, city, favorites, scent_preferences, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    `INSERT INTO users (id, name, email, password_hash, google_id, picture, role, favorites, scent_preferences, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
       user.id,
       user.name,
@@ -184,7 +171,6 @@ async function findOrCreateGoogleUser({ name, email, googleId, picture }) {
       user.googleId,
       user.picture,
       user.role,
-      null,
       JSON.stringify(user.favorites),
       null,
       user.createdAt,
@@ -216,7 +202,6 @@ module.exports = {
   updatePassword,
   invalidateSessions,
   deleteById,
-  updateCity,
   toggleFavorite,
   saveScentPreferences,
   toPublic,

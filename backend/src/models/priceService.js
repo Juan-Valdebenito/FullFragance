@@ -1,6 +1,5 @@
 const { getProducts, getProductById } = require("./catalogRepository");
-const { getStoresForCity } = require("./storeService");
-const { seededRandom, hashSeed } = require("../utils/geo");
+const { seededRandom, hashSeed } = require("../utils/random");
 const { normalize } = require("./productMatcher");
 
 const SOURCE_STORES = {
@@ -15,12 +14,6 @@ const SOURCE_STORES = {
   "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
   "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
 };
-
-function priceFor(cityName, storeId, product) {
-  const rng = seededRandom(hashSeed(`${cityName}|${storeId}|${product.id}`));
-  const variation = (rng() - 0.5) * 0.35;
-  return Math.max(300, Math.round(product.basePrice * (1 + variation)));
-}
 
 function matchesProduct(product, productFilter) {
   if (!productFilter) return true;
@@ -60,32 +53,25 @@ function pricesForRealProduct(product) {
     : [];
 }
 
-function pricesForProduct(cityName, stores, product) {
+function pricesForProduct(product) {
   if (SOURCE_STORES[product.source] || product.source === "multi-store") return pricesForRealProduct(product);
-  return stores.map((store) => ({
-    storeId: store.id,
-    storeName: store.name,
-    price: priceFor(cityName, store.id, product),
-    available: true,
-  })).sort((a, b) => a.price - b.price);
+  if (!product.basePrice) return [];
+  return [{
+    storeId: "catalog-reference",
+    storeName: "Precio referencial",
+    price: product.basePrice,
+    available: Boolean(product.available),
+  }];
 }
 
-async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
+async function getComparison(productFilter) {
   const catalogProducts = await getProducts();
   const matches = catalogProducts.filter((product) => matchesProduct(product, productFilter));
   // Al haber datos reales, el catálogo debe priorizarlos frente al demo simulado.
   const realProducts = matches.filter((product) => SOURCE_STORES[product.source] || product.source === "multi-store");
   const products = realProducts.length ? realProducts : matches;
-  let stores = [];
-  if (products.some((product) => !SOURCE_STORES[product.source] && product.source !== "multi-store")) {
-    try {
-      stores = await getStoresForCity({ cityName, lat, lon });
-    } catch {
-      // Un producto real de marketplace sigue siendo útil aunque falle la búsqueda de sucursales OSM.
-    }
-  }
   return products.map((product) => {
-    const prices = pricesForProduct(cityName, stores, product);
+    const prices = pricesForProduct(product);
     const minPrice = prices[0]?.price ?? null;
     const historyData = generatePriceHistory(product.id, minPrice || product.basePrice || 0);
     return {
@@ -160,16 +146,10 @@ function generatePriceHistory(productId, currentMinPrice) {
   };
 }
 
-async function getComparisonForProduct({ cityName, lat, lon }, productId) {
+async function getComparisonForProduct(productId) {
   const product = await getProductById(productId);
   if (!product) return null;
-  let prices = [];
-  if (SOURCE_STORES[product.source] || product.source === "multi-store") {
-    prices = pricesForRealProduct(product);
-  } else {
-    const stores = await getStoresForCity({ cityName, lat, lon });
-    prices = pricesForProduct(cityName, stores, product);
-  }
+  const prices = pricesForProduct(product);
 
   const currentMinPrice = prices[0]?.price || product.basePrice || 0;
   const historyData = generatePriceHistory(product.id, currentMinPrice);
@@ -190,4 +170,4 @@ async function getComparisonForProduct({ cityName, lat, lon }, productId) {
   };
 }
 
-module.exports = { getComparisonForCity, getComparisonForProduct, generatePriceHistory };
+module.exports = { getComparison, getComparisonForProduct, generatePriceHistory };

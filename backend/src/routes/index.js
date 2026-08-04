@@ -2,7 +2,6 @@ const { Router } = require("express");
 
 const authRoutes = require("./authRoutes");
 const userRoutes = require("./userRoutes");
-const storeRoutes = require("./storeRoutes");
 const priceRoutes = require("./priceRoutes");
 const catalogRoutes = require("./catalogRoutes");
 const scraperRoutes = require("./scraperRoutes");
@@ -14,7 +13,6 @@ router.get("/", (_req, res) => res.json({ name: "FullFragrance API", status: "ok
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
-router.use("/stores", storeRoutes);
 router.use("/catalog", catalogRoutes);
 router.use("/scrapers", scraperRoutes);
 router.use("/analytics", analyticsRoutes);

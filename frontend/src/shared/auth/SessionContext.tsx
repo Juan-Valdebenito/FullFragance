@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { api, session } from "@/shared/api/client";
-import type { City, User } from "@/shared/api/types";
+import type { User } from "@/shared/api/types";
 
 type SessionValue = {
   user: User | null;
@@ -10,7 +10,6 @@ type SessionValue = {
   updateProfile: (profile: { name: string }) => Promise<void>;
   changePassword: (passwords: { currentPassword: string; newPassword: string }) => Promise<void>;
   deleteAccount: (confirmation: string) => Promise<void>;
-  updateCity: (city: City) => Promise<void>;
   refreshUser: () => Promise<User | null>;
   logout: () => void;
 };
@@ -63,11 +62,6 @@ export function SessionProvider({ initialUser, children }: { initialUser: User |
       await api.deleteAccount(confirmation);
       session.clear();
       setUser(null);
-    },
-    updateCity: async city => {
-      if (!user) throw new Error("Debes iniciar sesión para guardar tu ciudad.");
-      const updated = await api.setCity(city);
-      setUser(updated);
     },
     refreshUser,
     logout,
