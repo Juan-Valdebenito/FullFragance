@@ -215,6 +215,7 @@ test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", 
   const setProducts = products.filter((p) => /set/i.test(p.name));
   const individualProducts = products.filter((p) => !/set/i.test(p.name));
   assert.equal(setProducts.length, 1, "Debe haber exactamente 1 set");
+  assert.equal(setProducts[0].isSet, true, "El catálogo debe marcar el set para poder filtrarlo");
   assert.ok(individualProducts.length >= 1, "Debe haber al menos 1 perfume individual");
   // El perfume individual de Falabella y Ripley deben poder matchear entre sí
   const matchedIndividual = individualProducts.find((p) => p.source === "multi-store");

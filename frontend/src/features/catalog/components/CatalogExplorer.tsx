@@ -1,6 +1,6 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState, useRef, useTransition } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
@@ -26,6 +26,15 @@ const sourceBadges: Record<string, string> = {
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
+function isSetProduct(product: Comparison["product"]) {
+  if (product.isSet === true) return true;
+
+  // Compatibilidad con datos previos que aún no incluían la propiedad isSet.
+  const text = `${product.name} ${product.unit}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/\b(?:set|pack|kit|estuche|cofre|coffret)\b/.test(text)) return true;
+  return (text.match(/\b\d+(?:[.,]\d+)?\s*(?:ml|cl|oz|l)\b/g) ?? []).length >= 2;
+}
+
 export function toProduct(item: Comparison): Product {
   const pricesByChain = [...item.prices]
     .sort((a, b) => a.price - b.price)
@@ -40,7 +49,7 @@ export function toProduct(item: Comparison): Product {
       ? `Comparado en ${item.product.matchedStores} tiendas`
       : item.product.priceIsMock
       ? "Precio demo"
-      : item.product.isSet
+      : isSetProduct(item.product)
       ? "Set / Kit"
       : item.product.source
       ? cheapestByChain.length
@@ -75,10 +84,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const user = optionalSession?.user ?? null;
   const isAdmin = user?.role === "admin";
 
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
 
   // ── Leer estado desde la URL ────────────────────────────────────────────
   const urlQuery    = searchParams.get("q")      ?? initialQuery;
@@ -138,8 +145,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   // ── Helpers para actualizar la URL ──────────────────────────────────────
 
   /**
-   * Actualiza MÚLTIPLES params en un solo router.replace() atómico.
-   * Usar replace() para filtros (no agrega historial innecesario).
+   * Actualiza múltiples params de forma inmediata, sin esperar una navegación
+   * del App Router. Next sincroniza estas llamadas con useSearchParams.
    */
   function applyParams(changes: Record<string, string | null>, mode: "replace" | "push" = "replace") {
     const params = new URLSearchParams(searchParams.toString());
@@ -147,27 +154,28 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       if (value === null || value === "") params.delete(key);
       else params.set(key, value);
     }
-    const url = `${pathname}?${params.toString()}`;
-    // replace para filtros (no crea entrada en historial), push para paginación
-    if (mode === "push") router.push(url, { scroll: false });
-    else router.replace(url, { scroll: false });
+    const query = params.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
+    // replace para filtros (no crea entrada en historial), push para paginación.
+    if (mode === "push") window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
   }
 
   /** Cambia un filtro y resetea la página a 1 — una sola llamada atómica */
   function setFilter(key: string, value: string) {
-    startTransition(() => applyParams({ [key]: value || null, page: null }));
+    applyParams({ [key]: value || null, page: null });
   }
 
   /** Cambio de página — usa push() para que Back funcione */
   function goToPage(nextPage: number) {
     const clamped = Math.min(Math.max(nextPage, 1), totalPages);
-    startTransition(() => applyParams({ page: clamped === 1 ? null : String(clamped) }, "push"));
+    applyParams({ page: clamped === 1 ? null : String(clamped) }, "push");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   /** Reset de todos los filtros en una sola llamada */
   function resetFilters() {
-    startTransition(() => applyParams({ brand: null, cat: null, gender: null, minPrice: null, maxPrice: null, store: null, presentation: null, comparison: null, segment: null, sort: null, page: null }));
+    applyParams({ brand: null, cat: null, gender: null, minPrice: null, maxPrice: null, store: null, presentation: null, comparison: null, segment: null, sort: null, page: null });
   }
 
   /** Input de búsqueda: actualización local inmediata + debounce a URL */
@@ -175,7 +183,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     setInputValue(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      startTransition(() => applyParams({ q: value || null, page: null }));
+      applyParams({ q: value || null, page: null });
     }, 300);
   }
 
@@ -270,7 +278,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         (!minPrice || (item.minPrice ?? item.product.basePrice) >= minPrice) &&
         (!maxPrice || (item.minPrice ?? item.product.basePrice) <= maxPrice) &&
         (!store || item.prices.some(price => price.storeName === store)) &&
-        (!presentation || (presentation === "set" ? item.product.isSet : !item.product.isSet)) &&
+        (!presentation || (presentation === "set" ? isSetProduct(item.product) : !isSetProduct(item.product))) &&
         (!comparison || (item.product.matchedStores ?? item.prices.length) >= 2) &&
         (!segment  || perfumeSegmentForBrand(item.product.brand) === segment)
       )
