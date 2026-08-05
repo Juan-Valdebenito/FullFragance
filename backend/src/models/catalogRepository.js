@@ -305,7 +305,7 @@ async function getProducts() {
       description,
       // Los productos base no pasan por toCatalogProduct(), por lo que deben
       // incluir esta propiedad para que el filtro de presentación sea fiable.
-      isSet: isSet({ name: p.name, presentation: p.unit, unit: p.unit }),
+      isSet: isSet({ name: p.name, presentation: p.unit }),
     };
   });
 

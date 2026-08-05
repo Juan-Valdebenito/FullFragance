@@ -27,12 +27,12 @@ const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
 function isSetProduct(product: Comparison["product"]) {
-  if (product.isSet === true) return true;
-
-  // Compatibilidad con datos previos que aún no incluían la propiedad isSet.
+  // Se calcula desde el texto para evitar datos de catálogos previos que
+  // marcaron como set un perfume individual con el volumen repetido.
   const text = `${product.name} ${product.unit}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   if (/\b(?:set|pack|kit|estuche|cofre|coffret)\b/.test(text)) return true;
-  return (text.match(/\b\d+(?:[.,]\d+)?\s*(?:ml|cl|oz|l)\b/g) ?? []).length >= 2;
+  const volumes = text.match(/\b\d+(?:[.,]\d+)?\s*(?:ml|cl|oz|l)\b/g) ?? [];
+  return new Set(volumes.map((volume) => volume.replace(",", ".").replace(/\s/g, ""))).size >= 2;
 }
 
 export function toProduct(item: Comparison): Product {

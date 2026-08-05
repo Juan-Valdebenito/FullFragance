@@ -162,6 +162,7 @@ test("isSet detecta sets por patrón de múltiples volúmenes", () => {
 test("isSet devuelve false para perfumes individuales", () => {
   assert.equal(isSet({ name: "Perfume Hombre Wanted Edp 100 Ml" }), false);
   assert.equal(isSet({ name: "PERFUME VALENTINO BORN IN ROMA UOMO HOMBRE EDT 50 ML" }), false);
+  assert.equal(isSet({ name: "Perfume Hombre Wanted Edp 100 Ml", presentation: "100 ml" }), false);
 });
 
 // ── Nuevas fuentes: unidades, tipos y condiciones comerciales ─────────────

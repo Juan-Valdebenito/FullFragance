@@ -316,8 +316,12 @@ function modifierOf(product) {
 function isSet(product) {
   const tokens = normalize(product.name).split(" ").filter(Boolean);
   if (tokens.some((token) => SET_KEYWORDS.has(token))) return true;
-  // Patrón de múltiples volúmenes unidos con + o separados
-  const volumes = extractVolumes([product?.name, product?.presentation, product?.unit].filter(Boolean).join(" "));
+  // Un mismo volumen suele aparecer tanto en el nombre como en la
+  // presentación ("EDP 100 ml" + "100 ml"). Solo varios tamaños distintos
+  // indican un set cuando no hay una palabra clave explícita.
+  const volumes = [...new Set(
+    extractVolumes([product?.name, product?.presentation, product?.unit].filter(Boolean).join(" "))
+  )];
   return volumes.length >= 2;
 }
 
