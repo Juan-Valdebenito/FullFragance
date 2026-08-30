@@ -18,6 +18,38 @@ const memoryStore = {
   appMetadata: new Map(),
   analyticsEvents: [],
 };
+const FALLBACK_DATA_PATH = path.join(__dirname, "local-data.json");
+
+function loadPersistentFallback() {
+  if (!fs.existsSync(FALLBACK_DATA_PATH)) return false;
+  try {
+    const saved = JSON.parse(fs.readFileSync(FALLBACK_DATA_PATH, "utf-8"));
+    memoryStore.users = saved.users || [];
+    memoryStore.olfactoryNotes = saved.olfactoryNotes || [];
+    memoryStore.baseProducts = saved.baseProducts || [];
+    memoryStore.chains = saved.chains || [];
+    memoryStore.scrapedProducts = new Map(saved.scrapedProducts || []);
+    memoryStore.appMetadata = new Map(saved.appMetadata || []);
+    memoryStore.analyticsEvents = saved.analyticsEvents || [];
+    return true;
+  } catch (error) {
+    console.warn("No se pudo leer el respaldo local; se reconstruirá:", error.message);
+    return false;
+  }
+}
+
+function savePersistentFallback() {
+  const data = {
+    users: memoryStore.users,
+    olfactoryNotes: memoryStore.olfactoryNotes,
+    baseProducts: memoryStore.baseProducts,
+    chains: memoryStore.chains,
+    scrapedProducts: [...memoryStore.scrapedProducts.entries()],
+    appMetadata: [...memoryStore.appMetadata.entries()],
+    analyticsEvents: memoryStore.analyticsEvents,
+  };
+  fs.writeFileSync(FALLBACK_DATA_PATH, JSON.stringify(data, null, 2));
+}
 
 function getPool() {
   if (!pool) {
@@ -155,7 +187,7 @@ async function initDatabase() {
     } catch (err) {
       const allowMemoryFallback = process.env.NODE_ENV === "test" || process.env.ALLOW_MEMORY_FALLBACK === "true";
       if (allowMemoryFallback) {
-        console.warn("PostgreSQL no disponible, activando modo memoria para continuar:", err.message);
+        console.warn("PostgreSQL no disponible, activando respaldo local persistente:", err.message);
         useMemoryFallback = true;
         seedMemoryFromLegacy();
         isInitialized = true;
@@ -286,6 +318,7 @@ async function seedAndMigrateFromLegacy(p) {
 }
 
 function seedMemoryFromLegacy() {
+  if (loadPersistentFallback()) return;
   try {
     const { DEFAULT_DATA, DB_PATH } = require("./database");
     let legacyData = DEFAULT_DATA;
@@ -296,6 +329,7 @@ function seedMemoryFromLegacy() {
     memoryStore.baseProducts = legacyData.products || DEFAULT_DATA.products;
     memoryStore.chains = legacyData.chains || DEFAULT_DATA.chains;
     memoryStore.users = legacyData.users || [];
+    savePersistentFallback();
   } catch {
     // Usar defaults
   }
@@ -342,6 +376,7 @@ function memoryQuery(text, params = []) {
   }
   if (sql.includes("INSERT INTO analytics_events")) {
     memoryStore.analyticsEvents.push({ event_type: params[0], page: params[1], occurred_at: new Date().toISOString() });
+    savePersistentFallback();
     return { rows: [] };
   }
   if (sql.includes("FROM analytics_events WHERE occurred_at")) {
@@ -354,6 +389,7 @@ function memoryQuery(text, params = []) {
   }
   if (sql.includes("INSERT INTO app_metadata")) {
     memoryStore.appMetadata.set(params[0], params[1]);
+    savePersistentFallback();
     return { rows: [] };
   }
   if (sql.includes("INSERT INTO users")) {
@@ -371,41 +407,49 @@ function memoryQuery(text, params = []) {
       created_at: params[10],
     };
     memoryStore.users.push(user);
+    savePersistentFallback();
     return { rows: [userToPgRow(user)] };
   }
   if (sql.includes("UPDATE users SET city = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.city = params[1] ? JSON.parse(params[1]) : null;
+    if (user) savePersistentFallback();
     return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET name = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.name = params[1];
+    if (user) savePersistentFallback();
     return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET password_hash = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.password_hash = params[1];
+    if (user) savePersistentFallback();
     return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET session_version = session_version + 1 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.session_version = Number(user.session_version || user.sessionVersion || 0) + 1;
+    if (user) savePersistentFallback();
     return { rows: user ? [{ session_version: user.session_version }] : [] };
   }
   if (sql.includes("DELETE FROM users WHERE id = $1")) {
     const index = memoryStore.users.findIndex((u) => u.id === params[0]);
     if (index >= 0) memoryStore.users.splice(index, 1);
+    if (index >= 0) savePersistentFallback();
     return { rows: [], rowCount: index >= 0 ? 1 : 0 };
   }
   if (sql.includes("UPDATE users SET favorites = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.favorites = params[1] ? JSON.parse(params[1]) : [];
+    if (user) savePersistentFallback();
     return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET scent_preferences = $2 WHERE id = $1")) {
     const user = memoryStore.users.find((u) => u.id === params[0]);
     if (user) user.scent_preferences = params[1] ? JSON.parse(params[1]) : null;
+    if (user) savePersistentFallback();
     return { rows: user ? [userToPgRow(user)] : [] };
   }
   if (sql.includes("UPDATE users SET google_id =")) {
@@ -413,6 +457,7 @@ function memoryQuery(text, params = []) {
     if (user) {
       if (params[0]) user.google_id = params[0];
       if (params[1]) user.picture = params[1];
+      savePersistentFallback();
     }
     return { rows: user ? [userToPgRow(user)] : [] };
   }
@@ -442,6 +487,7 @@ function memoryQuery(text, params = []) {
       last_seen_at: params[12],
     };
     memoryStore.scrapedProducts.set(key, prod);
+    savePersistentFallback();
     return { rows: [prod] };
   }
   if (sql.includes("DELETE FROM scraped_products WHERE source = $1")) {
@@ -449,6 +495,7 @@ function memoryQuery(text, params = []) {
     for (const [key, val] of memoryStore.scrapedProducts.entries()) {
       if (val.source === source) memoryStore.scrapedProducts.delete(key);
     }
+    savePersistentFallback();
     return { rows: [] };
   }
   return { rows: [] };
