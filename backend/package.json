@@ -23,6 +23,7 @@
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "node-cron": "^4.6.0",
     "pg": "^8.22.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.1"

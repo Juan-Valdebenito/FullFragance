@@ -93,4 +93,4 @@ function getCatalogSyncJob(id) {
   return job ? publicJob(job) : null;
 }
 
-module.exports = { startCatalogSync, getCatalogSyncJob };
+module.exports = { startCatalogSync, getCatalogSyncJob, SUPPORTED_SOURCES: Object.keys(scrapers) };

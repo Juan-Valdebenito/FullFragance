@@ -87,6 +87,10 @@ En Railway → tu servicio → pestaña **Variables** → agrega una por una:
 | `FRONTEND_ORIGINS` | `https://full-fragance.vercel.app` *(actualiza después de deployar el frontend)* |
 | `TRUST_PROXY` | `true` |
 | `SCRAPER_MOCK_PRICES` | `false` |
+| `SCRAPER_CRON_ENABLED` | `true` *(activa el scraping automático — ver Paso 2.4)* |
+| `SCRAPER_CRON_SCHEDULE` | `0 */6 * * *` *(cada 6 horas, formato cron estándar)* |
+| `SCRAPER_CRON_STAGGER_MS` | `60000` |
+| `SCRAPER_CRON_TIMEZONE` | `America/Santiago` |
 
 > **Puedes agregar todas de una vez** copiando el contenido de `backend/.env.production.example` y usando la función **Raw Editor** de Railway.
 
@@ -97,6 +101,15 @@ En Railway → tu servicio → pestaña **Variables** → agrega una por una:
 3. Guarda la URL: `https://tu-app.up.railway.app`
 4. Prueba que funciona: `https://tu-app.up.railway.app/`
    - Debe responder: `{"name":"FullFragrance API","frontend":"..."}`
+
+### 2.4 Scraping automático (cron)
+
+El backend incluye un scheduler interno (`node-cron`) que corre mientras el proceso esté vivo — como Railway no duerme el servicio (a diferencia de un plan serverless), esto basta para tener scraping periódico sin infraestructura adicional.
+
+- Con `SCRAPER_CRON_ENABLED=true`, al iniciar el servidor se programa una sincronización de las 10 tiendas según `SCRAPER_CRON_SCHEDULE` (cron estándar: min hora día mes díaSemana).
+- Cada tienda se dispara con un desfase de `SCRAPER_CRON_STAGGER_MS` (60s por defecto) entre sí, para no saturar recursos ni golpear varios sitios a la vez.
+- Deja `SCRAPER_CRON_ENABLED` sin definir o en `false` en desarrollo local para no scrapear sitios reales sin querer.
+- Revisa los logs de Railway (`[scraper-cron] ...`) para confirmar que se está ejecutando.
 
 ---
 
