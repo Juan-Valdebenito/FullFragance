@@ -63,10 +63,12 @@ function getPool() {
           password: env.pgPassword,
         };
     
-    // Connection timeout corto para detectar rápidamente si no hay servidor PG activo
+    // En desarrollo, timeout corto para detectar rápido si no hay Postgres local (fallback a memoria).
+    // En producción, Supabase está a varios saltos de red (Render Oregon -> Supabase São Paulo) y
+    // un timeout de 2s corta conexiones válidas, sobre todo al despertar de estar dormido (free tier).
     pool = new Pool({
       ...config,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: env.isProduction ? 15000 : 2000,
       max: 10,
     });
 

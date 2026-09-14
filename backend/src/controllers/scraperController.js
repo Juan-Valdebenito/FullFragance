@@ -1,4 +1,5 @@
 const { upsertProduct, listProducts, replaceProducts } = require("../data/catalogDatabase");
+const { invalidateCatalogCache } = require("../models/catalogRepository");
 const { scrapeProductOrFallback, scrapePerfumeCatalog } = require("../services/falabellaScraper");
 const {
   scrapeProductOrFallback: scrapeRipleyProductOrFallback,
@@ -50,6 +51,7 @@ async function syncFalabella(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -67,6 +69,7 @@ async function syncPerfumeCatalog(req, res, next) {
     }
     const results = await scrapePerfumeCatalog(maxProducts);
     results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -93,6 +96,7 @@ async function syncRipley(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -110,7 +114,10 @@ async function syncRipleyPerfumeCatalog(req, res, next) {
     }
     const results = await scrapeRipleyPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
-    if (products.length) replaceProducts("ripley-cl", products);
+    if (products.length) {
+      replaceProducts("ripley-cl", products);
+      invalidateCatalogCache();
+    }
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -143,6 +150,7 @@ async function syncAlisha(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -160,6 +168,7 @@ async function syncAlishaPerfumeCatalog(req, res, next) {
     }
     const results = await scrapeAlishaPerfumeCatalog(maxProducts);
     results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -186,6 +195,7 @@ async function syncSilk(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -203,6 +213,7 @@ async function syncSilkPerfumeCatalog(req, res, next) {
     }
     const results = await scrapeSilkPerfumeCatalog(maxProducts);
     results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -229,6 +240,7 @@ async function syncElite(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -246,6 +258,7 @@ async function syncElitePerfumeCatalog(req, res, next) {
     }
     const results = await scrapeElitePerfumeCatalog(maxProducts);
     results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -272,6 +285,7 @@ async function syncCosmetic(req, res, next) {
         results.push({ url, ok: false, error: error.message });
       }
     }
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -289,6 +303,7 @@ async function syncCosmeticPerfumeCatalog(req, res, next) {
     }
     const results = await scrapeCosmeticPerfumeCatalog(maxProducts);
     results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
   } catch (error) {
     next(error);
@@ -307,7 +322,10 @@ async function syncParis(req, res, next) {
     }
     const results = await scrapeParisPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
-    if (products.length) replaceProducts("paris-cl", products);
+    if (products.length) {
+      replaceProducts("paris-cl", products);
+      invalidateCatalogCache();
+    }
     res.status(200).json({ results });
   } catch (error) {
     next(error);
@@ -337,7 +355,10 @@ async function syncAbc(req, res, next) {
     }
     const results = await scrapeAbcPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
-    if (products.length) replaceProducts("abc-cl", products);
+    if (products.length) {
+      replaceProducts("abc-cl", products);
+      invalidateCatalogCache();
+    }
     res.status(200).json({ results });
   } catch (error) {
     next(error);
@@ -367,7 +388,10 @@ async function syncPreunic(req, res, next) {
     }
     const results = await scrapePreunicPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
-    if (products.length) replaceProducts("preunic-cl", products);
+    if (products.length) {
+      replaceProducts("preunic-cl", products);
+      invalidateCatalogCache();
+    }
     res.status(200).json({ results });
   } catch (error) {
     next(error);
@@ -397,7 +421,10 @@ async function syncLodoro(req, res, next) {
     }
     const results = await scrapeLodoroPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
-    if (products.length) replaceProducts("lodoro-cl", products);
+    if (products.length) {
+      replaceProducts("lodoro-cl", products);
+      invalidateCatalogCache();
+    }
     res.status(200).json({ results });
   } catch (error) {
     next(error);
