@@ -228,23 +228,34 @@ async function mergeScrapedProducts(products) {
     }
     list.push(product);
   }
+  const largestBrandGroup = Math.max(0, ...[...byBrand.values()].map((list) => list.length));
+  if (largestBrandGroup > 300) {
+    console.warn(`mergeScrapedProducts: grupo de marca mas grande tiene ${largestBrandGroup} productos (posible cuello de botella O(n^2)).`);
+  }
 
   const groups = [];
-  let processed = 0;
+  // Contamos comparaciones reales (candidatos revisados), no productos: un solo
+  // producto puede necesitar revisar cientos de grupos ya formados dentro de su
+  // marca, y ceder solo entre productos deja esa revisión completa sin cortes.
+  let comparisons = 0;
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
     for (const product of brandProducts) {
       // Un producto sólo puede unirse si es compatible con todo el grupo y no
       // duplica la misma tienda. Evita el "encadenamiento" A≈B y B≈C cuando
       // A y C son variantes distintas, un problema más visible al sumar fuentes.
-      const group = brandGroups.find((candidate) =>
-        !candidate.some((item) => item.source === product.source)
-        && candidate.every((item) => samePerfume(item, product))
-      );
-      if (group) group.push(product);
+      let matchedGroup = null;
+      for (const candidate of brandGroups) {
+        comparisons += 1;
+        if (comparisons % YIELD_EVERY === 0) await yieldToEventLoop();
+        if (candidate.some((item) => item.source === product.source)) continue;
+        if (candidate.every((item) => samePerfume(item, product))) {
+          matchedGroup = candidate;
+          break;
+        }
+      }
+      if (matchedGroup) matchedGroup.push(product);
       else brandGroups.push([product]);
-      processed += 1;
-      if (processed % YIELD_EVERY === 0) await yieldToEventLoop();
     }
     groups.push(...brandGroups);
   }
