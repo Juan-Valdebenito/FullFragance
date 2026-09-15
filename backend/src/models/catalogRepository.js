@@ -194,7 +194,15 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   };
 }
 
-function mergeScrapedProducts(products) {
+// El agrupamiento por marca es O(n^2) dentro de cada marca (cada producto se
+// compara contra todos los grupos ya formados). Con miles de productos
+// scrapeados esto puede tardar varios segundos de CPU; sin puntos de cesión
+// bloquea el event loop completo (incluido el healthcheck) y Render mata el
+// proceso por "unhealthy". Cedemos el control cada YIELD_EVERY comparaciones.
+const YIELD_EVERY = 200;
+const yieldToEventLoop = () => new Promise((resolve) => setImmediate(resolve));
+
+async function mergeScrapedProducts(products) {
   const dbData = getDbData();
   const profiles = dbData.products;
   const allNotes = dbData.olfactoryNotes;
@@ -215,6 +223,7 @@ function mergeScrapedProducts(products) {
   }
 
   const groups = [];
+  let processed = 0;
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
     for (const product of brandProducts) {
@@ -227,6 +236,8 @@ function mergeScrapedProducts(products) {
       );
       if (group) group.push(product);
       else brandGroups.push([product]);
+      processed += 1;
+      if (processed % YIELD_EVERY === 0) await yieldToEventLoop();
     }
     groups.push(...brandGroups);
   }
@@ -288,7 +299,7 @@ async function getProducts() {
   const scrapedLists = await Promise.all(sources.map((source) => listScrapedProducts(source)));
   const rawScraped = scrapedLists.flat();
 
-  const scraped = mergeScrapedProducts(rawScraped);
+  const scraped = await mergeScrapedProducts(rawScraped);
   const dbData = getDbData();
   const allNotes = dbData.olfactoryNotes;
 
