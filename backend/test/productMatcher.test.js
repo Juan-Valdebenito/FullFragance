@@ -44,12 +44,12 @@ test("reconoce variantes habituales del nombre de una marca", () => {
   ), true);
 });
 
-test("infiere marcas desde títulos de Cosmetic y permite matchear registros históricos", () => {
+test("infiere marcas desde títulos de Cosmetic y permite matchear registros históricos", async () => {
   assert.equal(inferBrandFromName("Perfume Sospiro Liberto EDP 100 ml Unisex"), "Sospiro");
   assert.equal(inferBrandFromName("Perfume Verbena EDT 120ml Hombre de Adolfo Dominguez"), "Adolfo Dominguez");
   assert.equal(inferBrandFromName("Si Giorgio Armani EDP 30 ml"), "Giorgio Armani");
 
-  const products = mergeScrapedProducts([
+  const products = await mergeScrapedProducts([
     perfume("cosmetic-cl", { brand: "Sin marca", name: "Perfume Sospiro Liberto EDP 100 ml Unisex" }),
     perfume("falabella-cl", { brand: "Sospiro", name: "Sospiro Liberto EDP 100 ml Unisex" }),
   ]);
@@ -58,16 +58,16 @@ test("infiere marcas desde títulos de Cosmetic y permite matchear registros his
   assert.equal(products[0].matchedStores, 2);
 });
 
-test("agrupa ofertas de Falabella y Ripley y conserva ambos precios", () => {
-  const products = mergeScrapedProducts([perfume("falabella-cl"), perfume("ripley-cl")]);
+test("agrupa ofertas de Falabella y Ripley y conserva ambos precios", async () => {
+  const products = await mergeScrapedProducts([perfume("falabella-cl"), perfume("ripley-cl")]);
   assert.equal(products.length, 1);
   assert.equal(products[0].source, "multi-store");
   assert.equal(products[0].matchedStores, 2);
   assert.deepEqual(products[0].offers.map((offer) => offer.price), [129990, 119990]);
 });
 
-test("usa la imagen de otra tienda cuando la oferta representante no la tiene", () => {
-  const products = mergeScrapedProducts([
+test("usa la imagen de otra tienda cuando la oferta representante no la tiene", async () => {
+  const products = await mergeScrapedProducts([
     perfume("falabella-cl", { imageUrl: null }),
     perfume("ripley-cl", { imageUrl: "https://rimage.ripley.cl/producto.jpg" }),
     perfume("silk-cl", { imageUrl: "https://cdn.shopify.com/producto.jpg" }),
@@ -206,8 +206,8 @@ test("normaliza aliases de nombres entre tiendas", () => {
 
 // ── Merge: productos se mantienen separados ───────────────────────────────
 
-test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", () => {
-  const products = mergeScrapedProducts([
+test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", async () => {
+  const products = await mergeScrapedProducts([
     perfume("falabella-cl", { brand: "AZZARO", name: "Perfume Hombre Wanted Edp 100 Ml", sku: "50321933" }),
     perfume("ripley-cl", { brand: "AZZARO", name: "SET PERFUME HOMBRE AZZARO WANTED EDP 100ML+75ML+10ML", sku: "2000411508384P" }),
     perfume("ripley-cl", { brand: "AZZARO", name: "PERFUME AZZARO WANTED HOMBRE EDP 100 ML", sku: "2000398101370P" }),
@@ -223,8 +223,8 @@ test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", 
   assert.ok(matchedIndividual, "Los perfumes individuales de distintas tiendas deben matchear");
 });
 
-test("mergeScrapedProducts no une dos productos de la misma tienda por una coincidencia intermedia", () => {
-  const products = mergeScrapedProducts([
+test("mergeScrapedProducts no une dos productos de la misma tienda por una coincidencia intermedia", async () => {
+  const products = await mergeScrapedProducts([
     perfume("alisha-cl", { brand: "Dior", name: "Dior Homme EDT 100 ml", sku: "alisha-1" }),
     perfume("silk-cl", { brand: "Dior", name: "Dior Homme EDT 100 ml", sku: "silk-1" }),
     perfume("alisha-cl", { brand: "Dior", name: "Dior Homme Parfum 100 ml", sku: "alisha-2" }),

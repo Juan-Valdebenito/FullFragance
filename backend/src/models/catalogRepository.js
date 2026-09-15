@@ -7,12 +7,19 @@ let cachedProducts = null;
 let cachedOlfactoryNotes = null;
 let cachedBaseProducts = null;
 let cachedChains = null;
+// El cómputo del catálogo (merge de miles de productos scrapeados) es pesado.
+// Sin esto, cada request concurrente mientras el caché está vacío dispara su
+// propio cómputo completo en paralelo, multiplicando la carga de CPU en una
+// instancia de un solo núcleo. Todas las llamadas concurrentes comparten la
+// misma promesa en curso.
+let productsPromise = null;
 
 function invalidateCatalogCache() {
   cachedProducts = null;
   cachedOlfactoryNotes = null;
   cachedBaseProducts = null;
   cachedChains = null;
+  productsPromise = null;
 }
 
 function inferGender(name) {
@@ -194,7 +201,15 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   };
 }
 
-function mergeScrapedProducts(products) {
+// El agrupamiento por marca es O(n^2) dentro de cada marca (cada producto se
+// compara contra todos los grupos ya formados). Con miles de productos
+// scrapeados esto puede tardar varios segundos de CPU; sin puntos de cesión
+// bloquea el event loop completo (incluido el healthcheck) y Render mata el
+// proceso por "unhealthy". Cedemos el control cada YIELD_EVERY comparaciones.
+const YIELD_EVERY = 200;
+const yieldToEventLoop = () => new Promise((resolve) => setImmediate(resolve));
+
+async function mergeScrapedProducts(products) {
   const dbData = getDbData();
   const profiles = dbData.products;
   const allNotes = dbData.olfactoryNotes;
@@ -213,19 +228,33 @@ function mergeScrapedProducts(products) {
     }
     list.push(product);
   }
+  const largestBrandGroup = Math.max(0, ...[...byBrand.values()].map((list) => list.length));
+  if (largestBrandGroup > 300) {
+    console.warn(`mergeScrapedProducts: grupo de marca mas grande tiene ${largestBrandGroup} productos (posible cuello de botella O(n^2)).`);
+  }
 
   const groups = [];
+  // Contamos comparaciones reales (candidatos revisados), no productos: un solo
+  // producto puede necesitar revisar cientos de grupos ya formados dentro de su
+  // marca, y ceder solo entre productos deja esa revisión completa sin cortes.
+  let comparisons = 0;
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
     for (const product of brandProducts) {
       // Un producto sólo puede unirse si es compatible con todo el grupo y no
       // duplica la misma tienda. Evita el "encadenamiento" A≈B y B≈C cuando
       // A y C son variantes distintas, un problema más visible al sumar fuentes.
-      const group = brandGroups.find((candidate) =>
-        !candidate.some((item) => item.source === product.source)
-        && candidate.every((item) => samePerfume(item, product))
-      );
-      if (group) group.push(product);
+      let matchedGroup = null;
+      for (const candidate of brandGroups) {
+        comparisons += 1;
+        if (comparisons % YIELD_EVERY === 0) await yieldToEventLoop();
+        if (candidate.some((item) => item.source === product.source)) continue;
+        if (candidate.every((item) => samePerfume(item, product))) {
+          matchedGroup = candidate;
+          break;
+        }
+      }
+      if (matchedGroup) matchedGroup.push(product);
       else brandGroups.push([product]);
     }
     groups.push(...brandGroups);
@@ -280,7 +309,16 @@ function mergeScrapedProducts(products) {
 
 async function getProducts() {
   if (cachedProducts) return cachedProducts;
+  if (!productsPromise) productsPromise = buildProducts();
+  const pending = productsPromise;
+  try {
+    return await pending;
+  } finally {
+    if (productsPromise === pending) productsPromise = null;
+  }
+}
 
+async function buildProducts() {
   await loadOlfactoryNotesFromDb();
   await loadBaseProductsFromDb();
 
@@ -288,7 +326,7 @@ async function getProducts() {
   const scrapedLists = await Promise.all(sources.map((source) => listScrapedProducts(source)));
   const rawScraped = scrapedLists.flat();
 
-  const scraped = mergeScrapedProducts(rawScraped);
+  const scraped = await mergeScrapedProducts(rawScraped);
   const dbData = getDbData();
   const allNotes = dbData.olfactoryNotes;
 

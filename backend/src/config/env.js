@@ -161,4 +161,10 @@ module.exports = {
     process.env.LODORO_UCP_AGENT_PROFILE ||
     "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
+
+  // ── Scheduler de scraping (cron) ─────────────────────────────────
+  scraperCronEnabled: process.env.SCRAPER_CRON_ENABLED === "true",
+  scraperCronSchedule: process.env.SCRAPER_CRON_SCHEDULE || "0 */6 * * *",
+  scraperCronStaggerMs: Number(process.env.SCRAPER_CRON_STAGGER_MS || 60000),
+  scraperCronTimezone: process.env.SCRAPER_CRON_TIMEZONE || "America/Santiago",
 };

@@ -22,13 +22,15 @@
 
 ### 1.2 Obtener la URL de conexión
 
-1. En tu proyecto Supabase → **Settings** (ícono de engranaje) → **Database**
-2. Baja hasta **Connection string** → selecciona la pestaña **URI**
+1. En tu proyecto Supabase, abre **Connect**.
+2. Copia la URL de **Session pooler** (puerto `5432`), no la de **Direct connection**.
 3. Copia la URL que tiene este formato:
    ```
-   postgresql://postgres:[TU-PASSWORD]@db.[REF].supabase.co:5432/postgres
+   postgresql://postgres.[REF]:[TU-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
    ```
-   > ⚠️ Reemplaza `[TU-PASSWORD]` con la contraseña que elegiste en el paso anterior.
+   > ⚠️ Reemplaza `[TU-PASSWORD]` con la contraseña que elegiste en el paso anterior. Conserva `postgres.[REF]` como usuario: el pooler lo requiere.
+
+   > El host directo `db.[REF].supabase.co` normalmente solo expone IPv6. En una red sin salida IPv6 el backend termina antes del healthcheck con `connect ENETUNREACH`. El Session pooler usa IPv4.
 
 ### 1.3 Poblar la base de datos
 
@@ -36,10 +38,10 @@ Desde tu terminal, en la carpeta `backend/`:
 
 ```bash
 # Opción A: Usando la variable directamente
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres" npm run seed:supabase
+DATABASE_URL="postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres" npm run seed:supabase
 
 # Opción B: Creando un archivo .env temporal
-echo 'DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres' > .env.supabase
+echo 'DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres' > .env.supabase
 cp .env.supabase .env   # sobreescribe temporalmente
 npm run seed:supabase
 ```
@@ -85,6 +87,10 @@ En Railway → tu servicio → pestaña **Variables** → agrega una por una:
 | `FRONTEND_ORIGINS` | `https://full-fragance.vercel.app` *(actualiza después de deployar el frontend)* |
 | `TRUST_PROXY` | `true` |
 | `SCRAPER_MOCK_PRICES` | `false` |
+| `SCRAPER_CRON_ENABLED` | `true` *(activa el scraping automático — ver Paso 2.4)* |
+| `SCRAPER_CRON_SCHEDULE` | `0 */6 * * *` *(cada 6 horas, formato cron estándar)* |
+| `SCRAPER_CRON_STAGGER_MS` | `60000` |
+| `SCRAPER_CRON_TIMEZONE` | `America/Santiago` |
 
 > **Puedes agregar todas de una vez** copiando el contenido de `backend/.env.production.example` y usando la función **Raw Editor** de Railway.
 
@@ -95,6 +101,15 @@ En Railway → tu servicio → pestaña **Variables** → agrega una por una:
 3. Guarda la URL: `https://tu-app.up.railway.app`
 4. Prueba que funciona: `https://tu-app.up.railway.app/`
    - Debe responder: `{"name":"FullFragrance API","frontend":"..."}`
+
+### 2.4 Scraping automático (cron)
+
+El backend incluye un scheduler interno (`node-cron`) que corre mientras el proceso esté vivo — como Railway no duerme el servicio (a diferencia de un plan serverless), esto basta para tener scraping periódico sin infraestructura adicional.
+
+- Con `SCRAPER_CRON_ENABLED=true`, al iniciar el servidor se programa una sincronización de las 10 tiendas según `SCRAPER_CRON_SCHEDULE` (cron estándar: min hora día mes díaSemana).
+- Cada tienda se dispara con un desfase de `SCRAPER_CRON_STAGGER_MS` (60s por defecto) entre sí, para no saturar recursos ni golpear varios sitios a la vez.
+- Deja `SCRAPER_CRON_ENABLED` sin definir o en `false` en desarrollo local para no scrapear sitios reales sin querer.
+- Revisa los logs de Railway (`[scraper-cron] ...`) para confirmar que se está ejecutando.
 
 ---
 
