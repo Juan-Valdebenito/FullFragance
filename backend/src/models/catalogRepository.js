@@ -7,12 +7,19 @@ let cachedProducts = null;
 let cachedOlfactoryNotes = null;
 let cachedBaseProducts = null;
 let cachedChains = null;
+// El cómputo del catálogo (merge de miles de productos scrapeados) es pesado.
+// Sin esto, cada request concurrente mientras el caché está vacío dispara su
+// propio cómputo completo en paralelo, multiplicando la carga de CPU en una
+// instancia de un solo núcleo. Todas las llamadas concurrentes comparten la
+// misma promesa en curso.
+let productsPromise = null;
 
 function invalidateCatalogCache() {
   cachedProducts = null;
   cachedOlfactoryNotes = null;
   cachedBaseProducts = null;
   cachedChains = null;
+  productsPromise = null;
 }
 
 function inferGender(name) {
@@ -291,7 +298,16 @@ async function mergeScrapedProducts(products) {
 
 async function getProducts() {
   if (cachedProducts) return cachedProducts;
+  if (!productsPromise) productsPromise = buildProducts();
+  const pending = productsPromise;
+  try {
+    return await pending;
+  } finally {
+    if (productsPromise === pending) productsPromise = null;
+  }
+}
 
+async function buildProducts() {
   await loadOlfactoryNotesFromDb();
   await loadBaseProductsFromDb();
 
