@@ -1,8 +1,15 @@
 const catalogRepository = require("../models/catalogRepository");
 
+// El catálogo se refresca por cron cada varias horas, así que el navegador y el
+// CDN pueden servirlo sin volver a golpear el backend durante la navegación.
+function catalogCacheHeader(res) {
+  res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+}
+
 async function listNotes(_req, res, next) {
   try {
     const notes = await catalogRepository.getOlfactoryNotes();
+    catalogCacheHeader(res);
     res.json({ notes });
   } catch (err) {
     next(err);
@@ -12,6 +19,7 @@ async function listNotes(_req, res, next) {
 async function listProducts(_req, res, next) {
   try {
     const products = await catalogRepository.getProducts();
+    catalogCacheHeader(res);
     res.json({ products });
   } catch (err) {
     next(err);
@@ -28,6 +36,7 @@ async function featuredProducts(_req, res, next) {
         return comparison || first.basePrice - second.basePrice;
       })
       .slice(0, 10);
+    catalogCacheHeader(res);
     res.json({ products });
   } catch (err) {
     next(err);
@@ -40,6 +49,7 @@ async function dealOfDay(_req, res, next) {
 
     if (!best) return res.json({ deal: null });
 
+    catalogCacheHeader(res);
     res.json({
       deal: best.product,
       minPrice: best.minPrice,
@@ -55,6 +65,7 @@ async function dealOfDay(_req, res, next) {
 async function dealsOfDay(_req, res, next) {
   try {
     const deals = await getBestDeals();
+    catalogCacheHeader(res);
     res.json({
       deals: deals.map(({ product, minPrice, maxPrice, savings, savingsPct }) => ({
         deal: product,
@@ -101,4 +112,4 @@ async function getBestDeals() {
   return fallback;
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay };
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, catalogCacheHeader };

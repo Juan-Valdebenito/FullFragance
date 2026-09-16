@@ -1,8 +1,10 @@
 const { getComparison, getComparisonForProduct } = require("../models/priceService");
 const { getProducts } = require("../models/catalogRepository");
+const { catalogCacheHeader } = require("./catalogController");
 
 async function listProducts(req, res, next) {
   try {
+    catalogCacheHeader(res);
     res.json({ products: await getProducts() });
   } catch (err) {
     next(err);
@@ -13,6 +15,7 @@ async function comparePrices(req, res, next) {
   try {
     const { q } = req.query;
     const comparison = await getComparison(q);
+    catalogCacheHeader(res);
     res.json({ comparison });
   } catch (err) {
     next(err);
@@ -24,6 +27,7 @@ async function compareOneProduct(req, res, next) {
     const { productId } = req.params;
     const result = await getComparisonForProduct(productId);
     if (!result) return res.status(404).json({ error: "Producto no encontrado." });
+    catalogCacheHeader(res);
     res.json(result);
   } catch (err) {
     next(err);

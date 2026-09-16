@@ -178,6 +178,9 @@ async function initDatabase() {
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
           ON users(google_id) WHERE google_id IS NOT NULL;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower
+          ON users(LOWER(email));
       `);
 
       // Compatible con instalaciones creadas antes de la revocación de sesiones.
