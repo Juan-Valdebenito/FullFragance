@@ -1,7 +1,7 @@
 {
   "name": "ferio-backend",
   "version": "1.0.0",
-  "description": "Backend de Ferio: API de comparacion de precios por ciudad",
+  "description": "Backend de FullFragrance: API de comparación de precios online",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

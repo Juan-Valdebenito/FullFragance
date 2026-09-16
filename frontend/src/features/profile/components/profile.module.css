@@ -47,8 +47,6 @@
 .primaryAction:hover:not(:disabled) { opacity: .86; transform: translateY(-1px); }
 .primaryAction:disabled { cursor: wait; opacity: .65; }
 
-.cityForm { display: grid; max-width: 620px; gap: 18px; margin-top: 22px; }
-.cityForm label,
 .accountForm label {
   display: grid;
   gap: 8px;
@@ -59,7 +57,6 @@
   text-transform: uppercase;
 }
 
-.cityForm select,
 .accountForm input {
   width: 100%;
   border: 1px solid var(--outline-variant);
@@ -70,15 +67,11 @@
   outline: 0;
 }
 
-.cityForm select:focus,
 .accountForm input:focus { border-color: var(--gold); }
 .accountForm input[readonly] { background: var(--surface-low); color: var(--on-surface-muted); cursor: not-allowed; }
 .accountForm small { color: var(--on-surface-muted); font-size: .68rem; font-weight: 400; letter-spacing: normal; text-transform: none; }
 
-.coordinates { display: flex; gap: 18px; color: var(--outline); font-family: ui-monospace, monospace; font-size: .7rem; }
-.cityForm p,
 .status { border-left: 3px solid var(--gold); background: var(--surface-low); padding: 10px; color: var(--on-surface-muted); font-size: .78rem; }
-.cityForm button { justify-self: start; border: 0; border-radius: var(--radius-md); background: var(--primary); color: var(--on-primary); padding: 13px 22px; font-weight: 700; }
 
 .accountCard,
 .shortcuts {
@@ -109,7 +102,47 @@
 .securitySection h3,
 .dangerZone h3 { margin-top: 5px; color: var(--on-surface); font: 600 1rem "Space Grotesk", sans-serif; }
 .passwordForm,
-.deleteForm { display: grid; gap: 14px; }
+.deleteForm {
+  display: grid;
+  max-width: 520px;
+  gap: 16px;
+}
+
+/* These forms live outside .accountForm, so they need the same field layout. */
+.passwordForm label,
+.deleteForm label {
+  display: grid;
+  gap: 8px;
+  color: var(--on-surface-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.passwordForm input,
+.deleteForm input {
+  width: 100%;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-lowest);
+  padding: 12px 13px;
+  color: var(--on-surface);
+  outline: 0;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.passwordForm input:focus,
+.deleteForm input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-light);
+}
+
+.passwordForm small {
+  color: var(--on-surface-muted);
+  font-size: .72rem;
+  font-weight: 400;
+  letter-spacing: normal;
+}
 
 .secondaryAction {
   justify-self: start;
@@ -181,7 +214,6 @@
   .summary { grid-template-columns: 1fr; text-align: center; }
   .avatar { margin: auto; }
   .stats { justify-content: center; }
-  .coordinates { flex-direction: column; gap: 5px; }
   .sessionRow { align-items: flex-start; flex-direction: column; }
   .textAction { padding: 0; }
 }

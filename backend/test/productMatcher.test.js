@@ -162,6 +162,7 @@ test("isSet detecta sets por patrón de múltiples volúmenes", () => {
 test("isSet devuelve false para perfumes individuales", () => {
   assert.equal(isSet({ name: "Perfume Hombre Wanted Edp 100 Ml" }), false);
   assert.equal(isSet({ name: "PERFUME VALENTINO BORN IN ROMA UOMO HOMBRE EDT 50 ML" }), false);
+  assert.equal(isSet({ name: "Perfume Hombre Wanted Edp 100 Ml", presentation: "100 ml" }), false);
 });
 
 // ── Nuevas fuentes: unidades, tipos y condiciones comerciales ─────────────
@@ -215,6 +216,7 @@ test("mergeScrapedProducts mantiene separados set y perfume individual Wanted", 
   const setProducts = products.filter((p) => /set/i.test(p.name));
   const individualProducts = products.filter((p) => !/set/i.test(p.name));
   assert.equal(setProducts.length, 1, "Debe haber exactamente 1 set");
+  assert.equal(setProducts[0].isSet, true, "El catálogo debe marcar el set para poder filtrarlo");
   assert.ok(individualProducts.length >= 1, "Debe haber al menos 1 perfume individual");
   // El perfume individual de Falabella y Ripley deben poder matchear entre sí
   const matchedIndividual = individualProducts.find((p) => p.source === "multi-store");

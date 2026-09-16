@@ -4,7 +4,6 @@ import { useOptionalSession } from "@/shared/auth/SessionContext";
 import { ThemeToggle } from "@/shared/theme/ThemeToggle";
 import { Icon } from "./Icon";
 import { LogoutButton } from "./LogoutButton";
-import { UserLocation } from "./UserLocation";
 import styles from "./shared.module.css";
 
 export function HeaderActions() {
@@ -43,7 +42,6 @@ export function HeaderActions() {
         </Link>
       )}
       <ThemeToggle />
-      <span><UserLocation /></span>
       <Link aria-label="Perfil" href="/perfil"><Icon name="user" /></Link>
       <LogoutButton />
     </div>

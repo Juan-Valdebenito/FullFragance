@@ -155,7 +155,7 @@ export function AccountSettings() {
         <div>
           <p className="eyebrow">Acción irreversible</p>
           <h3>Eliminar mi cuenta</h3>
-          <p>Se eliminarán permanentemente tu cuenta, favoritos, ciudad y preferencias olfativas. Esta acción no se puede deshacer.</p>
+          <p>Se eliminarán permanentemente tu cuenta, favoritos y preferencias olfativas. Esta acción no se puede deshacer.</p>
         </div>
         <form className={styles.deleteForm} onSubmit={deleteAccount}>
           <label>

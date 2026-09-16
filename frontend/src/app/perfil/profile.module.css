@@ -9,27 +9,6 @@
   align-content: start;
 }
 
-/* ─── Settings section ───────────────────────────────── */
-
-.settings {
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-lg);
-  background: var(--surface-lowest);
-  padding: 30px;
-  box-shadow: var(--shadow);
-}
-
-.settings h2 {
-  margin: 7px 0 10px;
-  font: 600 1.6rem "Space Grotesk", sans-serif;
-}
-
-.settings > p:last-of-type {
-  color: var(--on-surface-muted);
-  line-height: 1.55;
-  margin-bottom: 22px;
-}
-
 .profileGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
@@ -40,6 +19,5 @@
 /* ─── Responsive ─────────────────────────────────────── */
 
 @media (max-width: 600px) {
-  .settings { padding: 20px; }
   .profileGrid { grid-template-columns: 1fr; }
 }

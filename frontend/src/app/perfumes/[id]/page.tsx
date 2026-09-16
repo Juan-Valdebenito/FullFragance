@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/shared/components/Header";
 import { Footer } from "@/shared/components/Footer";
+import { AdBanner } from "@/shared/components/AdBanner";
 import { ProductDetail } from "@/features/catalog/components/ProductDetail";
 
 export const metadata: Metadata = { title: "Detalle de perfume | FullFragrance" };
@@ -30,6 +31,12 @@ export default async function PerfumePage({
   return (
     <>
       <Header active="catalog" />
+      <section className="container" style={{ paddingTop: "18px" }} aria-label="Publicidad">
+        <AdBanner
+          format="strip"
+          slotId={process.env.NEXT_PUBLIC_AD_SLOT_PRODUCT_STRIP}
+        />
+      </section>
       <ProductDetail productId={id} backHref={backHref} />
       <Footer />
     </>

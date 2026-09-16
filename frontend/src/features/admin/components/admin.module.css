@@ -411,8 +411,45 @@
 
 .brandList {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.brandPagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.brandPagination button {
+  border: 1px solid var(--outline-variant);
+  border-radius: 6px;
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  padding: 7px 10px;
+  font-size: .72rem;
+  font-weight: 700;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.brandPagination button:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: var(--gold-light);
+}
+
+.brandPagination button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.brandPagination span {
+  color: var(--on-surface-muted);
+  font-size: .72rem;
+  white-space: nowrap;
 }
 
 .brandRow {

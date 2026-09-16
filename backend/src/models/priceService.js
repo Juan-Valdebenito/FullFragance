@@ -1,6 +1,5 @@
 const { getProducts, getProductById } = require("./catalogRepository");
-const { getStoresForCity } = require("./storeService");
-const { seededRandom, hashSeed } = require("../utils/geo");
+const { seededRandom, hashSeed } = require("../utils/random");
 const { normalize } = require("./productMatcher");
 
 const SOURCE_STORES = {
@@ -15,12 +14,6 @@ const SOURCE_STORES = {
   "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
   "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
 };
-
-function priceFor(cityName, storeId, product) {
-  const rng = seededRandom(hashSeed(`${cityName}|${storeId}|${product.id}`));
-  const variation = (rng() - 0.5) * 0.35;
-  return Math.max(300, Math.round(product.basePrice * (1 + variation)));
-}
 
 function matchesProduct(product, productFilter) {
   if (!productFilter) return true;
@@ -60,116 +53,146 @@ function pricesForRealProduct(product) {
     : [];
 }
 
-function pricesForProduct(cityName, stores, product) {
+function pricesForProduct(product) {
   if (SOURCE_STORES[product.source] || product.source === "multi-store") return pricesForRealProduct(product);
-  return stores.map((store) => ({
-    storeId: store.id,
-    storeName: store.name,
-    price: priceFor(cityName, store.id, product),
-    available: true,
-  })).sort((a, b) => a.price - b.price);
+  if (!product.basePrice) return [];
+  return [{
+    storeId: "catalog-reference",
+    storeName: "Precio referencial",
+    price: product.basePrice,
+    available: Boolean(product.available),
+  }];
 }
 
-async function getComparisonForCity({ cityName, lat, lon }, productFilter) {
+// El listado sólo alimenta las tarjetas del catálogo. La descripción generada,
+// las notas olfativas resueltas y las ofertas crudas (ya representadas en
+// `prices`) sumaban la mayor parte de los bytes enviados y sólo las usa el
+// detalle, que se pide producto a producto.
+function listProduct(product) {
+  return {
+    id: product.id,
+    name: product.name,
+    brand: product.brand,
+    unit: product.unit,
+    basePrice: product.basePrice,
+    category: product.category,
+    gender: product.gender,
+    notes: product.notes,
+    source: product.source,
+    imageUrl: product.imageUrl,
+    imageUrls: product.imageUrls,
+    available: product.available,
+    priceIsMock: product.priceIsMock,
+    matchedStores: product.matchedStores,
+    aliases: product.aliases,
+  };
+}
+
+// El catálogo sin filtro es lo que piden el explorador, favoritos y el panel
+// admin en cada visita. `getProducts()` devuelve siempre el mismo arreglo hasta
+// que un scraper invalida el caché, así que su identidad sirve de marca de
+// versión: si cambia, este resultado se recomputa solo.
+let cachedComparison = null;
+let cachedComparisonSource = null;
+
+async function getComparison(productFilter) {
   const catalogProducts = await getProducts();
+  if (!productFilter && cachedComparisonSource === catalogProducts) return cachedComparison;
+
   const matches = catalogProducts.filter((product) => matchesProduct(product, productFilter));
   // Al haber datos reales, el catálogo debe priorizarlos frente al demo simulado.
   const realProducts = matches.filter((product) => SOURCE_STORES[product.source] || product.source === "multi-store");
   const products = realProducts.length ? realProducts : matches;
-  let stores = [];
-  if (products.some((product) => !SOURCE_STORES[product.source] && product.source !== "multi-store")) {
-    try {
-      stores = await getStoresForCity({ cityName, lat, lon });
-    } catch {
-      // Un producto real de marketplace sigue siendo útil aunque falle la búsqueda de sucursales OSM.
-    }
-  }
-  return products.map((product) => {
-    const prices = pricesForProduct(cityName, stores, product);
-    const minPrice = prices[0]?.price ?? null;
-    const historyData = generatePriceHistory(product.id, minPrice || product.basePrice || 0);
+  const comparison = products.map((product) => {
+    const prices = pricesForProduct(product);
     return {
-      product,
-      prices,
-      minPrice,
+      product: listProduct(product),
+      // La tarjeta sólo imprime tienda y precio; el enlace a la tienda y la
+      // etiqueta de oportunidad viven en el detalle, que se pide por producto.
+      prices: prices.map(({ storeId, storeName, price }) => ({ storeId, storeName, price })),
+      minPrice: prices[0]?.price ?? null,
       maxPrice: prices[prices.length - 1]?.price ?? null,
-      opportunity: historyData.opportunity,
     };
   });
+
+  if (!productFilter) {
+    cachedComparisonSource = catalogProducts;
+    cachedComparison = comparison;
+  }
+  return comparison;
 }
 
-function generatePriceHistory(productId, currentMinPrice) {
+const HISTORY_DAYS = 90;
+
+// Serie de precios sin fechas: el listado sólo necesita los números para
+// deducir la etiqueta de oportunidad. Construir los 90 Date + toISOString por
+// producto costaba más que todo el resto del endpoint junto y se descartaba.
+function priceSeries(productId, currentMinPrice) {
   const price = currentMinPrice || 50000;
-  const history = [];
-  const today = new Date();
   const seed = hashSeed(`history|${productId}`);
+  const prices = [];
 
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-
+  for (let i = HISTORY_DAYS - 1; i >= 0; i--) {
     if (i === 0) {
-      history.push({ date: dateStr, price });
+      prices.push(price);
       continue;
     }
-
     const rng = seededRandom(seed + i * 17);
     const wave = Math.sin(i / 6) * 0.08;
     const noise = (rng() - 0.5) * 0.06;
     const flashSale = (i % 23 === 0) ? -0.15 : 0;
     const factor = 1 + wave + noise + flashSale;
-    
-    const historicalPrice = Math.max(1000, Math.round((price * factor) / 100) * 100);
-    history.push({ date: dateStr, price: historicalPrice });
+    prices.push(Math.max(1000, Math.round((price * factor) / 100) * 100));
   }
+
+  return prices;
+}
+
+function priceStats(prices) {
+  const prices30 = prices.slice(60);
+  return {
+    min30d: Math.min(...prices30),
+    min90d: Math.min(...prices),
+    avg30d: Math.round(prices30.reduce((total, value) => total + value, 0) / prices30.length),
+  };
+}
+
+function opportunityFor(price, { min30d, min90d, avg30d }) {
+  if (price <= min30d) return { code: "lowest_30", label: "🔥 Precio más bajo en 30 días", type: "lowest_30" };
+  if (price <= min90d) return { code: "lowest_90", label: "🔥 Precio más bajo en 90 días", type: "lowest_90" };
+  if (price < avg30d * 0.95) {
+    const pct = Math.round(((avg30d - price) / avg30d) * 100);
+    return { code: "great_deal", label: `📉 ${pct}% más barato que el promedio`, type: "great_deal" };
+  }
+  if (price > avg30d * 1.05) return { code: "trending_up", label: "📈 Precio en alza", type: "trending_up" };
+  return { code: "stable", label: "📊 Precio estable", type: "stable" };
+}
+
+function generatePriceHistory(productId, currentMinPrice) {
+  const prices = priceSeries(productId, currentMinPrice);
+  const today = new Date();
+  const history = prices.map((price, index) => {
+    const day = new Date(today);
+    day.setDate(day.getDate() - (HISTORY_DAYS - 1 - index));
+    return { date: day.toISOString().split("T")[0], price };
+  });
 
   const points30 = history.slice(60);
-  const prices30 = points30.map((p) => p.price);
-  const prices90 = history.map((p) => p.price);
-
-  const min30 = Math.min(...prices30);
-  const min90 = Math.min(...prices90);
-  const avg30 = Math.round(prices30.reduce((a, b) => a + b, 0) / prices30.length);
-
-  let opportunity = {
-    code: "stable",
-    label: "📊 Precio estable",
-    type: "stable",
-  };
-
-  if (price <= min30) {
-    opportunity = { code: "lowest_30", label: "🔥 Precio más bajo en 30 días", type: "lowest_30" };
-  } else if (price <= min90) {
-    opportunity = { code: "lowest_90", label: "🔥 Precio más bajo en 90 días", type: "lowest_90" };
-  } else if (price < avg30 * 0.95) {
-    const pct = Math.round(((avg30 - price) / avg30) * 100);
-    opportunity = { code: "great_deal", label: `📉 ${pct}% más barato que el promedio`, type: "great_deal" };
-  } else if (price > avg30 * 1.05) {
-    opportunity = { code: "trending_up", label: "📈 Precio en alza", type: "trending_up" };
-  }
+  const stats = priceStats(prices);
 
   return {
     history,
     history30d: points30,
     history90d: history,
-    min30d: min30,
-    min90d: min90,
-    avg30d: avg30,
-    opportunity,
+    ...stats,
+    opportunity: opportunityFor(currentMinPrice || 50000, stats),
   };
 }
 
-async function getComparisonForProduct({ cityName, lat, lon }, productId) {
+async function getComparisonForProduct(productId) {
   const product = await getProductById(productId);
   if (!product) return null;
-  let prices = [];
-  if (SOURCE_STORES[product.source] || product.source === "multi-store") {
-    prices = pricesForRealProduct(product);
-  } else {
-    const stores = await getStoresForCity({ cityName, lat, lon });
-    prices = pricesForProduct(cityName, stores, product);
-  }
+  const prices = pricesForProduct(product);
 
   const currentMinPrice = prices[0]?.price || product.basePrice || 0;
   const historyData = generatePriceHistory(product.id, currentMinPrice);
@@ -190,4 +213,4 @@ async function getComparisonForProduct({ cityName, lat, lon }, productId) {
   };
 }
 
-module.exports = { getComparisonForCity, getComparisonForProduct, generatePriceHistory };
+module.exports = { getComparison, getComparisonForProduct, generatePriceHistory };

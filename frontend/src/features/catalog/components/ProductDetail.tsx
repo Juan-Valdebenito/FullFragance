@@ -3,14 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
-import type { ApiPrice, ApiProduct, City, ProductDetailResult } from "@/shared/api/types";
-import { useOptionalSession } from "@/shared/auth/SessionContext";
+import type { ApiPrice, ApiProduct, ProductDetailResult } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import { FavoriteButton } from "./FavoriteButton";
 import { PriceHistoryChart } from "./PriceHistoryChart";
 import styles from "./ProductDetail.module.css";
 
-const SANTIAGO: City = { name: "Santiago", country: "Chile", lat: -33.4489, lon: -70.6693 };
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const stores: Record<string, string> = {
   Sephora: "https://www.sephora.cl",
@@ -50,8 +48,6 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDetailProps) {
-  const optionalSession = useOptionalSession();
-  const user = optionalSession?.user ?? null;
   const [detailResult, setDetailResult] = useState<ProductDetailResult | null>(null);
   const [product, setProduct] = useState<ApiProduct | null>(null);
   const [prices, setPrices] = useState<ApiPrice[]>([]);
@@ -62,7 +58,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
   useEffect(() => {
     (async () => {
       try {
-        const result = await api.productPrices(user?.city ?? SANTIAGO, productId);
+        const result = await api.productPrices(productId);
         setDetailResult(result);
         setProduct(result.product);
         setPrices(result.prices);
@@ -70,7 +66,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el perfume.");
       } finally { setLoading(false); }
     })();
-  }, [productId, user?.city]);
+  }, [productId]);
 
   const sortedPrices = useMemo(() => {
     const cheapestByStore = new Map<string, ApiPrice>();

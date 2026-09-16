@@ -1,4 +1,4 @@
-import type { ApiNote, City, Comparison, Recommendation, Store, SyncJob, User } from "./types";
+import type { ApiNote, Comparison, Recommendation, SyncJob, User } from "./types";
 
 // Cuando se abre la web desde otro equipo, localhost es ese equipo y no el
 // computador que ejecuta el backend. Sin variable de entorno, conservamos el
@@ -22,7 +22,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return data as T;
 }
 function saveSession(data: { token: string; user: User }) { localStorage.setItem(TOKEN_KEY, data.token); return data.user; }
-const cityQuery = (city: City) => new URLSearchParams({ cityName: city.name, lat: String(city.lat), lon: String(city.lon) }).toString();
 export const session = { hasToken: () => Boolean(token()), clear: () => localStorage.removeItem(TOKEN_KEY) };
 export function productImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return imageUrl;
@@ -39,10 +38,8 @@ export const api = {
   updateProfile: (body: { name: string }) => request<{ user: User }>("/users/me/profile", { method: "PUT", body: JSON.stringify(body) }).then(data => data.user),
   changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string; token: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }).then(data => { localStorage.setItem(TOKEN_KEY, data.token); return { message: data.message }; }),
   deleteAccount: (confirmation: string) => request<void>("/users/me", { method: "DELETE", body: JSON.stringify({ confirmation }) }),
-  setCity: (city: City) => request<{ user: User }>("/users/me/city", { method: "PUT", body: JSON.stringify(city) }).then(data => data.user),
-  comparisons: (city: City, query = "") => request<{ comparison: Comparison[] }>(`/prices?${cityQuery(city)}&q=${encodeURIComponent(query)}`).then(data => data.comparison),
-  productPrices: (city: City, productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}?${cityQuery(city)}`),
-  stores: (city: City) => request<{ stores: Store[] }>(`/stores?${cityQuery(city)}`).then(data => data.stores),
+  comparisons: (query = "") => request<{ comparison: Comparison[] }>(`/prices?q=${encodeURIComponent(query)}`).then(data => data.comparison),
+  productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
   trackPageView: (page: string) => request<void>("/analytics/page-view", { method: "POST", body: JSON.stringify({ page }), authenticated: false }),
   adminMetrics: () => request<{ metrics: import("./types").AdminMetrics }>("/analytics/metrics").then(data => data.metrics),

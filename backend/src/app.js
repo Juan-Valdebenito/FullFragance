@@ -1,4 +1,5 @@
 const express = require("express");
+const compression = require("compression");
 const cors = require("cors");
 const morgan = require("morgan");
 const swaggerUi = require("swagger-ui-express");
@@ -16,6 +17,7 @@ const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", trustProxy);
 app.use(securityHeaders);
+app.use(compression());
 app.use(cors(corsOptions()));
 app.use(express.json({ limit: "100kb", strict: true }));
 app.use(morgan("dev"));
