@@ -1,7 +1,11 @@
+const zlib = require("zlib");
+const { promisify } = require("util");
 const { query } = require("../data/pgDatabase");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
 const { normalizeBrand, inferBrandFromName, samePerfume, tokenScore, isSet } = require("./productMatcher");
 const { DEFAULT_DATA } = require("../data/database");
+
+const gzip = promisify(zlib.gzip);
 
 let cachedProducts = null;
 let cachedOlfactoryNotes = null;
@@ -13,6 +17,13 @@ let cachedChains = null;
 // instancia de un solo núcleo. Todas las llamadas concurrentes comparten la
 // misma promesa en curso.
 let productsPromise = null;
+// El JSON completo del catálogo pesa ~16MB: serializarlo y comprimirlo en
+// cada request es caro en si mismo (varios segundos de CPU), incluso con
+// cachedProducts ya calculado. Bajo trafico alto (ej. un cyberday) esto
+// satura el unico proceso Node. Se cachea el body ya serializado y
+// gzipeado una vez, y se reusa hasta que el catalogo cambie.
+let cachedProductsPayload = null; // { json: string, gzip: Buffer }
+let productsPayloadPromise = null;
 
 function invalidateCatalogCache() {
   cachedProducts = null;
@@ -20,6 +31,8 @@ function invalidateCatalogCache() {
   cachedBaseProducts = null;
   cachedChains = null;
   productsPromise = null;
+  cachedProductsPayload = null;
+  productsPayloadPromise = null;
 }
 
 function inferGender(name) {
@@ -318,6 +331,27 @@ async function getProducts() {
   }
 }
 
+// Body de /api/products ya serializado y gzipeado. Se comparte entre todas
+// las visitas hasta que invalidateCatalogCache() lo limpie (nuevo scraping).
+async function getProductsPayload() {
+  if (cachedProductsPayload) return cachedProductsPayload;
+  if (!productsPayloadPromise) productsPayloadPromise = buildProductsPayload();
+  const pending = productsPayloadPromise;
+  try {
+    return await pending;
+  } finally {
+    if (productsPayloadPromise === pending) productsPayloadPromise = null;
+  }
+}
+
+async function buildProductsPayload() {
+  const products = await getProducts();
+  const json = JSON.stringify({ products });
+  const compressed = await gzip(json);
+  cachedProductsPayload = { json, gzip: compressed };
+  return cachedProductsPayload;
+}
+
 async function buildProducts() {
   await loadOlfactoryNotesFromDb();
   await loadBaseProductsFromDb();
@@ -371,6 +405,7 @@ async function getNoteById(id) {
 
 module.exports = {
   getProducts,
+  getProductsPayload,
   getProductById,
   getChains,
   getOlfactoryNotes,

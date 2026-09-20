@@ -1,11 +1,21 @@
 const { getComparison, getComparisonForProduct } = require("../models/priceService");
-const { getProducts } = require("../models/catalogRepository");
+const { getProductsPayload } = require("../models/catalogRepository");
 const { catalogCacheHeader } = require("./catalogController");
 
 async function listProducts(req, res, next) {
   try {
     catalogCacheHeader(res);
-    res.json({ products: await getProducts() });
+    const payload = await getProductsPayload();
+    // Servimos el JSON ya serializado (y gzipeado si el cliente lo acepta) en
+    // vez de volver a stringify+comprimir en cada visita: bajo trafico alto
+    // (cyberday) es la diferencia entre milisegundos y varios segundos de CPU
+    // por request en un servidor de un solo proceso.
+    if (req.acceptsEncodings("gzip") === "gzip") {
+      res.set("Content-Encoding", "gzip");
+      res.type("json").send(payload.gzip);
+    } else {
+      res.type("json").send(payload.json);
+    }
   } catch (err) {
     next(err);
   }

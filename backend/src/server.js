@@ -2,7 +2,7 @@ const app = require("./app");
 const { port } = require("./config/env");
 const { initDatabase } = require("./data/pgDatabase");
 const { startScraperScheduler } = require("./services/scraperScheduler");
-const { getProducts } = require("./models/catalogRepository");
+const { getProducts, getProductsPayload } = require("./models/catalogRepository");
 
 async function start() {
   await initDatabase();
@@ -11,10 +11,15 @@ async function start() {
   });
   startScraperScheduler();
 
-  // Pre-calienta el catálogo (merge de productos scrapeados) al arrancar para
-  // que el primer visitante real no pague el costo del cómputo inicial.
+  // Pre-calienta el catálogo (merge de productos scrapeados) y su respuesta
+  // ya serializada/gzipeada al arrancar, para que el primer visitante real
+  // no pague ninguno de esos dos costos.
   getProducts()
-    .then((products) => console.log(`Catálogo pre-calentado: ${products.length} productos.`))
+    .then(async (products) => {
+      console.log(`Catálogo pre-calentado: ${products.length} productos.`);
+      await getProductsPayload();
+      console.log("Respuesta de /api/products pre-comprimida.");
+    })
     .catch((error) => console.error("No se pudo pre-calentar el catálogo:", error.message));
 }
 
