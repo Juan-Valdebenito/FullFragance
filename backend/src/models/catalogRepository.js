@@ -2,7 +2,7 @@ const zlib = require("zlib");
 const { promisify } = require("util");
 const { query } = require("../data/pgDatabase");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { normalizeBrand, inferBrandFromName, samePerfume, tokenScore, isSet } = require("./productMatcher");
+const { normalizeBrand, inferBrandFromName, samePerfumeSignatures, productSignature, tokenScore, isSet } = require("./productMatcher");
 const { DEFAULT_DATA } = require("../data/database");
 
 const gzip = promisify(zlib.gzip);
@@ -222,6 +222,14 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
 const YIELD_EVERY = 200;
 const yieldToEventLoop = () => new Promise((resolve) => setImmediate(resolve));
 
+function biggestBucketOf(groupsByKey) {
+  let biggest = 0;
+  for (const bucket of groupsByKey.values()) {
+    if (bucket.length > biggest) biggest = bucket.length;
+  }
+  return biggest;
+}
+
 async function mergeScrapedProducts(products) {
   const dbData = getDbData();
   const profiles = dbData.products;
@@ -241,40 +249,59 @@ async function mergeScrapedProducts(products) {
     }
     list.push(product);
   }
-  const largestBrandGroup = Math.max(0, ...[...byBrand.values()].map((list) => list.length));
-  if (largestBrandGroup > 300) {
-    console.warn(`mergeScrapedProducts: grupo de marca mas grande tiene ${largestBrandGroup} productos (posible cuello de botella O(n^2)).`);
-  }
-
   const groups = [];
   // Contamos comparaciones reales (candidatos revisados), no productos: un solo
-  // producto puede necesitar revisar cientos de grupos ya formados dentro de su
-  // marca, y ceder solo entre productos deja esa revisión completa sin cortes.
+  // producto puede necesitar revisar varios grupos ya formados, y ceder solo
+  // entre productos deja esa revisión completa sin cortes.
   let comparisons = 0;
+  let largestBucket = 0;
   for (const brandProducts of byBrand.values()) {
     const brandGroups = [];
+    // Índice de grupos por clave de bloqueo. Dos productos con claves distintas
+    // no pueden ser el mismo perfume, así que revisar sólo su propia cubeta da
+    // el mismo resultado que recorrer todos los grupos de la marca, pero sin el
+    // coste cuadrático: marcas como Lattafa superan los 800 productos.
+    const groupsByKey = new Map();
     for (const product of brandProducts) {
+      const signature = productSignature(product);
+      const candidates = groupsByKey.get(signature.blockingKey);
       // Un producto sólo puede unirse si es compatible con todo el grupo y no
       // duplica la misma tienda. Evita el "encadenamiento" A≈B y B≈C cuando
       // A y C son variantes distintas, un problema más visible al sumar fuentes.
       let matchedGroup = null;
-      for (const candidate of brandGroups) {
+      for (const candidate of candidates || []) {
         comparisons += 1;
         if (comparisons % YIELD_EVERY === 0) await yieldToEventLoop();
-        if (candidate.some((item) => item.source === product.source)) continue;
-        if (candidate.every((item) => samePerfume(item, product))) {
+        if (candidate.some((item) => item.signature.source === signature.source)) continue;
+        if (candidate.every((item) => samePerfumeSignatures(item.signature, signature))) {
           matchedGroup = candidate;
           break;
         }
       }
-      if (matchedGroup) matchedGroup.push(product);
-      else brandGroups.push([product]);
+      const member = { product, signature };
+      if (matchedGroup) {
+        matchedGroup.push(member);
+      } else {
+        // El grupo entra a la vez en el orden de salida y en su cubeta, para
+        // conservar el mismo orden de catálogo que la versión sin índice.
+        const created = [member];
+        brandGroups.push(created);
+        if (candidates) candidates.push(created);
+        else groupsByKey.set(signature.blockingKey, [created]);
+      }
     }
     groups.push(...brandGroups);
+    largestBucket = Math.max(largestBucket, biggestBucketOf(groupsByKey));
+  }
+
+  // El coste real ya no depende del tamaño de la marca sino de la cubeta más
+  // grande, que es lo único que se recorre por producto.
+  if (largestBucket > 500) {
+    console.warn(`mergeScrapedProducts: la cubeta mas grande tiene ${largestBucket} grupos; revisa la clave de bloqueo si sigue creciendo.`);
   }
 
   return groups.map((group) => {
-    const converted = group.map((product) => toCatalogProduct(product, profiles, allNotes));
+    const converted = group.map(({ product }) => toCatalogProduct(product, profiles, allNotes));
     const representative = converted.find((product) => product.source === "falabella-cl") || converted[0];
     // La tienda representante puede no entregar imagen, aunque otra oferta del
     // mismo perfume sí. El card debe aprovechar cualquier imagen válida del

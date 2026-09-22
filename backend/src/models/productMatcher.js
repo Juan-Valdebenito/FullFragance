@@ -343,22 +343,54 @@ function commercialVariantOf(product) {
   return new Set([...tokens].filter((token) => COMMERCIAL_VARIANTS.has(token)));
 }
 
+/**
+ * ¿Este token numérico es el volumen y no parte del nombre?
+ * Lo es si coincide con un volumen ya extraído, o si el registro no declara
+ * volumen en ninguna parte y el número tiene pinta de mililitros ("EDP 100",
+ * sin unidad). Un "No 28" o un "Polo 67" no la tienen y se conservan.
+ */
+function isVolumeToken(token, volumeTokens, hasDeclaredVolume) {
+  if (!/^\d+$/.test(token)) return false;
+  if (volumeTokens.has(token)) return true;
+  if (hasDeclaredVolume) return false;
+  const amount = Number(token);
+  return amount >= 5 && amount <= 500 && amount % 5 === 0;
+}
+
 function identityTokens(product) {
   const brandTokens = new Set(normalizeBrand(brandOf(product)).split(" ").filter(Boolean));
+  // Los volúmenes ya se comparan aparte (volumeOf + sameVolume), así que se
+  // quitan del nombre junto con su unidad. Los demás números SÍ son identidad:
+  // "No 28" y "No 33" son perfumes distintos, y antes quedaban idénticos al
+  // descartar cualquier token numérico.
+  const volumes = extractVolumes([product?.name, product?.presentation, product?.unit].filter(Boolean).join(" "));
+  const volumeTokens = new Set(volumes.map((volume) => String(Math.round(volume))));
   return normalizedProductName(product)
+    .replace(/\b\d+(?:[.,\s]\d+)?\s*(?:ml|cl|l|oz|g)\b/g, " ")
     .split(" ")
     .filter(
       (token) =>
         token &&
         !STOP_WORDS.has(token) &&
         !brandTokens.has(token) &&
-        !/^\d+(?:ml|g|oz)?$/.test(token)
+        !isVolumeToken(token, volumeTokens, volumes.length > 0)
     );
 }
 
+/**
+ * Números que forman parte del nombre ("No 28", "1 Million", "212").
+ * Son identidad exacta, no difusa: con el umbral de tokens, "Zak No 28" y
+ * "Zak No 33" puntuaban 0.75 y terminaban fusionados en un solo producto.
+ */
+function numericTokens(product) {
+  return new Set(identityTokens(product).filter((token) => /^\d+$/.test(token)));
+}
+
 function tokenScore(left, right) {
-  const a = new Set(identityTokens(left));
-  const b = new Set(identityTokens(right));
+  return tokenSetScore(new Set(identityTokens(left)), new Set(identityTokens(right)));
+}
+
+function tokenSetScore(a, b) {
   if (!a.size || !b.size) return 0;
   const common = [...a].filter((token) => b.has(token)).length;
   return common / Math.max(a.size, b.size);
@@ -384,65 +416,79 @@ function sameTokenSet(left, right) {
  *    (coincidencia exacta) para evitar falsos positivos en nombres genéricos.
  */
 function samePerfume(left, right) {
+  return samePerfumeSignatures(productSignature(left), productSignature(right));
+}
+
+/**
+ * Calcula de una sola vez todos los atributos derivados que usa la comparación.
+ * Antes cada llamada a samePerfume los recalculaba (normalizar strings, regex de
+ * volumen, de concentración, de tipo...), y el merge del catálogo llama a la
+ * comparación cientos de miles de veces sobre el mismo puñado de productos.
+ */
+function productSignature(product) {
+  if (!product) return null;
+
+  const brand = normalizeBrand(brandOf(product));
+  const set = isSet(product);
+  const signature = set ? setSignature(product) : null;
+  const modifiers = modifierOf(product);
+  const commercialVariants = commercialVariantOf(product);
+  const productType = productTypeOf(product);
+  const tokens = identityTokens(product);
+  const numbers = new Set(tokens.filter((token) => /^\d+$/.test(token)));
+
+  return {
+    product,
+    source: product.source,
+    brand,
+    isSet: set,
+    setSignature: signature,
+    volume: volumeOf(product),
+    concentration: concentrationOf(product),
+    modifiers,
+    commercialVariants,
+    productType,
+    tokens,
+    tokenSet: new Set(tokens),
+    numbers,
+    // Todo lo que samePerfume exige igual de forma exacta va en esta clave.
+    // Dos productos con claves distintas jamás pueden ser el mismo perfume, así
+    // que sirve para agrupar candidatos sin perder ninguna coincidencia.
+    blockingKey: [
+      brand,
+      set ? `set:${signature || ""}` : "unidad",
+      productType || "",
+      [...modifiers].sort().join("+"),
+      [...commercialVariants].sort().join("+"),
+      [...numbers].sort().join("+"),
+    ].join("|"),
+  };
+}
+
+/** Versión de samePerfume sobre firmas ya calculadas. Misma regla, mismo resultado. */
+function samePerfumeSignatures(left, right) {
   if (!left || !right || left.source === right.source) return false;
 
-  // Un set/kit NO es el mismo producto que un perfume individual
-  if (isSet(left) !== isSet(right)) return false;
-  if (isSet(left) && setSignature(left) !== setSignature(right)) return false;
+  // Cubre de una sola comparación: set y su composición, marca, tipo de
+  // producto, modificadores de identidad, condición comercial y números.
+  if (left.blockingKey !== right.blockingKey) return false;
+  // Sin marca reconocible no se agrupa, aunque ambas cadenas sean iguales.
+  if (!left.brand || !right.brand) return false;
 
-  const leftBrand = normalizeBrand(brandOf(left));
-  const rightBrand = normalizeBrand(brandOf(right));
-  if (!leftBrand || !rightBrand || leftBrand !== rightBrand) return false;
+  if (left.volume && right.volume && !sameVolume(left.volume, right.volume)) return false;
 
-  // Verificar volumen
-  const leftVolume = volumeOf(left);
-  const rightVolume = volumeOf(right);
-  if (leftVolume && rightVolume && !sameVolume(leftVolume, rightVolume)) return false;
+  if (left.concentration && right.concentration && left.concentration !== right.concentration) return false;
+  // Si solo uno declara concentración es una señal débil de mismatch: no se
+  // rechaza, pero sube el umbral de tokens exigido más abajo.
+  const concentrationMismatch = Boolean(left.concentration) !== Boolean(right.concentration);
 
-  // Verificar concentración
-  const leftConcentration = concentrationOf(left);
-  const rightConcentration = concentrationOf(right);
-  if (leftConcentration && rightConcentration && leftConcentration !== rightConcentration) return false;
-  // Si solo uno tiene concentración definida, es una señal débil de mismatch.
-  // No rechazar directamente (un producto puede no listar la concentración en el nombre),
-  // pero elevar el umbral de tokens requerido al final.
-  const concentrationMismatch = Boolean(leftConcentration) !== Boolean(rightConcentration);
+  const score = tokenSetScore(left.tokenSet, right.tokenSet);
+  const minTokens = Math.min(left.tokens.length, right.tokens.length);
 
-  // Verificar modificadores de identidad: si los conjuntos difieren → son productos distintos
-  const leftModifiers = modifierOf(left);
-  const rightModifiers = modifierOf(right);
-  // Si uno tiene un modificador que el otro no tiene → productos distintos
-  for (const mod of leftModifiers) {
-    if (!rightModifiers.has(mod)) return false;
-  }
-  for (const mod of rightModifiers) {
-    if (!leftModifiers.has(mod)) return false;
-  }
+  // Con un solo token relevante hace falta coincidencia perfecta.
+  if (minTokens <= 1) return score >= 1.0;
 
-  const leftType = productTypeOf(left);
-  const rightType = productTypeOf(right);
-  if (leftType !== rightType && (leftType || rightType)) return false;
-
-  const leftCommercialVariant = commercialVariantOf(left);
-  const rightCommercialVariant = commercialVariantOf(right);
-  if (!sameTokenSet(leftCommercialVariant, rightCommercialVariant)) return false;
-
-  // Calcular score de tokens
-  const score = tokenScore(left, right);
-
-  // Guard: si alguno tiene muy pocos tokens relevantes, requerir coincidencia exacta
-  const leftTokens = identityTokens(left);
-  const rightTokens = identityTokens(right);
-  const minTokens = Math.min(leftTokens.length, rightTokens.length);
-
-  if (minTokens <= 1) {
-    // Con 1 solo token relevante necesitamos coincidencia perfecta
-    return score >= 1.0;
-  }
-
-  // Si hay mismatch de concentración (uno definida, otro no), requerir coincidencia casi perfecta
-  const threshold = concentrationMismatch ? 0.90 : 0.72;
-  return score >= threshold;
+  return score >= (concentrationMismatch ? 0.90 : 0.72);
 }
 
 module.exports = {
@@ -458,6 +504,10 @@ module.exports = {
   productTypeOf,
   commercialVariantOf,
   identityTokens,
+  numericTokens,
   tokenScore,
+  tokenSetScore,
   samePerfume,
+  productSignature,
+  samePerfumeSignatures,
 };

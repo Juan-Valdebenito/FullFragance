@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { inferBrandFromName, samePerfume, isSet, volumeOf } = require("../src/models/productMatcher");
+const { inferBrandFromName, samePerfume, isSet, volumeOf, identityTokens, productSignature } = require("../src/models/productMatcher");
 const { mergeScrapedProducts } = require("../src/models/catalogRepository");
 
 function perfume(source, overrides = {}) {
@@ -231,4 +231,56 @@ test("mergeScrapedProducts no une dos productos de la misma tienda por una coinc
   ]);
   assert.equal(products.length, 2);
   assert.equal(products.find((product) => product.source === "multi-store")?.matchedStores, 2);
+});
+
+test("los números del nombre distinguen perfumes de una misma línea", () => {
+  const izquierda = perfume("silk-cl", { brand: "Zak", name: "Zak Perfumes Hub No 28 EDP 100 ml" });
+  const derecha = perfume("paris-cl", { brand: "Zak", name: "Zak Perfumes Hub No 33 EDP 100 ml" });
+  assert.equal(samePerfume(izquierda, derecha), false);
+});
+
+test("el mismo perfume numerado se reconoce aunque cambie el formato del nombre", () => {
+  assert.equal(samePerfume(
+    perfume("silk-cl", { brand: "Zak", name: "Zak Perfumes Hub No 28 EDP 100 ml" }),
+    perfume("paris-cl", { brand: "Zak", name: "ZAK PERFUMES HUB N° 28 EDP 100ML" })
+  ), true);
+});
+
+test("no confunde dos perfumes distintos de la misma línea Elixir", () => {
+  assert.equal(samePerfume(
+    perfume("silk-cl", { brand: "Paco Rabanne", name: "PACO RABANNE PHANTOM ELIXIR MEN PARFUM INTENSE 100ML" }),
+    perfume("paris-cl", { brand: "Paco Rabanne", name: "PACO RABANNE ONE MILLION ELIXIR PARFUM INTENSE MEN 100ML" })
+  ), false);
+});
+
+test("agrupa un 212 escrito por tiendas distintas", () => {
+  assert.equal(samePerfume(
+    perfume("silk-cl", { brand: "Carolina Herrera", name: "Perfume Carolina Herrera 212 EDT 30 ml", presentation: "30 ml" }),
+    perfume("paris-cl", { brand: "Carolina Herrera", name: "Perfume Mujer 212 Edt 30Ml", presentation: "30 ml" })
+  ), true);
+});
+
+test("no mezcla 212 con 212 VIP", () => {
+  assert.equal(samePerfume(
+    perfume("silk-cl", { brand: "Carolina Herrera", name: "Carolina Herrera 212 Men EDT 100 ml" }),
+    perfume("paris-cl", { brand: "Carolina Herrera", name: "Carolina Herrera 212 VIP Men EDT 100 ml" })
+  ), false);
+});
+
+test("un volumen sin unidad no se confunde con un número del nombre", () => {
+  assert.deepEqual(
+    identityTokens(perfume("silk-cl", { brand: "Dior", name: "Perfume Hombre Eau Fraiche Extreme EDP 100", presentation: "" })),
+    identityTokens(perfume("paris-cl", { brand: "Dior", name: "Perfume Eau Fraiche Extreme EDP Hombre 100 ml", presentation: "100 ml" }))
+  );
+});
+
+test("la clave de bloqueo nunca separa dos productos que samePerfume considera iguales", () => {
+  const izquierda = perfume("silk-cl", { brand: "Dior", name: "Dior Homme EDT 100 ml" });
+  const derecha = perfume("paris-cl", { brand: "Dior", name: "PERFUME DIOR HOMME HOMBRE EDT 100 ML" });
+  assert.equal(samePerfume(izquierda, derecha), true);
+  assert.equal(
+    productSignature(izquierda).blockingKey,
+    productSignature(derecha).blockingKey,
+    "Si dos productos matchean, deben caer en la misma cubeta o el merge nunca los compararía"
+  );
 });
