@@ -204,3 +204,9 @@ img { display: block; max-width: 100%; }
   .container { width: min(calc(100% - 28px), var(--max-width)); }
   .pageHeader { padding-top: 36px; padding-bottom: 32px; }
 }
+
+/* El selector de tema se queda solo con su icono en móvil: la etiqueta no
+   cabe junto a la marca, el botón de menú y los enlaces de cuenta. */
+@media (max-width: 600px) {
+  .themeToggleLabel { display: none; }
+}

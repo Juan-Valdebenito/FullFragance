@@ -49,7 +49,11 @@ export function ThemeToggle() {
         }}
       >
         <span>{currentOption.icon}</span>
-        <span style={{ fontSize: ".72rem" }}>{currentOption.label}</span>
+        {/* En móvil solo queda el icono: la etiqueta no cabe junto a la marca
+            y el botón de menú (ver .themeToggleLabel en globals.css). */}
+        <span className="themeToggleLabel" style={{ fontSize: ".72rem" }}>
+          {currentOption.label}
+        </span>
       </button>
 
       {open && (

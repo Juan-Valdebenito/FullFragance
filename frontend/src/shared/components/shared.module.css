@@ -37,6 +37,9 @@
 /* ─── Topbar / Nav ───────────────────────────────────────────────────────── */
 
 .topbar {
+  /* Alto del header + su borde: lo usa el panel móvil para colgarse justo
+     debajo sin taparlo. */
+  --header-height: 77px;
   position: sticky;
   z-index: 30;
   top: 0;
@@ -61,7 +64,7 @@
   min-width: 0;
 }
 
-.navStart nav {
+.navStart > nav {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -72,7 +75,7 @@
   white-space: nowrap;
 }
 
-.navStart nav a {
+.navStart > nav a {
   border: 1px solid transparent;
   border-radius: 9px;
   color: var(--on-surface-muted);
@@ -83,8 +86,8 @@
   transition: color var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-.navStart nav a:hover,
-.navStart nav .active {
+.navStart > nav a:hover,
+.navStart > nav .active {
   border-color: color-mix(in srgb, var(--gold) 28%, transparent);
   background: var(--surface-bright);
   color: var(--primary);
@@ -129,8 +132,109 @@
 }
 
 .megaTrigger:hover > button span,
-.megaTrigger:focus-within > button span {
+.megaTrigger:focus-within > button span,
+.megaTrigger > button[aria-expanded="true"] span {
   transform: rotate(180deg);
+}
+
+/* ─── Navegación móvil ───────────────────────────────────────────────────── */
+
+/* Por debajo de 1260px el nav de escritorio se oculta; este botón y su panel
+   son la única navegación disponible, así que no pueden depender de :hover. */
+.menuButton {
+  display: none;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--outline-variant);
+  border-radius: 10px;
+  background: var(--surface-low);
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.menuButton:hover,
+.menuButton:focus-visible {
+  border-color: var(--gold);
+  color: var(--primary);
+  outline: none;
+}
+
+.mobilePanel {
+  display: none;
+}
+
+.mobileInner {
+  display: grid;
+  gap: 20px;
+  padding-block: 18px 26px;
+}
+
+.mobileLinks {
+  display: grid;
+  gap: 2px;
+}
+
+.mobileLinks a {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--on-surface);
+  font-size: .95rem;
+  font-weight: 600;
+  padding: 12px;
+}
+
+.mobileLinks .active {
+  border-color: color-mix(in srgb, var(--gold) 28%, transparent);
+  background: var(--surface-low);
+  color: var(--primary);
+}
+
+.mobileSections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  border-top: 1px solid var(--surface-container);
+  padding-top: 20px;
+}
+
+.mobileSections section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.mobileSections h2 {
+  color: var(--gold-dark);
+  font-size: .68rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.mobileSections a {
+  color: var(--on-surface-muted);
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.mobileSections a strong {
+  display: block;
+  color: var(--on-surface);
+  font-size: .82rem;
+}
+
+.mobileSections a small {
+  color: var(--on-surface-muted);
+  font-size: .68rem;
+}
+
+/* El mega menú esconde esta columna en pantallas medianas; en el panel móvil
+   sí debe verse, porque aquí no compite con nada. */
+.mobileSections .toolsColumn {
+  display: flex !important;
 }
 
 /* ─── Mega menu panel ────────────────────────────────────────────────────── */
@@ -154,7 +258,8 @@
 }
 
 .megaTrigger:hover .megaMenu,
-.megaTrigger:focus-within .megaMenu {
+.megaTrigger:focus-within .megaMenu,
+.megaMenu[data-open] {
   visibility: visible;
   opacity: 1;
   transform: none;
@@ -246,7 +351,9 @@
   padding-left: 18px;
 }
 
-.actions span {
+/* Hijo directo a propósito: como selector descendente alcanzaba los spans
+   internos del selector de tema y le rompía el diseño. */
+.actions > span {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -418,9 +525,31 @@
   }
 }
 
+/* Por debajo de 1260px la barra de enlaces ya no convive con la marca y las
+   acciones sin montarse encima, así que se cambia por el panel desplegable:
+   además el mega menú por :hover nunca fue usable en pantallas táctiles. */
+@media (max-width: 1260px) {
+  .navStart > nav { display: none; }
+  .navStart { gap: 12px; }
+  .menuButton { display: grid; }
+  .mobilePanel {
+    position: fixed;
+    z-index: 40;
+    top: var(--header-height);
+    right: 0;
+    left: 0;
+    display: block;
+    max-height: calc(100dvh - var(--header-height));
+    overflow-y: auto;
+    border-top: 1px solid var(--gold-light);
+    border-bottom: 1px solid var(--surface-container);
+    background: var(--surface-bright);
+    box-shadow: 0 22px 48px rgb(31 27 20 / 13%);
+  }
+  .mobilePanel[hidden] { display: none; }
+}
+
 @media (max-width: 1050px) {
-  .navStart { gap: 16px; }
-  .navStart nav a { padding-inline: 8px; }
   .megaGrid { grid-template-columns: repeat(3, 1fr); }
   .toolsColumn { display: none !important; }
   .footerInner { grid-template-columns: 1.2fr 1fr 1fr; }
@@ -428,8 +557,6 @@
 }
 
 @media (max-width: 900px) {
-  .navStart nav { display: none; }
-  .navStart { gap: 0; }
   .brand { padding-right: 0; }
   .brand::after { display: none; }
   .megaGrid {
@@ -442,9 +569,19 @@
 }
 
 @media (max-width: 600px) {
+  .topbar { --header-height: 69px; }
   .nav { min-height: 68px; }
+  .mobileSections { grid-template-columns: 1fr; }
   .actions { gap: 5px; border-left: 0; padding-left: 0; }
-  .actions span { display: none; }
+  /* Solo hijos directos: el selector descendente también escondía el icono y
+     la etiqueta del selector de tema, dejando un botón vacío en móvil. */
+  .actions > span { display: none; }
+  /* El header a 390px tiene que caber con marca, menú, tema y cuentas. */
+  .brand { padding-right: 0; }
+  .brand strong { font-size: 1.2rem; }
+  .brand small { display: none; }
+  .loginLink,
+  .registerLink { padding: 8px 9px; font-size: .62rem; }
   .footerInner { grid-template-columns: 1fr; padding-block: 36px; }
   .footerTrust { grid-column: auto; }
   .footerContact > * { width: 100%; }

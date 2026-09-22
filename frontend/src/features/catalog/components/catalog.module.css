@@ -315,7 +315,9 @@
 
 .catalogToolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(200px, 240px) auto;
+  /* Sin mínimos duros: las columnas deben poder encoger cuando el
+     contenedor es más estrecho que el viewport (rieles de anuncios). */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 240px) auto;
   align-items: flex-end;
   gap: 20px;
   margin-bottom: 24px;
@@ -659,6 +661,7 @@
 
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   width: fit-content;
   max-width: 100%;
   align-items: center;

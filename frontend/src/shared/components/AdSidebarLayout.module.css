@@ -34,8 +34,11 @@
   }
 }
 
-/* ── En pantallas menores a 1280px: colapsar sidebars ───────── */
-@media (max-width: 1280px) {
+/* ── En pantallas menores a 1600px: colapsar sidebars ─────────
+   Los dos rieles se llevan ~400px (160 + 160 + gaps + padding). El
+   catálogo que va dentro necesita ~1080px para no desbordar, así que
+   por debajo de 1600px el contenido se queda con el ancho completo. */
+@media (max-width: 1600px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas: "content";
