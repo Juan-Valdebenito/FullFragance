@@ -57,6 +57,10 @@
 
 /* ─── Responsive ─────────────────────────────────────── */
 
+@media (max-width: 900px) {
+  .main { padding-top: 28px; }
+}
+
 @media (max-width: 600px) {
   .main { padding-top: 24px; }
 

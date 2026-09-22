@@ -8,10 +8,10 @@
      franja periférica, con aire suficiente para no competir con las tarjetas. */
   grid-template-columns: 170px minmax(0, 1180px) 170px;
   grid-template-areas: "left content right";
-  column-gap: clamp(48px, 4vw, 88px);
+  column-gap: clamp(32px, 3vw, 72px);
   max-width: 1920px;
   margin-inline: auto;
-  padding-inline: clamp(32px, 5vw, 96px);
+  padding-inline: clamp(20px, 3vw, 72px);
   align-items: start;
 }
 
@@ -25,11 +25,21 @@
   top: 90px; /* debajo del header */
 }
 
+/* ── Pantallas medianas: reducir sidebars ───────────────────── */
+@media (max-width: 1440px) {
+  .layout {
+    grid-template-columns: 160px minmax(0, 1fr) 160px;
+    column-gap: clamp(20px, 2vw, 40px);
+    padding-inline: clamp(16px, 2.5vw, 48px);
+  }
+}
+
 /* ── En pantallas menores a 1280px: colapsar sidebars ───────── */
 @media (max-width: 1280px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-areas: "content";
+    padding-inline: clamp(16px, 3vw, 40px);
   }
   .sidebarLeft,
   .sidebarRight {
