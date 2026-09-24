@@ -5,9 +5,38 @@ import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
 import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
 import "./globals.css";
 
+const SITE_URL = "https://fullfragance.cl";
+
 export const metadata: Metadata = {
-  title: "FullFragance",
-  description: "Compara precios y descubre tu próxima fragancia favorita.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "FullFragrance | Comparador de Precios de Perfumes en Chile",
+    template: "%s | FullFragrance",
+  },
+  description:
+    "Compara precios de perfumes originales entre tiendas verificadas de Chile (Falabella, Ripley, Paris, ABC y más) y encuentra la oferta más barata antes de comprar.",
+  keywords: [
+    "perfumes",
+    "comparar precios perfumes",
+    "perfumes baratos chile",
+    "perfumes originales chile",
+    "ofertas perfumes",
+  ],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "es_CL",
+    siteName: "FullFragrance",
+    url: SITE_URL,
+    title: "FullFragrance | Comparador de Precios de Perfumes en Chile",
+    description:
+      "Compara precios de perfumes originales entre tiendas verificadas de Chile y encuentra la oferta más barata antes de comprar.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FullFragrance | Comparador de Precios de Perfumes en Chile",
+    description: "Compara precios de perfumes originales entre tiendas verificadas de Chile.",
+  },
 };
 
 export default function RootLayout({

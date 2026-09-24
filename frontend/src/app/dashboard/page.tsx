@@ -3,7 +3,12 @@ import { Header } from "@/shared/components/Header";
 import { Footer } from "@/shared/components/Footer";
 import { DashboardContent } from "./DashboardContent";
 
-export const metadata: Metadata = { title: "Comparador de perfumes | FullFragrance" };
+export const metadata: Metadata = {
+  title: "Comparador de perfumes",
+  description:
+    "Explora y compara precios de miles de perfumes originales entre Falabella, Ripley, Paris, ABC y otras tiendas verificadas de Chile. Filtra por marca, notas olfativas y mejores ofertas.",
+  alternates: { canonical: "/dashboard" },
+};
 
 export default async function DashboardPage({
   searchParams,
