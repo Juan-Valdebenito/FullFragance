@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Header } from "@/shared/components/Header";
 import { Footer } from "@/shared/components/Footer";
 import { AdBanner } from "@/shared/components/AdBanner";
+import { AdSidebarLayout } from "@/shared/components/AdSidebarLayout";
 import { ProductDetail } from "@/features/catalog/components/ProductDetail";
 
 export const metadata: Metadata = { title: "Detalle de perfume | FullFragrance" };
@@ -37,7 +38,9 @@ export default async function PerfumePage({
           slotId={process.env.NEXT_PUBLIC_AD_SLOT_PRODUCT_STRIP}
         />
       </section>
-      <ProductDetail productId={id} backHref={backHref} />
+      <AdSidebarLayout left={false} right>
+        <ProductDetail productId={id} backHref={backHref} />
+      </AdSidebarLayout>
       <Footer />
     </>
   );
