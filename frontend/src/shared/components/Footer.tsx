@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { Brand } from "./Brand";
 import { FooterPlatformLinks } from "./FooterPlatformLinks";
+import { AdBanner } from "./AdBanner";
 import styles from "./shared.module.css";
 
 export function Footer({ compact = false }: { compact?: boolean }) {
-  return <footer className={`${styles.footer} ${compact ? styles.compact : ""}`}><div className={`container ${styles.footerInner}`}>
+  return <footer className={`${styles.footer} ${compact ? styles.compact : ""}`}>
+    {!compact && (
+      <div className={`container ${styles.footerAdStrip}`}>
+        <AdBanner format="strip" slotId={process.env.NEXT_PUBLIC_AD_SLOT_HOME_STRIP} />
+      </div>
+    )}
+    <div className={`container ${styles.footerInner}`}>
     <section className={styles.footerProfile}>
       <Brand />
       <p>Comparador de perfumes de tiendas verificadas. Ordenamos precios, detectamos coincidencias entre comercios y ayudamos a comprar con mejor información.</p>

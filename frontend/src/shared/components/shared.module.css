@@ -423,6 +423,10 @@
 
 .compact { margin-top: 0; }
 
+.footerAdStrip {
+  padding-block: 20px 0;
+}
+
 .footerInner {
   display: grid;
   grid-template-columns: minmax(280px, 1.5fr) minmax(150px, .72fr) minmax(170px, .82fr) minmax(230px, .92fr);
