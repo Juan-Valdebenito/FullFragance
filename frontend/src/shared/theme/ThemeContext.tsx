@@ -21,14 +21,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     if (savedTheme && ["light", "dark", "pitch-black"].includes(savedTheme)) {
       setThemeState(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
     } else {
       // Default to warm dark if prefers dark mode, otherwise light
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const initialTheme = prefersDark ? "dark" : "light";
-      setThemeState(initialTheme);
-      document.documentElement.setAttribute("data-theme", initialTheme);
+      setThemeState(prefersDark ? "dark" : "light");
     }
+    // El data-theme ya fue aplicado por el script inline en <head> antes del primer render
     setMounted(true);
   }, []);
 

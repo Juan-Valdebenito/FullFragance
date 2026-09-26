@@ -47,6 +47,12 @@ export default function RootLayout({
   return (
     <html lang="es" data-scroll-behavior="smooth">
       <head>
+        {/* Aplica el tema guardado antes del primer render para evitar el flash claro→oscuro */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("fullfragrance_theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t!=="light"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`,
+          }}
+        />
         {/* Script de Google AdSense — solo activo con NEXT_PUBLIC_ADSENSE_ID */}
         <GoogleAdsense />
       </head>

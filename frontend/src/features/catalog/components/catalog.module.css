@@ -572,7 +572,7 @@
 .bestBadge {
   border-radius: 4px;
   background: var(--primary);
-  color: var(--gold);
+  color: var(--on-primary);
   padding: 2px 6px;
   font-size: 0.55rem;
   font-weight: 700;
