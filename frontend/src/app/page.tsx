@@ -6,6 +6,7 @@ import { HeroActions } from "@/shared/components/HeroActions";
 import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
+import { HeroRecommendation } from "@/features/catalog/components/HeroRecommendation";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = {
@@ -73,34 +74,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className={styles.preview} aria-label="Vista previa de comparador de perfumes">
-              <div className={styles.previewSearch}>
-                <Icon name="search" size={18} />
-                <span>Oferta Destacada del Día</span>
-              </div>
-              <article className={styles.previewCard}>
-                <div className={styles.bottleScene}><i /><i /><i /></div>
-                <div className={styles.previewContent}>
-                  <span className={styles.previewBadge}>Ahorras hasta un 32%</span>
-                  <h2>Club De Nuit Intense Man</h2>
-                  <p>105 ml · Eau de Parfum · Armaf</p>
-                  <div className={styles.previewPrices}>
-                    <span className={styles.previewPriceBest}>
-                      <small>Mejor opción verificada</small>
-                      <strong>$31.990</strong>
-                    </span>
-                    <span>
-                      <small>Otra tienda nacional</small>
-                      <strong className={styles.oldPrice}>$46.990</strong>
-                    </span>
-                  </div>
-                </div>
-              </article>
-              <div className={styles.previewFoot}>
-                <span>Comparación de 5 tiendas en tiempo real</span>
-                <Link href="/dashboard?q=Club+de+nuit">Ver oferta →</Link>
-              </div>
-            </div>
+            <HeroRecommendation />
           </div>
         </section>
 

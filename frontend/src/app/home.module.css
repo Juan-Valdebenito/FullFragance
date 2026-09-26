@@ -244,6 +244,10 @@
   background: linear-gradient(145deg, #ffffff, rgba(230, 224, 235, 0.9));
 }
 
+.previewCardEnter {
+  animation: dealContentEnter 0.35s ease both;
+}
+
 .previewContent {
   padding: 16px;
 }
@@ -1213,6 +1217,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .previewCardEnter,
   .dealContent {
     animation: none;
   }
