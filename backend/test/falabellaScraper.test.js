@@ -11,6 +11,7 @@ const {
   normalizeCollectionProduct,
   extractPriceFromCard,
   isSoldByFalabella,
+  isPerfumeProduct,
   productFromUrl,
   buildFalabellaImageUrl,
 } = require("../src/services/falabellaScraper");
@@ -68,6 +69,18 @@ test("acepta únicamente productos vendidos directamente por Falabella", () => {
   assert.equal(isSoldByFalabella({ sellerId: "FALABELLA_CHILE", sellerName: "FALABELLA" }), true);
   assert.equal(isSoldByFalabella({ sellerId: "SC55CFB", sellerName: "COSMETIC" }), false);
   assert.equal(isSoldByFalabella({ sellerName: "Vendedor marketplace" }), false);
+});
+
+test("acepta la tienda oficial de Natura solo con su id de vendedor", () => {
+  assert.equal(isSoldByFalabella({ sellerId: "SCCAA7E", sellerName: "Natura" }), true);
+  assert.equal(isSoldByFalabella({ sellerId: "SC0FD07", sellerName: "Natura" }), false);
+  assert.equal(isSoldByFalabella({ sellerName: "Natura" }), false);
+});
+
+test("reconoce perfumes de tienda oficial por nombre cuando el slug no lo indica", () => {
+  const url = "https://www.falabella.com/falabella-cl/product/1/essencial-unico-masculino-natura";
+  assert.equal(isPerfumeProduct({ url, name: "Perfume Essencial Único Masculino 90 ml" }), true);
+  assert.equal(isPerfumeProduct({ url, name: "Crema De Manos Ekos Castaña 75g" }), false);
 });
 
 test("extrae precio internet desde el arreglo prices", () => {

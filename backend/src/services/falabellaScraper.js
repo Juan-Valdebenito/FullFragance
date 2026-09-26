@@ -8,6 +8,7 @@ const {
   falabellaFixtureDir,
   falabellaPerfumesUrl,
   falabellaPdpSitemapIndexUrl,
+  falabellaOfficialStoreUrls,
   falabellaSitemapFilesToScan,
   scraperMockPrices,
 } = require("../config/env");
@@ -278,18 +279,31 @@ function extractImageFromCard(card) {
   return null;
 }
 
+// Tiendas oficiales de marca que venden dentro de Falabella. Se aceptan igual
+// que Falabella porque el vendedor es el propio fabricante, no un revendedor.
+const OFFICIAL_BRAND_SELLERS = new Map([["SCCAA7E", "NATURA"]]);
+const OFFICIAL_BRAND_SELLER_NAMES = new Set(OFFICIAL_BRAND_SELLERS.values());
+
 function isSoldByFalabella(card) {
   const sellerId = String(card?.sellerId || card?.seller?.id || "").trim().toUpperCase();
   const sellerName = String(card?.sellerName || card?.seller?.name || "").trim().toUpperCase();
-  return sellerId === "FALABELLA_CHILE" || sellerName === "FALABELLA";
+  if (sellerId === "FALABELLA_CHILE" || sellerName === "FALABELLA") return true;
+  return OFFICIAL_BRAND_SELLERS.get(sellerId) === sellerName;
 }
 
 function isJsonLdSoldByFalabella(product) {
   const offers = Array.isArray(product?.offers) ? product.offers : [product?.offers];
   return offers.some((offer) => {
     const seller = String(offer?.seller?.name || offer?.seller || "").trim().toUpperCase();
-    return seller === "FALABELLA" || seller === "FALABELLA CHILE";
+    return seller === "FALABELLA" || seller === "FALABELLA CHILE" || OFFICIAL_BRAND_SELLER_NAMES.has(seller);
   });
+}
+
+// En las tiendas oficiales algunas URLs no incluyen "perfume" en el slug
+// (ej. essencial-unico-masculino-natura), así que también se mira el nombre.
+function isPerfumeProduct(product) {
+  if (isPerfumeProductUrl(product.url)) return true;
+  return /(?:^|\s)(perfume|parfum|fragancia|colonia|eau de (?:toilette|parfum|cologne)|edp|edt|body splash)(?:\s|$)/i.test(product.name);
 }
 
 function inferAvailabilityFromCard(availability) {
@@ -459,7 +473,48 @@ async function scrapeDirectCatalogPage(page = 1) {
     .filter((product) => isPerfumeProductUrl(product.url));
   const totalPages = Math.max(1, Math.ceil(Number(pagination.count || cards.length) / Number(pagination.perPage || 48)));
   const directTotal = pagination.count ? Number(pagination.count) : null;
+  // Las tiendas oficiales quedan enterradas entre los ~10.000 resultados de la
+  // búsqueda general, así que se recorren aparte junto con la primera página.
+  if (page === 1 && !falabellaFixtureDir) {
+    const official = await scrapeOfficialStores();
+    products.push(...official.products);
+    return { products, page, totalPages, scanned: cards.length + official.scanned, directTotal };
+  }
   return { products, page, totalPages, scanned: cards.length, directTotal };
+}
+
+async function scrapeOfficialStorePage(storeUrl, page) {
+  const url = new URL(assertFalabellaUrl(storeUrl));
+  if (page > 1) url.searchParams.set("page", String(page));
+  const { html } = await fetchPage(url.toString());
+  const pagination = findNextData(html)?.props?.pageProps?.pagination || {};
+  const cards = extractPageResults(html);
+  const products = cards
+    .filter(isSoldByFalabella)
+    .map((card) => normalizeCollectionProduct(card))
+    .filter(isPerfumeProduct);
+  const totalPages = Math.max(1, Math.ceil(Number(pagination.count || cards.length) / Number(pagination.perPage || 48)));
+  return { products, totalPages, scanned: cards.length };
+}
+
+async function scrapeOfficialStores() {
+  const products = [];
+  let scanned = 0;
+  for (const storeUrl of falabellaOfficialStoreUrls) {
+    try {
+      let totalPages = 1;
+      for (let page = 1; page <= Math.min(totalPages, 20); page += 1) {
+        const result = await scrapeOfficialStorePage(storeUrl, page);
+        totalPages = result.totalPages;
+        scanned += result.scanned;
+        products.push(...result.products);
+      }
+    } catch (error) {
+      // Una tienda oficial caída no debe tumbar la sincronización completa.
+      console.warn(`[falabella] No se pudo leer la tienda oficial ${storeUrl}: ${error.message}`);
+    }
+  }
+  return { products, scanned };
 }
 
 async function findProductInCollection(sku) {
@@ -568,6 +623,8 @@ module.exports = {
   isSoldByFalabella,
   productFromUrl,
   isPerfumeProductUrl,
+  isPerfumeProduct,
+  scrapeOfficialStorePage,
   buildFalabellaImageUrl,
   scrapeDirectCatalogPage,
 };

@@ -53,6 +53,11 @@ module.exports = {
   falabellaPdpSitemapIndexUrl:
     process.env.FALABELLA_PDP_SITEMAP_INDEX_URL ||
     "https://www.falabella.com/static/site/sitemaps/pdp/pdp_cl_FA_COM-index.xml",
+  // Tiendas oficiales de marca dentro de Falabella que se suman al catálogo.
+  falabellaOfficialStoreUrls: (
+    process.env.FALABELLA_OFFICIAL_STORE_URLS ||
+    "https://www.falabella.com/falabella-cl/seller/Natura"
+  ).split(",").map((value) => value.trim()).filter(Boolean),
   falabellaSitemapFilesToScan: Number(process.env.FALABELLA_SITEMAP_FILES_TO_SCAN || 8),
   ripleyUserAgent:
     process.env.RIPLEY_USER_AGENT ||
