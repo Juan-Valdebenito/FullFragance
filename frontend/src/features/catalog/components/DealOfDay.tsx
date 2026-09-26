@@ -9,6 +9,18 @@ import { Icon } from "@/shared/components/Icon";
 import styles from "@/app/home.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const VISIBLE_DEALS = 6;
+
+// El backend entrega un grupo amplio de ofertas; se baraja en cada visita para
+// que el carrusel no muestre siempre los mismos perfumes.
+function pickRandomDeals(deals: DealData[]) {
+  const shuffled = [...deals];
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swap]] = [shuffled[swap], shuffled[index]];
+  }
+  return shuffled.slice(0, VISIBLE_DEALS);
+}
 
 function DealSkeleton() {
   return (
@@ -42,7 +54,7 @@ export function DealOfDay() {
 
   useEffect(() => {
     api.dealsOfDay()
-      .then(setDeals)
+      .then(list => setDeals(pickRandomDeals(list)))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);

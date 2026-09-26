@@ -80,12 +80,35 @@ async function dealsOfDay(_req, res, next) {
   }
 }
 
+// Cantidad de ofertas que se envían al frontend; el cliente las baraja y
+// muestra solo algunas, así la portada no repite siempre los mismos perfumes.
+const DEALS_POOL_SIZE = 30;
+// Algunas tiendas publican precios de relleno (ej. $9.999.999) en productos sin
+// stock real. Se descartan los precios absurdos y, con 3+ tiendas, los que se
+// alejan demasiado de la mediana del producto.
+const MAX_REALISTIC_PRICE = 3000000;
+const OUTLIER_FACTOR = 3;
+const MAX_REALISTIC_SAVINGS_PCT = 80;
+
+function median(values) {
+  const sorted = [...values].sort((first, second) => first - second);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function realisticPrices(offers) {
+  const prices = offers.map((offer) => offer.price).filter((price) => price > 0 && price < MAX_REALISTIC_PRICE);
+  if (prices.length < 3) return prices;
+  const reference = median(prices);
+  return prices.filter((price) => price <= reference * OUTLIER_FACTOR && price >= reference / OUTLIER_FACTOR);
+}
+
 async function getBestDeals() {
   const allProducts = await catalogRepository.getProducts();
   const products = allProducts
     .filter((product) => product.available && product.basePrice > 0 && product.offers?.length > 1)
     .map((product) => {
-      const prices = product.offers.map((offer) => offer.price).filter((price) => price > 0);
+      const prices = realisticPrices(product.offers);
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
       const savings = maxPrice - minPrice;
@@ -93,14 +116,15 @@ async function getBestDeals() {
       return { product, minPrice, maxPrice, savings, savingsPct };
     })
     .filter((deal) => Number.isFinite(deal.minPrice) && Number.isFinite(deal.maxPrice))
+    .filter((deal) => deal.savings > 0 && deal.savingsPct <= MAX_REALISTIC_SAVINGS_PCT)
     .sort((first, second) => second.savings - first.savings || second.savingsPct - first.savingsPct);
 
-  if (products.length) return products.slice(0, 5);
+  if (products.length) return products.slice(0, DEALS_POOL_SIZE);
 
   const fallback = allProducts
     .filter((product) => product.available && product.basePrice > 0)
     .sort((first, second) => (second.matchedStores || 0) - (first.matchedStores || 0) || first.basePrice - second.basePrice)
-    .slice(0, 5)
+    .slice(0, DEALS_POOL_SIZE)
     .map((product) => ({
       product,
       minPrice: product.basePrice,
