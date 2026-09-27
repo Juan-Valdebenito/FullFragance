@@ -6,6 +6,7 @@ import Image from "next/image";
 import { api, productImageUrl } from "@/shared/api/client";
 import type { DealOfDay as DealData } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
+import { storeLabel } from "@/features/catalog/domain/stores";
 import styles from "@/app/home.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
@@ -95,7 +96,9 @@ export function DealOfDay() {
 
   const { deal, minPrice, maxPrice, savings, savingsPct } = deals[activeIndex];
   const image = productImageUrl(deal.imageUrl);
-  const storeNames = deal.offers?.map(o => o.source.replace(/-cl$/, "")).filter(Boolean) ?? [];
+  const storeNames = deal.offers?.map(o => storeLabel(o.source)).filter(Boolean) ?? [];
+  // Muchos nombres ya incluyen el volumen ("... 80Ml"); no se repite.
+  const showUnit = Boolean(deal.unit) && !deal.name.toLowerCase().replace(/\s/g, "").includes(deal.unit.toLowerCase().replace(/\s/g, ""));
   const selectDeal = (index: number) => setActiveIndex((index + deals.length) % deals.length);
 
   return (
@@ -139,10 +142,10 @@ export function DealOfDay() {
           </div>
         )}
       </div>
-      <div className={styles.dealContent} key={deal.id}>
+      <div className={`${styles.dealContent} ${image ? styles.dealContentWithImage : ""}`} key={deal.id}>
         <div className={styles.dealInfo}>
           <p className="eyebrow">{deal.brand}</p>
-          <h2>{deal.name} · {deal.unit}</h2>
+          <h2>{deal.name}{showUnit ? ` · ${deal.unit}` : ""}</h2>
           <p className={styles.dealSub}>
             Destacamos esta oferta según su precio histórico y su valor actual.
             {storeNames.length > 0 && ` Disponible en ${storeNames.join(", ")}.`}
@@ -175,7 +178,7 @@ export function DealOfDay() {
               src={image}
               alt={`Perfume ${deal.name} de ${deal.brand}`}
               fill
-              sizes="(max-width: 900px) 0px, 320px"
+              sizes="(max-width: 980px) 0px, 260px"
               unoptimized
               style={{ objectFit: "contain", padding: "24px" }}
             />

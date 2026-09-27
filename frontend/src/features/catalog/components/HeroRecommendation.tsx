@@ -23,31 +23,22 @@ function randomIndex(total: number, exclude: number) {
   return next >= exclude ? next + 1 : next;
 }
 
-// Tarjeta estática usada mientras carga el catálogo o si la API falla.
+// Tarjeta neutra mientras carga el catálogo o si la API falla. No muestra
+// precios para no exhibir cifras que no vienen de las tiendas.
 function FallbackCard() {
   return (
     <>
       <article className={styles.previewCard}>
         <div className={styles.bottleScene}><i /><i /><i /></div>
         <div className={styles.previewContent}>
-          <span className={styles.previewBadge}>Ahorras hasta un 32%</span>
-          <h2>Club De Nuit Intense Man</h2>
-          <p>105 ml · Eau de Parfum · Armaf</p>
-          <div className={styles.previewPrices}>
-            <span className={styles.previewPriceBest}>
-              <small>Mejor opción verificada</small>
-              <strong>$31.990</strong>
-            </span>
-            <span>
-              <small>Otra tienda nacional</small>
-              <strong className={styles.oldPrice}>$46.990</strong>
-            </span>
-          </div>
+          <span className={styles.previewBadge}>Precios en vivo</span>
+          <h2>Compara antes de comprar</h2>
+          <p>Diseñador · Nicho · Árabes</p>
         </div>
       </article>
       <div className={styles.previewFoot}>
-        <span>Comparación de 5 tiendas en tiempo real</span>
-        <Link href="/dashboard?q=Club+de+nuit">Ver oferta →</Link>
+        <span>Tiendas verificadas de Chile</span>
+        <Link href="/dashboard">Ver catálogo →</Link>
       </div>
     </>
   );

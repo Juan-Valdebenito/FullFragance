@@ -5,24 +5,13 @@ import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
+import { storeLabels } from "../domain/stores";
 import { isPerfumeSegment, perfumeSegmentForBrand, perfumeSegments } from "../domain/segment";
 import { ProductCard } from "./ProductCard";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./catalog.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const sourceBadges: Record<string, string> = {
-  "falabella-cl": "Falabella",
-  "ripley-cl": "Ripley",
-  "alisha-cl": "Alisha",
-  "silk-cl": "Silk",
-  "elite-cl": "Elite",
-  "cosmetic-cl": "Cosmetic",
-  "paris-cl": "Paris",
-  "abc-cl": "ABC",
-  "preunic-cl": "Preunic",
-  "lodoro-cl": "L'Odoro",
-};
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
@@ -52,9 +41,7 @@ export function toProduct(item: Comparison): Product {
       : isSetProduct(item.product)
       ? "Set / Kit"
       : item.product.source
-      ? cheapestByChain.length
-        ? sourceBadges[item.product.source] ?? "Marketplace"
-        : "Dato scraper"
+      ? storeLabels[item.product.source]
       : undefined;
   return {
     id: item.product.id,
@@ -62,7 +49,8 @@ export function toProduct(item: Comparison): Product {
     brand: item.product.brand,
     name: item.product.name,
     size: item.product.unit,
-    notes: [item.product.category],
+    // "Perfumes" es la única categoría del catálogo y no aporta en el card.
+    notes: item.product.category && item.product.category !== "Perfumes" ? [item.product.category] : [],
     image: productImageUrl(item.product.imageUrl),
     imageCandidates: [...new Set((item.product.imageUrls || [item.product.imageUrl])
       .filter((imageUrl): imageUrl is string => Boolean(imageUrl))
@@ -110,8 +98,13 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [inputValue, setInputValue] = useState(urlQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mantener el input sincronizado si la URL cambia desde afuera (Back/Forward)
-  useEffect(() => { setInputValue(urlQuery); }, [urlQuery]);
+  // Mantener el input sincronizado si la URL cambia desde afuera (Back/Forward).
+  // Se ajusta durante el render para evitar un render extra desde un efecto.
+  const [syncedQuery, setSyncedQuery] = useState(urlQuery);
+  if (syncedQuery !== urlQuery) {
+    setSyncedQuery(urlQuery);
+    setInputValue(urlQuery);
+  }
 
   // ── Datos del catálogo ──────────────────────────────────────────────────
   const [items, setItems] = useState<Comparison[]>([]);
@@ -381,7 +374,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
             <div className={styles.filterIntro}>
               <div>
                 <span>Perfumes</span>
-                <strong>{filteredItems.length} resultados</strong>
+                <strong>{filteredItems.length.toLocaleString("es-CL")} {filteredItems.length === 1 ? "resultado" : "resultados"}</strong>
               </div>
               <button onClick={resetFilters} disabled={!filterCount}>Borrar filtros</button>
             </div>
@@ -429,13 +422,16 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                   {stores.map(value => <option key={value}>{value}</option>)}
                 </select>
               </label>
-              <label>
-                Categoría
-                <select value={category} onChange={e => setFilter("cat", e.target.value)}>
-                  <option value="">Todas</option>
-                  {categories.map(v => <option key={v}>{v}</option>)}
-                </select>
-              </label>
+              {/* Se oculta mientras el catálogo tenga una sola categoría. */}
+              {(categories.length > 1 || category) && (
+                <label>
+                  Categoría
+                  <select value={category} onChange={e => setFilter("cat", e.target.value)}>
+                    <option value="">Todas</option>
+                    {categories.map(v => <option key={v}>{v}</option>)}
+                  </select>
+                </label>
+              )}
               <label>
                 Género
                 <select value={gender} onChange={e => setFilter("gender", e.target.value)}>
@@ -454,10 +450,10 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                 </select>
               </label>
               <label>
-                Comparación de precios
+                Tiendas
                 <select value={comparison} onChange={e => setFilter("comparison", e.target.value)}>
-                  <option value="">Cualquier disponibilidad</option>
-                  <option value="multiple">Disponible en 2 o más tiendas</option>
+                  <option value="">Todas</option>
+                  <option value="multiple">En 2 o más tiendas</option>
                 </select>
               </label>
             </div>
@@ -468,7 +464,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
           <div className={styles.catalogStage}>
             <div className={styles.catalogToolbar}>
               <div>
-                <p>Home · Perfumes{segment ? ` · ${activeSegment.label}` : ""}</p>
+                <p>Inicio · Perfumes{segment ? ` · ${activeSegment.label}` : ""}</p>
                 <h2>{activeSegment.title}</h2>
               </div>
               <label>
@@ -485,7 +481,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               </label>
               <div className={styles.topPager}>
                 <span>
-                  {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, filteredItems.length)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredItems.length)} de {filteredItems.length}
+                  {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, filteredItems.length)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredItems.length)} de {filteredItems.length.toLocaleString("es-CL")}
                 </span>
                 {renderPagination(true)}
               </div>
@@ -505,7 +501,11 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       )}
 
       {!loading && !error && filteredItems.length === 0 && (
-        <p className={styles.empty}>No encontramos fragancias para "{inputValue}".</p>
+        <p className={styles.empty}>
+          {urlQuery.trim()
+            ? `No encontramos fragancias para "${urlQuery.trim()}".`
+            : "Ninguna fragancia coincide con los filtros elegidos."}
+        </p>
       )}
     </section>
   );

@@ -126,7 +126,7 @@ export function LandingFeatured() {
               <div className={styles.carouselBody}>
                 <span className={styles.carouselBrand}>{product.brand}</span>
                 <h3 className={styles.carouselTitle}>{product.name}</h3>
-                <p className={styles.carouselSub}>{product.unit} · {product.category}</p>
+                <p className={styles.carouselSub}>{[product.unit, product.gender].filter(Boolean).join(" · ")}</p>
                 <div className={styles.carouselPriceRow}>
                   <div>
                     <small>Mejor precio desde</small>

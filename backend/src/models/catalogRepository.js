@@ -2,7 +2,7 @@ const zlib = require("zlib");
 const { promisify } = require("util");
 const { query } = require("../data/pgDatabase");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { normalizeBrand, inferBrandFromName, samePerfumeSignatures, productSignature, tokenScore, isSet } = require("./productMatcher");
+const { normalizeBrand, inferBrandFromName, canonicalBrandNames, samePerfumeSignatures, productSignature, tokenScore, isSet } = require("./productMatcher");
 const { DEFAULT_DATA } = require("../data/database");
 
 const gzip = promisify(zlib.gzip);
@@ -35,10 +35,47 @@ function invalidateCatalogCache() {
   productsPayloadPromise = null;
 }
 
-function inferGender(name) {
-  const value = String(name || "").toLowerCase();
-  if (/mujer|femenin|woman|lady|her\b/.test(value)) return "Femenino";
-  if (/hombre|masculin|man\b|him\b/.test(value)) return "Masculino";
+const FEMALE_PATTERN = /\bmujer|\bfemenin|\bfeminine\b|\bfemale\b|\bwom[ae]n\b|\bgirls?\b|\blad(?:y|ies)\b|\bher\b|\bfemme\b|\bpour elle\b|\bdama\b|\bdonna\b|\bfille\b/;
+const MALE_PATTERN = /\bhombre|\bmasculin|\bmasculine\b|\bmale\b|\bm[ae]n\b|\bboys?\b|\bhim\b|\bhomme\b|\bpour lui\b|\bcaballero|\buomo\b|\bgarcon\b/;
+const UNISEX_PATTERN = /\bunisex\b/;
+// Elite marca el género al final del nombre: (M) mujer, (H) hombre, (U) unisex.
+// Sólo se interpreta en Elite: otra tienda podría usar (M) para masculino.
+const ELITE_MARKERS = { h: "Masculino", m: "Femenino", u: "Unisex" };
+
+function explicitGender(name, source) {
+  const value = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (source === "elite-cl") {
+    const marker = value.match(/\((h|m|u)\)/)?.[1];
+    if (marker) return ELITE_MARKERS[marker];
+  }
+  if (UNISEX_PATTERN.test(value)) return "Unisex";
+  if (FEMALE_PATTERN.test(value)) return "Femenino";
+  if (MALE_PATTERN.test(value)) return "Masculino";
+  return null;
+}
+
+// Si ninguna tienda indica el género se deja vacío en vez de asumir Unisex:
+// eso inflaba ese filtro con miles de perfumes sin dato.
+const UNKNOWN_GENDER = "";
+
+function inferGender(name, source) {
+  return explicitGender(name, source) || UNKNOWN_GENDER;
+}
+
+// Cada tienda nombra distinto el mismo perfume. Gana el género que más tiendas
+// indican; en empate un género concreto gana a Unisex, y si empatan Masculino
+// y Femenino se considera Unisex. El resultado no depende del orden de scraping.
+function inferGroupGender(products) {
+  const votes = { Masculino: 0, Femenino: 0, Unisex: 0 };
+  for (const product of products) {
+    const gender = explicitGender(product.name, product.source);
+    if (gender) votes[gender] += 1;
+  }
+  const best = Math.max(votes.Masculino, votes.Femenino, votes.Unisex);
+  if (!best) return UNKNOWN_GENDER;
+  if (votes.Masculino === best && votes.Femenino === best) return "Unisex";
+  if (votes.Masculino === best) return "Masculino";
+  if (votes.Femenino === best) return "Femenino";
   return "Unisex";
 }
 
@@ -180,7 +217,7 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   const inferredBrand = resolvedBrand(product);
   const enrichedProduct = inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
   const profile = scentProfileFor(enrichedProduct, profiles);
-  const gender = inferGender(enrichedProduct.name);
+  const gender = inferGender(enrichedProduct.name, enrichedProduct.source);
   const rawNotes = profile?.notes && profile.notes.length ? profile.notes : inferOlfactoryNotes(enrichedProduct, gender);
   const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
   const description = profile?.description || inferDescription(enrichedProduct, gender, olfactoryNotes);
@@ -189,7 +226,7 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
     id: `${enrichedProduct.source.replace(/-cl$/, "")}-${enrichedProduct.sku.toLowerCase()}`,
     name: enrichedProduct.name,
     brand: enrichedProduct.brand || "Sin marca",
-    unit: enrichedProduct.presentation || "Presentación no informada",
+    unit: enrichedProduct.presentation || "",
     basePrice: enrichedProduct.price || 0,
     category: "Perfumes",
     gender,
@@ -235,9 +272,17 @@ async function mergeScrapedProducts(products) {
   const profiles = dbData.products;
   const allNotes = dbData.olfactoryNotes;
 
-  const enrichedProducts = products.map((product) => {
+  const resolvedProducts = products.map((product) => {
     const inferredBrand = resolvedBrand(product);
     return inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
+  });
+  // Las tiendas escriben la misma marca de formas distintas (HUGO BOSS, Hugo
+  // Boss, HUGOBOSS). Se unifica antes de agrupar para que el matching y el
+  // filtro de marca vean una sola.
+  const brandNames = canonicalBrandNames(resolvedProducts.map((product) => product.brand));
+  const enrichedProducts = resolvedProducts.map((product) => {
+    const brand = brandNames.get(product.brand);
+    return brand && brand !== product.brand ? { ...product, brand } : product;
   });
   const byBrand = new Map();
   for (const product of enrichedProducts) {
@@ -322,7 +367,7 @@ async function mergeScrapedProducts(products) {
     }
     const offers = [...offersBySource.values()];
     const positivePrices = offers.filter((offer) => offer.price > 0).map((offer) => offer.price);
-    const gender = representative.gender || inferGender(representative.name);
+    const gender = inferGroupGender(converted);
     const notes = representative.notes && representative.notes.length ? representative.notes : inferOlfactoryNotes(representative, gender);
     const olfactoryNotes = resolveOlfactoryNotes(notes, allNotes);
     const description = representative.description || inferDescription(representative, gender, olfactoryNotes);

@@ -483,7 +483,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
           <strong className={styles.kpiValue}>10</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC, Preunic y L'Odoro</p>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC, Preunic y L&apos;Odoro</p>
         </article>
       </section>
 
@@ -964,7 +964,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               🌺
             </div>
             <div>
-              <h3>L'Odoro</h3>
+              <h3>L&apos;Odoro</h3>
               <small>lodoro-cl · Catálogo UCP/MCP</small>
             </div>
             <span className={`${styles.syncStateBadge} ${syncingLodoro ? styles.stateRunning : lodoroJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
@@ -1045,7 +1045,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="paris">Paris</option>
               <option value="abc">ABC</option>
               <option value="preunic">Preunic</option>
-              <option value="lodoro">L'Odoro</option>
+              <option value="lodoro">L&apos;Odoro</option>
             </select>
           </div>
         </div>
@@ -1078,7 +1078,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
                     <td><code className={styles.idCode}>{item.product.id}</code></td>
                     <td><strong>{item.product.brand}</strong></td>
                     <td className={styles.cellName}>{item.product.name}</td>
-                    <td><span className={styles.unitBadge}>{item.product.unit}</span></td>
+                    <td><span className={styles.unitBadge}>{item.product.unit || "—"}</span></td>
                     <td><span className={`${styles.storeBadge} ${srcCls}`}>{srcLabel}</span></td>
                     <td><strong className={styles.priceText}>{item.minPrice ? money.format(item.minPrice) : "—"}</strong></td>
                     <td>

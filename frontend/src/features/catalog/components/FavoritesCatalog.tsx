@@ -16,10 +16,8 @@ export function FavoritesCatalog({ className }: { className?: string }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    // Sin sesión se muestra el aviso de login y no se usa el estado de carga.
+    if (!user) return;
     api.comparisons()
       .then(data => setItems(data.filter(item => [item.product.id, ...(item.product.aliases || [])].some(id => user.favorites.includes(id)))))
       .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar tus favoritos."))

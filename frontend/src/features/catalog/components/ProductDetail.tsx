@@ -169,22 +169,25 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
           <div className={styles.info}>
             <p className="eyebrow">{product.brand}</p>
             <h1>{product.name}</h1>
-            <p className={styles.unit}>{product.unit} · {product.gender}</p>
+            <p className={styles.unit}>
+              {[product.unit, product.gender].filter(Boolean).join(" · ")}
+            </p>
 
             <div className={`${styles.matchStatus} ${hasComparison ? styles.matchConfirmed : styles.matchPending}`}>
               <span aria-hidden="true">{hasComparison ? "✓" : "!"}</span>
               <div>
-                <strong>{hasComparison ? "Coincidencia verificada" : "Opción única disponible"}</strong>
+                <strong>{hasComparison ? `Comparado en ${sortedPrices.length} tiendas` : "Disponible en 1 tienda"}</strong>
                 <small>{hasComparison
-                  ? `Fragancia identificada y verificada en ${sortedPrices.length} tiendas de perfumería.`
-                  : "Esta fragancia se encuentra disponible en 1 tienda verificada por el momento."}</small>
+                  ? "Verificamos que es el mismo perfume, formato y concentración."
+                  : "Por ahora no encontramos este perfume en otras tiendas."}</small>
               </div>
             </div>
 
-            <div className={styles.tags} style={{ marginTop: "16px" }}>
-              <span>{product.category}</span>
-              {product.isSet && <span>Set / Kit</span>}
-            </div>
+            {product.isSet && (
+              <div className={styles.tags} style={{ marginTop: "16px" }}>
+                <span>Set / Kit</span>
+              </div>
+            )}
 
             <div className={styles.favoriteLine}>
               <FavoriteButton productId={product.id} aliases={product.aliases} large />

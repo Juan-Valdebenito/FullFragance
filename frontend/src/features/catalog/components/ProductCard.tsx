@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "../domain/product";
@@ -21,11 +21,16 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
     () => [...new Set(product.imageCandidates?.filter(Boolean) || (product.image ? [product.image] : []))],
     [product.image, product.imageCandidates]
   );
-  const [failedImages, setFailedImages] = useState<string[]>([]);
+  // Las URLs fallidas se asocian al producto y sus imágenes; si cambian, se
+  // vuelven a intentar todas sin necesidad de un efecto que limpie el estado.
+  const imagesKey = `${product.id}|${imageCandidates.join("|")}`;
+  const [failed, setFailed] = useState<{ key: string; urls: string[] }>({ key: imagesKey, urls: [] });
+  const failedImages = failed.key === imagesKey ? failed.urls : [];
   const image = imageCandidates.find((candidate) => !failedImages.includes(candidate));
-
-  // Al recibir nuevos datos para el mismo producto, vuelve a intentar las URLs.
-  useEffect(() => setFailedImages([]), [product.id, imageCandidates]);
+  const markFailed = (url: string) => setFailed((current) => {
+    const urls = current.key === imagesKey ? current.urls : [];
+    return urls.includes(url) ? current : { key: imagesKey, urls: [...urls, url] };
+  });
 
   return (
     <article className={`${styles.card} ${recommendation ? styles.recommendation : ""}`}>
@@ -38,7 +43,7 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
               alt={`Perfume ${product.name} de ${product.brand}`}
               fill
               sizes="(max-width: 700px) 100vw, 400px"
-              onError={() => setFailedImages((failed) => failed.includes(image) ? failed : [...failed, image])}
+              onError={() => markFailed(image)}
             />
           ) : (
             <span className={styles.imagePlaceholder}>FF</span>
@@ -51,7 +56,7 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
         <div className={styles.cardHeader}>
           <p className="eyebrow">{product.brand}</p>
           <h3>{product.name}</h3>
-          <p className={styles.notes}>{product.size ? `${product.size} · ` : ""}{product.notes.join(", ")}</p>
+          <p className={styles.notes}>{[product.size, ...product.notes].filter(Boolean).join(" · ")}</p>
         </div>
         <div className={styles.prices}>
           {product.prices.length ? (

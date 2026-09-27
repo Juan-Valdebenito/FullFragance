@@ -423,8 +423,13 @@
 
 .dealContent {
   display: grid;
-  gap: 20px;
+  align-items: center;
+  gap: 20px 32px;
   animation: dealContentEnter 0.35s ease both;
+}
+
+.dealContentWithImage {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 @keyframes dealContentEnter {
@@ -1124,6 +1129,15 @@
 
   .dealCard {
     padding: 22px 24px;
+  }
+
+  /* En pantallas angostas la imagen quedaría debajo del texto; se oculta. */
+  .dealContentWithImage {
+    grid-template-columns: 1fr;
+  }
+
+  .dealImageWrap {
+    display: none;
   }
 }
 

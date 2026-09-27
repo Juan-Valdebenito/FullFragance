@@ -203,6 +203,9 @@ function normalize(value) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    // Elite marca el género al final: (H) hombre, (M) mujer, (U) unisex. No es
+    // parte del nombre y sin quitarlo esos perfumes no se emparejan con otras tiendas.
+    .replace(/\((?:h|m|u)\)/g, " ")
     .replace(/\bn[º°]\s*(\d+)/g, " numero $1 ")
     .replace(/\bno\.?\s*(\d+)/g, " numero $1 ")
     .replace(/&/g, " y ")
@@ -253,6 +256,86 @@ function normalizeBrand(value) {
     [/\bjean paul gaultier\b/, "jean paul gaultier"],
   ];
   return aliases.find(([pattern]) => pattern.test(brand))?.[1] || brand;
+}
+
+// Siglas como CH, ABC, YSL o DKNY se mantienen en mayúsculas; palabras cortas
+// como DIOR, HUGO o ZARA (con vocales y más de 3 letras) pasan a formato título.
+function isAcronym(value) {
+  if (!/^[A-Z0-9&.'-]+$/.test(value)) return false;
+  return value.length <= 3 || !/[AEIOU]/.test(value);
+}
+const LOWERCASE_WORDS = new Set(["de", "del", "la", "le", "les", "di", "da", "des", "y", "of", "the", "by", "for", "et"]);
+
+function titleCaseBrand(value) {
+  return value
+    .toLowerCase()
+    .split(/(\s+)/)
+    .map((word, index) => {
+      if (!word.trim()) return word;
+      if (index > 0 && LOWERCASE_WORDS.has(word)) return word;
+      return word.replace(/(^|[-'&.])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
+    })
+    .join("");
+}
+
+// Clave para unificar escrituras de una marca. No usa normalizeBrand porque
+// éste pliega submarcas (Emporio Armani, Armani Exchange) en "armani", útil
+// para el matching pero incorrecto para el nombre que se muestra.
+function brandDisplayKey(value) {
+  return normalize(value).replace(/\by\b/g, " ").replace(/\s+/g, "");
+}
+
+let knownBrands = null;
+function knownBrandByKey() {
+  if (!knownBrands) {
+    knownBrands = new Map();
+    for (const [brand, aliases] of BRAND_ALIASES) {
+      for (const name of [brand, ...aliases]) {
+        const key = brandDisplayKey(name);
+        if (!knownBrands.has(key)) knownBrands.set(key, brand);
+      }
+    }
+  }
+  return knownBrands;
+}
+
+// "Hugo Boss" sí; "HUGO BOSS" o "Agatha ruiz de la prada" no.
+function isProperlyCased(value) {
+  if (value === value.toUpperCase() || value === value.toLowerCase()) return false;
+  return value.split(/\s+/).every((word, index) =>
+    (index > 0 && LOWERCASE_WORDS.has(word)) || !/^\p{Ll}/u.test(word)
+  );
+}
+
+/**
+ * Elige un solo nombre visible por marca. Las variantes se agrupan por
+ * brandDisplayKey; gana el nombre conocido de BRAND_ALIASES, luego
+ * la escritura en formato título más frecuente y, si todas vienen en mayúsculas, se pasa a
+ * formato título (salvo siglas como DKNY o CH).
+ */
+function canonicalBrandNames(brands) {
+  const variantsByKey = new Map();
+  for (const brand of brands) {
+    if (!brand) continue;
+    const key = brandDisplayKey(brand);
+    if (!key) continue;
+    const counts = variantsByKey.get(key) || new Map();
+    counts.set(brand, (counts.get(brand) || 0) + 1);
+    variantsByKey.set(key, counts);
+  }
+
+  const names = new Map();
+  for (const [key, counts] of variantsByKey) {
+    const variants = [...counts.entries()].sort((first, second) => second[1] - first[1]).map(([brand]) => brand);
+    const known = knownBrandByKey().get(key);
+    const mixedCase = variants.find(isProperlyCased);
+    const top = variants[0];
+    const canonical = known
+      || mixedCase
+      || (isAcronym(top) ? top : titleCaseBrand(top));
+    for (const variant of variants) names.set(variant, canonical);
+  }
+  return names;
 }
 
 /**
@@ -497,6 +580,7 @@ module.exports = {
   normalize,
   normalizeBrand,
   inferBrandFromName,
+  canonicalBrandNames,
   volumeOf,
   extractVolumes,
   concentrationOf,

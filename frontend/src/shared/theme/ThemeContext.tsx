@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark" | "pitch-black";
 
@@ -12,36 +12,63 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = "fullfragrance_theme";
+const THEMES: Theme[] = ["light", "dark", "pitch-black"];
+const listeners = new Set<() => void>();
+// Tema elegido en esta pestaña. Tiene prioridad sobre localStorage para que el
+// selector refleje la elección aunque el navegador bloquee el almacenamiento.
+let chosenTheme: Theme | null = null;
+
+function applyTheme(theme: Theme) {
+  if (theme === "light") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", theme);
+}
+
+function readTheme(): Theme {
+  if (chosenTheme) return chosenTheme;
+  try {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    if (savedTheme && THEMES.includes(savedTheme)) return savedTheme;
+  } catch {
+    // Sin acceso a localStorage se usa la preferencia del sistema.
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+// Otra pestaña cambió el tema: se adopta y se aplica también a este documento.
+function handleStorage(event: StorageEvent) {
+  if (event.key !== THEME_STORAGE_KEY) return;
+  chosenTheme = null;
+  applyTheme(readTheme());
+  listeners.forEach((listener) => listener());
+}
+
+function subscribe(listener: () => void) {
+  if (!listeners.size) window.addEventListener("storage", handleStorage);
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+    if (!listeners.size) window.removeEventListener("storage", handleStorage);
+  };
+}
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    if (savedTheme && ["light", "dark", "pitch-black"].includes(savedTheme)) {
-      setThemeState(savedTheme);
-    } else {
-      // Default to warm dark if prefers dark mode, otherwise light
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setThemeState(prefersDark ? "dark" : "light");
-    }
-    // El data-theme ya fue aplicado por el script inline en <head> antes del primer render
-    setMounted(true);
-  }, []);
+  // En el servidor y durante la hidratación se usa "light"; el data-theme real
+  // ya fue aplicado por el script inline en <head> antes del primer render.
+  const theme = useSyncExternalStore(subscribe, readTheme, () => "light" as Theme);
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-    if (newTheme === "light") {
-      document.documentElement.removeAttribute("data-theme");
-    } else {
-      document.documentElement.setAttribute("data-theme", newTheme);
+    chosenTheme = newTheme;
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      // Sin almacenamiento el tema igual se aplica durante esta visita.
     }
+    applyTheme(newTheme);
+    listeners.forEach((listener) => listener());
   };
 
   return (
-    <ThemeContext.Provider value={{ theme: mounted ? theme : "light", setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

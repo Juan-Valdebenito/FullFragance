@@ -3,39 +3,24 @@ import { useEffect, useState } from "react";
 import { api, ApiError, productImageUrl, session } from "@/shared/api/client";
 import type { Recommendation } from "@/shared/api/types";
 import type { Product } from "../domain/product";
+import { storeLabel } from "../domain/stores";
 import { ProductCard } from "./ProductCard";
 import styles from "./catalog.module.css";
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const stores: Record<string, string> = {
-  "falabella-cl": "Falabella",
-  "ripley-cl": "Ripley",
-  "alisha-cl": "Alisha Perfumes",
-  "silk-cl": "Silk Perfumes",
-  "elite-cl": "Elite Perfumes",
-  "cosmetic-cl": "Cosmetic",
-  "paris-cl": "Paris",
-  "abc-cl": "ABC",
-  "preunic-cl": "Preunic",
-  "lodoro-cl": "L'Odoro",
-};
 function adapt(item: Recommendation): Product {
   const prices = (item.product.offers || [])
     .filter(offer => offer.price > 0)
     .sort((a, b) => a.price - b.price)
-    .map((offer, index) => ({ id: `${offer.source}-${offer.sku}`, store: stores[offer.source] || offer.source, price: money.format(offer.price), offer: index === 0 }));
+    .map((offer, index) => ({ id: `${offer.source}-${offer.sku}`, store: storeLabel(offer.source), price: money.format(offer.price), offer: index === 0 }));
   return {
     id: item.product.id,
     aliases: item.product.aliases,
     brand: item.product.brand,
     name: item.product.name,
     size: item.product.unit,
-    notes: item.matchedNotes.length ? item.matchedNotes.map(note => note.name) : [item.product.category],
+    notes: item.matchedNotes.length ? item.matchedNotes.map(note => note.name) : [],
     image: productImageUrl(item.product.imageUrl),
-    badge: item.score
-      ? `Match ${Math.min(99, Math.round(item.score * 20))}%`
-      : item.product.source && stores[item.product.source]
-        ? "Dato scraper"
-        : "Popular",
+    badge: item.score ? `Afinidad ${Math.min(99, Math.round(item.score * 20))}%` : "Popular",
     prices: prices.length ? prices : item.product.basePrice > 0 ? [{ store: "Precio disponible", price: money.format(item.product.basePrice) }] : [],
   };
 }
@@ -83,7 +68,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
               notes: p.notes,
               image: productImageUrl(p.imageUrl),
               badge: "Destacado",
-              prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: stores[o.source] || o.source, price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
+              prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: storeLabel(o.source), price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
             }))).then(setItems);
           }
           setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar tus recomendaciones.");
@@ -100,7 +85,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
           notes: p.notes,
           image: productImageUrl(p.imageUrl),
           badge: "Destacado",
-          prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: stores[o.source] || o.source, price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
+          prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: storeLabel(o.source), price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
         }))))
         .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar las recomendaciones."))
         .finally(() => setLoading(false));

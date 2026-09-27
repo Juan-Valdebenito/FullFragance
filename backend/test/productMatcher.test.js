@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { inferBrandFromName, samePerfume, isSet, volumeOf, identityTokens, productSignature } = require("../src/models/productMatcher");
+const { inferBrandFromName, canonicalBrandNames, samePerfume, isSet, volumeOf, identityTokens, productSignature } = require("../src/models/productMatcher");
 const { mergeScrapedProducts } = require("../src/models/catalogRepository");
 
 function perfume(source, overrides = {}) {
@@ -283,4 +283,52 @@ test("la clave de bloqueo nunca separa dos productos que samePerfume considera i
     productSignature(derecha).blockingKey,
     "Si dos productos matchean, deben caer en la misma cubeta o el merge nunca los compararía"
   );
+});
+
+test("unifica las distintas escrituras de una misma marca", () => {
+  const names = canonicalBrandNames(["HUGO BOSS", "Hugo Boss", "HUGOBOSS", "AGATHA RUIZ DE LA PRADA", "Agatha ruiz de la prada", "DKNY", "MAISON ALHAMBRA"]);
+  assert.equal(names.get("HUGOBOSS"), "Hugo Boss");
+  assert.equal(names.get("Agatha ruiz de la prada"), "Agatha Ruiz de la Prada");
+  assert.equal(names.get("DKNY"), "DKNY");
+  assert.equal(names.get("MAISON ALHAMBRA"), "Maison Alhambra");
+});
+
+test("agrupa marcas escritas distinto y toma el género de cualquier tienda", async () => {
+  const [product, ...rest] = await mergeScrapedProducts([
+    perfume("falabella-cl", { brand: "HUGO BOSS", name: "Boss Bottled EDT 100 ml" }),
+    perfume("elite-cl", { brand: "Hugo Boss", name: "Boss Bottled EDT 100 ML (H)" }),
+  ]);
+  assert.equal(rest.length, 0);
+  assert.equal(product.brand, "Hugo Boss");
+  assert.equal(product.gender, "Masculino");
+});
+
+test("no pliega submarcas de Armani al mostrar el nombre", () => {
+  const names = canonicalBrandNames(["EMPORIO ARMANI", "Armani Exchange", "ARMANI", "DIOR", "ZARA"]);
+  assert.equal(names.get("EMPORIO ARMANI"), "Emporio Armani");
+  assert.equal(names.get("Armani Exchange"), "Armani Exchange");
+  assert.equal(names.get("ARMANI"), "Giorgio Armani");
+  assert.equal(names.get("DIOR"), "Dior");
+  assert.equal(names.get("ZARA"), "Zara");
+});
+
+test("detecta género por palabras en inglés y no depende del orden de las tiendas", async () => {
+  const [leMale] = await mergeScrapedProducts([perfume("paris-cl", { brand: "Jean Paul Gaultier", name: "Le Male EDT 125 ml" })]);
+  assert.equal(leMale.gender, "Masculino");
+
+  const mixed = (order) => mergeScrapedProducts(order.map((source) => perfume(source, {
+    brand: "Hugo Boss",
+    name: source === "elite-cl" ? "Boss Bottled EDT 100 ML (U)" : "Boss Bottled Hombre EDT 100 ml",
+  })));
+  const [first] = await mixed(["falabella-cl", "paris-cl", "elite-cl"]);
+  const [second] = await mixed(["elite-cl", "paris-cl", "falabella-cl"]);
+  assert.equal(first.gender, "Masculino");
+  assert.equal(second.gender, "Masculino");
+});
+
+test("el marcador (M) sólo significa mujer en Elite", async () => {
+  const [other] = await mergeScrapedProducts([perfume("paris-cl", { brand: "Armaf", name: "Armaf Club de Nuit EDT 105 ml (M)" })]);
+  assert.equal(other.gender, "");
+  const [elite] = await mergeScrapedProducts([perfume("elite-cl", { brand: "Armaf", name: "Armaf Club de Nuit EDT 105 ml (M)" })]);
+  assert.equal(elite.gender, "Femenino");
 });
