@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { CatalogSearchResult, Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
@@ -68,6 +68,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // ── Leer estado desde la URL ────────────────────────────────────────────
   const urlQuery    = searchParams.get("q")      ?? initialQuery;
@@ -165,9 +166,12 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     }
     const query = params.toString();
     const url = query ? `${pathname}?${query}` : pathname;
+    // Se usa el router de Next (no window.history directo) para que
+    // useSearchParams() quede al tanto del cambio: si no, urlQuery queda
+    // desactualizado y el input de búsqueda "revierte" al primer valor.
     // replace para filtros (no crea entrada en historial), push para paginación.
-    if (mode === "push") window.history.pushState(null, "", url);
-    else window.history.replaceState(null, "", url);
+    if (mode === "push") router.push(url, { scroll: false });
+    else router.replace(url, { scroll: false });
   }
 
   /** Cambia un filtro y resetea la página a 1 — una sola llamada atómica */
