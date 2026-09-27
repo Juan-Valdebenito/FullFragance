@@ -1,14 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { api, productImageUrl } from "@/shared/api/client";
+import { api, productImageCandidates } from "@/shared/api/client";
 import type { ApiProduct } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
+import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import styles from "@/app/home.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+
+function FeaturedImage({ product }: { product: ApiProduct }) {
+  const candidates = useMemo(() => productImageCandidates(product), [product]);
+  const { image, markFailed } = useImageFallback(candidates);
+  if (!image) return <span className={styles.carouselPlaceholder}>FF</span>;
+  return (
+    <Image
+      src={image}
+      alt={`Perfume ${product.name} de ${product.brand}`}
+      fill
+      sizes="(max-width: 920px) 90vw, 420px"
+      unoptimized
+      onError={() => markFailed(image)}
+    />
+  );
+}
 
 export function LandingFeatured() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -94,7 +111,6 @@ export function LandingFeatured() {
       <div className={styles.carouselTrack} ref={trackRef}>
         {visibleIndices.map((productIndex, slot) => {
           const product = products[productIndex];
-          const image = productImageUrl(product.imageUrl);
           const storesCount = product.matchedStores ?? product.offers?.length ?? 1;
           const compared = storesCount > 1;
           const isFeatured = slot === 0;
@@ -107,17 +123,7 @@ export function LandingFeatured() {
             >
               <div className={styles.carouselImageWrap}>
                 <Link href={`/perfumes/${product.id}`} aria-label={`Ver ${product.name}`}>
-                  {image ? (
-                    <Image
-                      src={image}
-                      alt={`Perfume ${product.name} de ${product.brand}`}
-                      fill
-                      sizes="(max-width: 920px) 90vw, 420px"
-                      unoptimized
-                    />
-                  ) : (
-                    <span className={styles.carouselPlaceholder}>FF</span>
-                  )}
+                  <FeaturedImage product={product} />
                 </Link>
                 <span className={styles.carouselBadge}>
                   {compared ? `Comparado en ${storesCount} tiendas` : "Verificado"}

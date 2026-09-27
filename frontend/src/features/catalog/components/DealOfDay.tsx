@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { api, productImageUrl } from "@/shared/api/client";
+import { api, productImageCandidates } from "@/shared/api/client";
 import type { DealOfDay as DealData } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
+import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import { storeLabel } from "@/features/catalog/domain/stores";
 import styles from "@/app/home.module.css";
 
@@ -95,7 +96,7 @@ export function DealOfDay() {
   }
 
   const { deal, minPrice, maxPrice, savings, savingsPct } = deals[activeIndex];
-  const image = productImageUrl(deal.imageUrl);
+  const imageCandidates = productImageCandidates(deal);
   const storeNames = deal.offers?.map(o => storeLabel(o.source)).filter(Boolean) ?? [];
   // Muchos nombres ya incluyen el volumen ("... 80Ml"); no se repite.
   const showUnit = Boolean(deal.unit) && !deal.name.toLowerCase().replace(/\s/g, "").includes(deal.unit.toLowerCase().replace(/\s/g, ""));
@@ -142,7 +143,7 @@ export function DealOfDay() {
           </div>
         )}
       </div>
-      <div className={`${styles.dealContent} ${image ? styles.dealContentWithImage : ""}`} key={deal.id}>
+      <div className={`${styles.dealContent} ${imageCandidates.length ? styles.dealContentWithImage : ""}`} key={deal.id}>
         <div className={styles.dealInfo}>
           <p className="eyebrow">{deal.brand}</p>
           <h2>{deal.name}{showUnit ? ` · ${deal.unit}` : ""}</h2>
@@ -172,19 +173,26 @@ export function DealOfDay() {
             </Link>
           </div>
         </div>
-        {image && (
-          <div className={styles.dealImageWrap} aria-hidden="true">
-            <Image
-              src={image}
-              alt={`Perfume ${deal.name} de ${deal.brand}`}
-              fill
-              sizes="(max-width: 980px) 0px, 260px"
-              unoptimized
-              style={{ objectFit: "contain", padding: "24px" }}
-            />
-          </div>
-        )}
+        <DealImage candidates={imageCandidates} alt={`Perfume ${deal.name} de ${deal.brand}`} />
       </div>
+    </div>
+  );
+}
+
+function DealImage({ candidates, alt }: { candidates: string[]; alt: string }) {
+  const { image, markFailed } = useImageFallback(candidates);
+  if (!image) return null;
+  return (
+    <div className={styles.dealImageWrap} aria-hidden="true">
+      <Image
+        src={image}
+        alt={alt}
+        fill
+        sizes="(max-width: 980px) 0px, 260px"
+        unoptimized
+        style={{ objectFit: "contain", padding: "24px" }}
+        onError={() => markFailed(image)}
+      />
     </div>
   );
 }

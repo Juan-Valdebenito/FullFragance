@@ -30,6 +30,11 @@ export function productImageUrl(imageUrl?: string | null) {
   }
   return imageUrl;
 }
+export function productImageCandidates(product: { imageUrl?: string | null; imageUrls?: string[] }) {
+  return [...new Set([product.imageUrl, ...(product.imageUrls || [])]
+    .map(productImageUrl)
+    .filter((imageUrl): imageUrl is string => Boolean(imageUrl)))];
+}
 export const api = {
   login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
   register: (body: { name: string; email: string; password: string }) => request<{ token: string; user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),

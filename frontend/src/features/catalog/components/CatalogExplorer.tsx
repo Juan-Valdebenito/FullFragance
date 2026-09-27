@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { api, ApiError, productImageUrl } from "@/shared/api/client";
+import { api, ApiError, productImageCandidates, productImageUrl } from "@/shared/api/client";
 import type { CatalogSearchResult, Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
@@ -45,10 +45,7 @@ export function toProduct(item: Comparison): Product {
     // "Perfumes" es la única categoría del catálogo y no aporta en el card.
     notes: item.product.category && item.product.category !== "Perfumes" ? [item.product.category] : [],
     image: productImageUrl(item.product.imageUrl),
-    imageCandidates: [...new Set((item.product.imageUrls || [item.product.imageUrl])
-      .filter((imageUrl): imageUrl is string => Boolean(imageUrl))
-      .map(productImageUrl)
-      .filter((imageUrl): imageUrl is string => Boolean(imageUrl)))],
+    imageCandidates: productImageCandidates(item.product),
     prices: cheapestByChain.map((price, priceIndex) => ({
       id: price.storeId,
       store: price.storeName,

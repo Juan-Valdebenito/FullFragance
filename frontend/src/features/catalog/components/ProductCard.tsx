@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "../domain/product";
 import { Icon } from "@/shared/components/Icon";
+import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import { FavoriteButton } from "./FavoriteButton";
 import styles from "./catalog.module.css";
 
@@ -21,16 +22,7 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
     () => [...new Set(product.imageCandidates?.filter(Boolean) || (product.image ? [product.image] : []))],
     [product.image, product.imageCandidates]
   );
-  // Las URLs fallidas se asocian al producto y sus imágenes; si cambian, se
-  // vuelven a intentar todas sin necesidad de un efecto que limpie el estado.
-  const imagesKey = `${product.id}|${imageCandidates.join("|")}`;
-  const [failed, setFailed] = useState<{ key: string; urls: string[] }>({ key: imagesKey, urls: [] });
-  const failedImages = failed.key === imagesKey ? failed.urls : [];
-  const image = imageCandidates.find((candidate) => !failedImages.includes(candidate));
-  const markFailed = (url: string) => setFailed((current) => {
-    const urls = current.key === imagesKey ? current.urls : [];
-    return urls.includes(url) ? current : { key: imagesKey, urls: [...urls, url] };
-  });
+  const { image, markFailed } = useImageFallback(imageCandidates);
 
   return (
     <article className={`${styles.card} ${recommendation ? styles.recommendation : ""}`}>

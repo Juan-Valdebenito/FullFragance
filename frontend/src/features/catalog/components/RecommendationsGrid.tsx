@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api, ApiError, productImageUrl, session } from "@/shared/api/client";
+import { api, ApiError, productImageCandidates, productImageUrl, session } from "@/shared/api/client";
 import type { Recommendation } from "@/shared/api/types";
 import type { Product } from "../domain/product";
 import { storeLabel } from "../domain/stores";
@@ -20,6 +20,7 @@ function adapt(item: Recommendation): Product {
     size: item.product.unit,
     notes: item.matchedNotes.length ? item.matchedNotes.map(note => note.name) : [],
     image: productImageUrl(item.product.imageUrl),
+    imageCandidates: productImageCandidates(item.product),
     badge: item.score ? `Afinidad ${Math.min(99, Math.round(item.score * 20))}%` : "Popular",
     prices: prices.length ? prices : item.product.basePrice > 0 ? [{ store: "Precio disponible", price: money.format(item.product.basePrice) }] : [],
   };
@@ -67,6 +68,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
               size: p.unit,
               notes: p.notes,
               image: productImageUrl(p.imageUrl),
+              imageCandidates: productImageCandidates(p),
               badge: "Destacado",
               prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: storeLabel(o.source), price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
             }))).then(setItems);
@@ -84,6 +86,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
           size: p.unit,
           notes: p.notes,
           image: productImageUrl(p.imageUrl),
+          imageCandidates: productImageCandidates(p),
           badge: "Destacado",
           prices: p.offers?.map((o, idx) => ({ id: `${o.source}-${o.sku}`, store: storeLabel(o.source), price: money.format(o.price), offer: idx === 0 })) || [{ store: "Precio base", price: money.format(p.basePrice) }]
         }))))

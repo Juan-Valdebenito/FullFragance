@@ -2,9 +2,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { api, ApiError, productImageUrl } from "@/shared/api/client";
+import { api, ApiError, productImageCandidates } from "@/shared/api/client";
 import type { ApiPrice, ApiProduct, Comparison, ProductDetailResult } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
+import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import { FavoriteButton } from "./FavoriteButton";
 import { PriceHistoryChart } from "./PriceHistoryChart";
 import styles from "./ProductDetail.module.css";
@@ -22,6 +23,7 @@ const stores: Record<string, string> = {
   ABC: "https://www.abc.cl",
   Preunic: "https://preunic.cl",
   "L'Odoro": "https://www.lodoro.cl",
+  "Le Paris Parfums": "https://leparisparfums.com",
   "La Polar": "https://www.lapolar.cl",
 };
 
@@ -53,7 +55,6 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
   const [prices, setPrices] = useState<ApiPrice[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [imgError, setImgError] = useState(false);
   const [similar, setSimilar] = useState<Comparison[]>([]);
 
   useEffect(() => {
@@ -83,6 +84,9 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
     return [...cheapestByStore.values()].sort((a, b) => a.price - b.price);
   }, [prices]);
 
+  const imageCandidates = useMemo(() => (product ? productImageCandidates(product) : []), [product]);
+  const { image, markFailed } = useImageFallback(imageCandidates);
+
   const hasComparison = sortedPrices.length > 1;
   const savings = hasComparison ? sortedPrices[sortedPrices.length - 1].price - sortedPrices[0].price : 0;
 
@@ -111,15 +115,15 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         <div className={styles.leftCol}>
           {/* Imagen del perfume */}
           <div className={styles.visual}>
-            {product.imageUrl && !imgError
+            {image
               ? <Image
-                  src={productImageUrl(product.imageUrl) || product.imageUrl}
+                  src={image}
                   unoptimized
                   alt={`${product.name} de ${product.brand}`}
                   fill
                   priority
                   sizes="(max-width: 900px) 100vw, 45vw"
-                  onError={() => setImgError(true)}
+                  onError={() => markFailed(image)}
                 />
               : <div className={styles.visualPlaceholder}><span>FF</span></div>}
           </div>

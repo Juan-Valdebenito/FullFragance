@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { api, productImageUrl } from "@/shared/api/client";
+import { api, productImageCandidates } from "@/shared/api/client";
 import type { ApiProduct } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
+import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import styles from "@/app/home.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
@@ -91,7 +92,8 @@ export function HeroRecommendation() {
 function RecommendedCard({ product }: { product: ApiProduct }) {
   const { min, max, stores } = priceRange(product);
   const savingsPct = max > 0 ? Math.round(((max - min) / max) * 100) : 0;
-  const image = productImageUrl(product.imageUrl);
+  const imageCandidates = useMemo(() => productImageCandidates(product), [product]);
+  const { image, markFailed } = useImageFallback(imageCandidates);
 
   return (
     <>
@@ -105,6 +107,7 @@ function RecommendedCard({ product }: { product: ApiProduct }) {
               sizes="(max-width: 900px) 90vw, 420px"
               unoptimized
               style={{ objectFit: "contain", padding: "20px" }}
+              onError={() => markFailed(image)}
             />
           ) : (
             <><i /><i /><i /></>
