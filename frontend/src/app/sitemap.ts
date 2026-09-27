@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import type { ApiProduct } from "@/shared/api/types";
 
 const SITE_URL = "https://fullfragance.cl";
 
@@ -13,10 +12,10 @@ function apiUrl() {
 
 async function fetchProductIds(): Promise<string[]> {
   try {
-    const res = await fetch(`${apiUrl()}/products`, { next: { revalidate } });
+    const res = await fetch(`${apiUrl()}/catalog/ids`, { next: { revalidate } });
     if (!res.ok) return [];
-    const data = (await res.json()) as { products: ApiProduct[] };
-    return data.products.map((product) => product.id);
+    const data = (await res.json()) as { ids: string[] };
+    return data.ids;
   } catch {
     // Si el backend está despertando (cold start del plan free), no rompemos
     // el sitemap: Google reintentará en el próximo crawl.

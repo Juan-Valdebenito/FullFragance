@@ -58,6 +58,15 @@ export type Comparison = {
   opportunity?: OpportunityTag;
 };
 
+export type CatalogSearchResult = {
+  items: Comparison[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  facets: { brands: string[]; categories: string[]; stores: string[] };
+};
+
 export type Recommendation = { product: ApiProduct; score: number | null; matchedNotes: ApiNote[]; reason: string };
 export type SyncJob = { id: string; source: string; status: "running" | "completed" | "failed"; currentPage: number; totalPages: number; scanned: number; imported: number; targetProducts: number | null; error: string | null };
 export type AdminMetrics = {

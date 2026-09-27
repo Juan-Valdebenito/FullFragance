@@ -1,4 +1,5 @@
 const catalogRepository = require("../models/catalogRepository");
+const catalogSearch = require("../models/catalogSearch");
 
 // El catálogo se refresca por cron cada varias horas, así que el navegador y el
 // CDN pueden servirlo sin volver a golpear el backend durante la navegación.
@@ -136,4 +137,27 @@ async function getBestDeals() {
   return fallback;
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, catalogCacheHeader };
+// Búsqueda paginada del catálogo: filtros, orden y opciones de los selectores
+// se resuelven aquí y sólo viaja la página pedida.
+async function searchProducts(req, res, next) {
+  try {
+    const result = await catalogSearch.searchCatalog(req.query);
+    catalogCacheHeader(res);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Ids para el sitemap: evita descargar el catálogo completo sólo para listar URLs.
+async function productIds(_req, res, next) {
+  try {
+    const ids = await catalogSearch.catalogIds();
+    catalogCacheHeader(res);
+    res.json({ ids });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, productIds, catalogCacheHeader };

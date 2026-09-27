@@ -38,7 +38,10 @@ export const api = {
   updateProfile: (body: { name: string }) => request<{ user: User }>("/users/me/profile", { method: "PUT", body: JSON.stringify(body) }).then(data => data.user),
   changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string; token: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }).then(data => { localStorage.setItem(TOKEN_KEY, data.token); return { message: data.message }; }),
   deleteAccount: (confirmation: string) => request<void>("/users/me", { method: "DELETE", body: JSON.stringify({ confirmation }) }),
+  // Catálogo completo: sólo para el panel admin (el backend exige rol admin).
   comparisons: (query = "") => request<{ comparison: Comparison[] }>(`/prices?q=${encodeURIComponent(query)}`).then(data => data.comparison),
+  comparisonsByIds: (ids: string[]) => request<{ comparison: Comparison[] }>(`/prices?ids=${ids.map(encodeURIComponent).join(",")}`).then(data => data.comparison),
+  searchCatalog: (params: URLSearchParams) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`),
   productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
   trackPageView: (page: string) => request<void>("/analytics/page-view", { method: "POST", body: JSON.stringify({ page }), authenticated: false }),

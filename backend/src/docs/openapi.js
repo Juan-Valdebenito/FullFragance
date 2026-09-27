@@ -164,27 +164,72 @@ const openapi = {
     "/products": {
       get: {
         tags: ["Precios"],
-        summary: "Listar productos del catalogo",
-        security: bearerAuth,
+        summary: "Listar productos del catalogo (paginado)",
         parameters: [
-          {
-            name: "q",
-            in: "query",
-            schema: { type: "string" },
-            description: "Busqueda por nombre o marca.",
-          },
+          { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
+          { name: "pageSize", in: "query", schema: { type: "integer", minimum: 1, maximum: 200, default: 50 } },
         ],
         responses: {
           200: {
-            description: "Productos disponibles",
+            description: "Una pagina de productos",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    products: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/Product" },
+                    products: { type: "array", items: { $ref: "#/components/schemas/Product" } },
+                    total: { type: "integer" },
+                    page: { type: "integer" },
+                    pageSize: { type: "integer" },
+                    totalPages: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
+          ...errorResponses,
+        },
+      },
+    },
+    "/catalog/search": {
+      get: {
+        tags: ["Precios"],
+        summary: "Buscar en el catalogo con filtros, orden y paginacion",
+        parameters: [
+          { name: "q", in: "query", schema: { type: "string" }, description: "Busqueda por nombre o marca." },
+          { name: "brand", in: "query", schema: { type: "string" } },
+          { name: "cat", in: "query", schema: { type: "string" } },
+          { name: "gender", in: "query", schema: { type: "string", enum: ["Masculino", "Femenino", "Unisex"] } },
+          { name: "minPrice", in: "query", schema: { type: "number" } },
+          { name: "maxPrice", in: "query", schema: { type: "number" } },
+          { name: "store", in: "query", schema: { type: "string" } },
+          { name: "presentation", in: "query", schema: { type: "string", enum: ["individual", "set"] } },
+          { name: "comparison", in: "query", schema: { type: "string", enum: ["multiple"] } },
+          { name: "segment", in: "query", schema: { type: "string", enum: ["designer", "niche", "arabic"] } },
+          { name: "sort", in: "query", schema: { type: "string", enum: ["recommended", "price", "price-desc", "savings", "stores", "name", "name-desc"] } },
+          { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
+          { name: "pageSize", in: "query", schema: { type: "integer", minimum: 1, maximum: 48, default: 12 } },
+        ],
+        responses: {
+          200: {
+            description: "Pagina de resultados y opciones de filtros",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: { type: "array", items: { $ref: "#/components/schemas/ComparisonItem" } },
+                    total: { type: "integer" },
+                    page: { type: "integer" },
+                    pageSize: { type: "integer" },
+                    totalPages: { type: "integer" },
+                    facets: {
+                      type: "object",
+                      properties: {
+                        brands: { type: "array", items: { type: "string" } },
+                        categories: { type: "array", items: { type: "string" } },
+                        stores: { type: "array", items: { type: "string" } },
+                      },
                     },
                   },
                 },
@@ -195,17 +240,37 @@ const openapi = {
         },
       },
     },
+    "/catalog/ids": {
+      get: {
+        tags: ["Precios"],
+        summary: "Ids de todos los perfumes (para el sitemap)",
+        responses: {
+          200: {
+            description: "Lista de ids",
+            content: { "application/json": { schema: { type: "object", properties: { ids: { type: "array", items: { type: "string" } } } } } },
+          },
+          ...errorResponses,
+        },
+      },
+    },
     "/prices": {
       get: {
         tags: ["Precios"],
         summary: "Comparar precios online",
+        description: "Con `ids` devuelve esos perfumes (favoritos). Con `q` devuelve hasta 100 resultados. Sin parametros devuelve el catalogo completo y requiere rol admin.",
         security: bearerAuth,
         parameters: [
           {
             name: "q",
             in: "query",
             schema: { type: "string" },
-            description: "Busqueda por nombre o marca.",
+            description: "Busqueda por nombre o marca (maximo 100 resultados).",
+          },
+          {
+            name: "ids",
+            in: "query",
+            schema: { type: "string" },
+            description: "Ids separados por coma (maximo 200).",
           },
         ],
         responses: {

@@ -1,0 +1,62 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+// Se reemplaza getComparison para probar la búsqueda sin base de datos.
+const priceService = require("../src/models/priceService");
+function item(id, overrides = {}) {
+  const { prices = [{ storeId: "a", storeName: "Falabella", price: 10000 }], ...product } = overrides;
+  const sorted = [...prices].sort((a, b) => a.price - b.price);
+  return {
+    product: { id, name: `Perfume ${id}`, brand: "Dior", unit: "100 ml", basePrice: sorted[0]?.price ?? 0, category: "Perfumes", gender: "Masculino", matchedStores: prices.length, aliases: [id], ...product },
+    prices: sorted,
+    minPrice: sorted[0]?.price ?? null,
+    maxPrice: sorted.at(-1)?.price ?? null,
+  };
+}
+const catalog = [
+  item("sauvage", { name: "Sauvage EDT", prices: [{ storeName: "Falabella", price: 90000 }, { storeName: "Paris", price: 80000 }] }),
+  item("asad", { brand: "Lattafa", name: "Asad EDP", prices: [{ storeName: "Silk Perfumes", price: 25000 }] }),
+  item("aventus", { brand: "Creed", name: "Aventus EDP", gender: "Masculino", prices: [{ storeName: "Paris", price: 300000 }] }),
+  item("set-good-girl", { brand: "Carolina Herrera", name: "Set Good Girl EDP 80 ml + 10 ml", gender: "Femenino", aliases: ["silk-123"] }),
+];
+priceService.getComparison = async () => catalog;
+const { searchCatalog, comparisonsByIds, parseSearchParams } = require("../src/models/catalogSearch");
+
+test("pagina resultados y respeta el tamaño máximo de página", async () => {
+  const first = await searchCatalog({ pageSize: "2" });
+  assert.equal(first.total, 4);
+  assert.equal(first.totalPages, 2);
+  assert.equal(first.items.length, 2);
+  // Una página fuera de rango se ajusta a la última en vez de devolver vacío.
+  const last = await searchCatalog({ pageSize: "2", page: "99" });
+  assert.equal(last.page, 2);
+  assert.equal(parseSearchParams({ pageSize: "5000" }).pageSize, 48);
+});
+
+test("aplica filtros de segmento, tienda, precio, presentación y comparación", async () => {
+  const ids = async (query) => (await searchCatalog(query)).items.map((entry) => entry.product.id);
+  assert.deepEqual(await ids({ segment: "arabic" }), ["asad"]);
+  assert.deepEqual(await ids({ segment: "niche" }), ["aventus"]);
+  assert.deepEqual(await ids({ store: "Paris", sort: "price" }), ["sauvage", "aventus"]);
+  assert.deepEqual(await ids({ maxPrice: "30000" }), ["set-good-girl", "asad"]);
+  assert.deepEqual(await ids({ presentation: "set" }), ["set-good-girl"]);
+  assert.deepEqual(await ids({ comparison: "multiple" }), ["sauvage"]);
+  assert.deepEqual(await ids({ gender: "Femenino" }), ["set-good-girl"]);
+});
+
+test("busca por texto y arma las opciones de los selectores desde esa búsqueda", async () => {
+  const result = await searchCatalog({ q: "perfume asad", brand: "Dior" });
+  assert.equal(result.total, 0);
+  assert.deepEqual(result.facets.brands, ["Lattafa"]);
+  assert.deepEqual(result.facets.stores, ["Silk Perfumes"]);
+});
+
+test("ordena por más tiendas primero en el orden recomendado", async () => {
+  const { items } = await searchCatalog({});
+  assert.equal(items[0].product.id, "sauvage");
+});
+
+test("devuelve favoritos por id o por alias de tienda", async () => {
+  const result = await comparisonsByIds(["silk-123", "no-existe"]);
+  assert.deepEqual(result.map((entry) => entry.product.id), ["set-good-girl"]);
+});

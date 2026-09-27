@@ -2,11 +2,11 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
-import type { Comparison, SyncJob } from "@/shared/api/types";
+import type { CatalogSearchResult, Comparison, SyncJob } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
 import { storeLabels } from "../domain/stores";
-import { isPerfumeSegment, perfumeSegmentForBrand, perfumeSegments } from "../domain/segment";
+import { isPerfumeSegment, perfumeSegments } from "../domain/segment";
 import { ProductCard } from "./ProductCard";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./catalog.module.css";
@@ -82,15 +82,12 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const gender      = searchParams.get("gender") ?? "";
   const minPriceParam = searchParams.get("minPrice") ?? "";
   const maxPriceParam = searchParams.get("maxPrice") ?? "";
-  const minPrice = Number(minPriceParam) > 0 ? Number(minPriceParam) : null;
-  const maxPrice = Number(maxPriceParam) > 0 ? Number(maxPriceParam) : null;
   const store = searchParams.get("store") ?? "";
   const presentation = searchParams.get("presentation") ?? "";
   const comparison = searchParams.get("comparison") ?? "";
   const segmentParam = searchParams.get("segment") ?? "";
   const segment = isPerfumeSegment(segmentParam) ? segmentParam : "";
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
-  const page        = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   // ── Estado local solo para el input de búsqueda (tipeo rápido) ──────────
   // El valor del input vive en React state para respuesta inmediata.
@@ -107,8 +104,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   }
 
   // ── Datos del catálogo ──────────────────────────────────────────────────
-  const [items, setItems] = useState<Comparison[]>([]);
+  const [result, setResult] = useState<CatalogSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reloadToken, setReloadToken] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [syncingRipley, setSyncingRipley] = useState(false);
   const [syncingAlisha, setSyncingAlisha] = useState(false);
@@ -121,19 +119,37 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const [syncMessage, setSyncMessage] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const loadCatalog = useCallback(async (search = urlQuery) => {
-    setItems(await api.comparisons(search));
-  }, [urlQuery]);
+  // Filtros, orden y paginación se resuelven en el backend: sólo viaja la página
+  // visible. La clave reúne los parámetros de la URL que afectan el resultado.
+  const searchKey = useMemo(() => {
+    const params = new URLSearchParams();
+    for (const key of ["brand", "cat", "gender", "minPrice", "maxPrice", "store", "presentation", "comparison", "segment", "sort", "page"]) {
+      const value = searchParams.get(key);
+      if (value) params.set(key, value);
+    }
+    if (urlQuery) params.set("q", urlQuery);
+    params.set("pageSize", String(PRODUCTS_PER_PAGE));
+    return params.toString();
+  }, [searchParams, urlQuery]);
 
   useEffect(() => {
+    let cancelled = false;
+    // Espera breve para agrupar cambios seguidos (ej. escribir un precio).
     const timeout = window.setTimeout(async () => {
-      setLoading(true); setError("");
-      try { await loadCatalog(urlQuery); }
-      catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el catálogo."); }
-      finally { setLoading(false); }
-    }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [loadCatalog, urlQuery]);
+      try {
+        const data = await api.searchCatalog(new URLSearchParams(searchKey));
+        if (!cancelled) { setResult(data); setError(""); }
+      } catch (reason) {
+        if (!cancelled) setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el catálogo.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 150);
+    return () => { cancelled = true; window.clearTimeout(timeout); };
+  }, [searchKey, reloadToken]);
+
+  // Tras sincronizar una tienda (admin) se vuelve a pedir la página actual.
+  const loadCatalog = useCallback(async () => { setReloadToken(token => token + 1); }, []);
 
   // ── Helpers para actualizar la URL ──────────────────────────────────────
 
@@ -257,52 +273,14 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     finally { setSyncingAbc(false); }
   }
 
-  // ── Filtrado y paginación (client-side, instantáneo) ────────────────────
-  const brands     = useMemo(() => [...new Set(items.map(i => i.product.brand))].sort(), [items]);
-  const categories = useMemo(() => [...new Set(items.map(i => i.product.category))].sort(), [items]);
-  const stores = useMemo(() => [...new Set(items.flatMap(item => item.prices.map(price => price.storeName)))].sort(), [items]);
-
-  const filteredItems = useMemo(() =>
-    items
-      .filter(item =>
-        (!brand    || item.product.brand    === brand)    &&
-        (!category || item.product.category === category) &&
-        (!gender   || item.product.gender   === gender)   &&
-        (!minPrice || (item.minPrice ?? item.product.basePrice) >= minPrice) &&
-        (!maxPrice || (item.minPrice ?? item.product.basePrice) <= maxPrice) &&
-        (!store || item.prices.some(price => price.storeName === store)) &&
-        (!presentation || (presentation === "set" ? isSetProduct(item.product) : !isSetProduct(item.product))) &&
-        (!comparison || (item.product.matchedStores ?? item.prices.length) >= 2) &&
-        (!segment  || perfumeSegmentForBrand(item.product.brand) === segment)
-      )
-      .sort((a, b) => {
-        if (sort === "name") return `${a.product.brand} ${a.product.name}`.localeCompare(`${b.product.brand} ${b.product.name}`, "es");
-        if (sort === "name-desc") return `${b.product.brand} ${b.product.name}`.localeCompare(`${a.product.brand} ${a.product.name}`, "es");
-        if (sort === "price") return (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
-        if (sort === "price-desc") return (b.minPrice ?? 0) - (a.minPrice ?? 0);
-        if (sort === "savings") {
-          const savingsA = (a.maxPrice && a.minPrice) ? a.maxPrice - a.minPrice : 0;
-          const savingsB = (b.maxPrice && b.minPrice) ? b.maxPrice - b.minPrice : 0;
-          return savingsB - savingsA;
-        }
-        if (sort === "stores") {
-          const storesA = a.product.matchedStores ?? a.prices.length ?? 0;
-          const storesB = b.product.matchedStores ?? b.prices.length ?? 0;
-          return storesB - storesA;
-        }
-        const diff = (b.product.matchedStores ?? 0) - (a.product.matchedStores ?? 0);
-        return diff || (a.minPrice ?? Number.MAX_SAFE_INTEGER) - (b.minPrice ?? Number.MAX_SAFE_INTEGER);
-      }),
-    [items, brand, category, gender, minPrice, maxPrice, store, presentation, comparison, segment, sort]
-  );
-
-  const totalPages   = Math.max(1, Math.ceil(filteredItems.length / PRODUCTS_PER_PAGE));
-  const currentPage  = Math.min(page, totalPages);
-  const visibleItems = useMemo(
-    () => filteredItems.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE),
-    [filteredItems, currentPage]
-  );
-  const products     = useMemo(() => visibleItems.map(toProduct), [visibleItems]);
+  // ── Resultado paginado del backend ──────────────────────────────────────
+  const brands       = result?.facets.brands ?? [];
+  const categories   = result?.facets.categories ?? [];
+  const stores       = result?.facets.stores ?? [];
+  const total        = result?.total ?? 0;
+  const totalPages   = result?.totalPages ?? 1;
+  const currentPage  = result?.page ?? 1;
+  const products     = useMemo(() => (result?.items ?? []).map(toProduct), [result]);
   const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison, segment].filter(Boolean).length;
   const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
 
@@ -313,7 +291,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
   // ── Paginación ──────────────────────────────────────────────────────────
   function renderPagination(compact = false) {
-    if (filteredItems.length <= PRODUCTS_PER_PAGE) return null;
+    if (total <= PRODUCTS_PER_PAGE) return null;
     return (
       <nav className={`${styles.pagination} ${compact ? styles.compactPagination : ""}`} aria-label="Páginas del catálogo">
         <button className={styles.pageArrow} onClick={() => goToPage(1)} disabled={currentPage === 1} aria-label="Primera página">|←</button>
@@ -374,7 +352,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
             <div className={styles.filterIntro}>
               <div>
                 <span>Perfumes</span>
-                <strong>{filteredItems.length.toLocaleString("es-CL")} {filteredItems.length === 1 ? "resultado" : "resultados"}</strong>
+                <strong>{total.toLocaleString("es-CL")} {total === 1 ? "resultado" : "resultados"}</strong>
               </div>
               <button onClick={resetFilters} disabled={!filterCount}>Borrar filtros</button>
             </div>
@@ -481,7 +459,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               </label>
               <div className={styles.topPager}>
                 <span>
-                  {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, filteredItems.length)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredItems.length)} de {filteredItems.length.toLocaleString("es-CL")}
+                  {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, total)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, total)} de {total.toLocaleString("es-CL")}
                 </span>
                 {renderPagination(true)}
               </div>
@@ -493,14 +471,14 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               ))}
             </div>
 
-            {filteredItems.length > PRODUCTS_PER_PAGE && (
+            {total > PRODUCTS_PER_PAGE && (
               <div className={styles.paginationWrap}>{renderPagination()}</div>
             )}
           </div>
         </div>
       )}
 
-      {!loading && !error && filteredItems.length === 0 && (
+      {!loading && !error && total === 0 && (
         <p className={styles.empty}>
           {urlQuery.trim()
             ? `No encontramos fragancias para "${urlQuery.trim()}".`

@@ -16,10 +16,11 @@ export function FavoritesCatalog({ className }: { className?: string }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Sin sesión se muestra el aviso de login y no se usa el estado de carga.
-    if (!user) return;
-    api.comparisons()
-      .then(data => setItems(data.filter(item => [item.product.id, ...(item.product.aliases || [])].some(id => user.favorites.includes(id)))))
+    // Sin sesión o sin favoritos no hay nada que pedir; el render lo resuelve.
+    if (!user?.favorites.length) return;
+    // Sólo se piden los perfumes guardados, no el catálogo completo.
+    api.comparisonsByIds(user.favorites)
+      .then(setItems)
       .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudieron cargar tus favoritos."))
       .finally(() => setLoading(false));
   }, [user]);
@@ -35,9 +36,9 @@ export function FavoritesCatalog({ className }: { className?: string }) {
     );
   }
 
-  if (loading) return <p className={styles.empty}>Cargando tus favoritos…</p>;
+  if (loading && user.favorites.length) return <p className={styles.empty}>Cargando tus favoritos…</p>;
   if (error) return <p className={styles.error}>{error}</p>;
-  if (!items.length) {
+  if (!user.favorites.length || !items.length) {
     return (
       <div className={styles.emptyState}>
         <span>♡</span>
