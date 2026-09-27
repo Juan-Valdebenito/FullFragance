@@ -107,8 +107,14 @@ async function fetchPage(url) {
         url,
       ], { maxBuffer: 8 * 1024 * 1024 });
       return { html: stdout, finalUrl: url };
-    } catch {
-      throw new Error("Ripley bloqueó la consulta automática (HTTP 403).");
+    } catch (curlError) {
+      // Diagnostico temporal: distinguir "curl no esta instalado en el
+      // contenedor" (ENOENT) de "curl tambien fue bloqueado" (403 de curl).
+      // Sin esto el mensaje generico oculta cual de los dos es el problema.
+      const detail = curlError?.code === "ENOENT"
+        ? "el binario curl no esta disponible en este servidor"
+        : (curlError?.stderr || curlError?.message || "sin detalle");
+      throw new Error(`Ripley bloqueó la consulta automática (HTTP 403). Fallback curl también falló: ${detail}`);
     }
   }
   if (!response.ok) throw new Error(`Ripley respondió HTTP ${response.status}.`);
