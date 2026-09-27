@@ -18,6 +18,9 @@ router.post("/silk/sync-perfumes", requireAdmin, scraperController.syncSilkPerfu
 router.get("/elite/products", requireAdmin, scraperController.listElite);
 router.post("/elite/sync", requireAdmin, scraperController.syncElite);
 router.post("/elite/sync-perfumes", requireAdmin, scraperController.syncElitePerfumeCatalog);
+router.get("/leparis/products", requireAdmin, scraperController.listLeparis);
+router.post("/leparis/sync", requireAdmin, scraperController.syncLeparis);
+router.post("/leparis/sync-perfumes", requireAdmin, scraperController.syncLeparisPerfumeCatalog);
 router.get("/cosmetic/products", requireAdmin, scraperController.listCosmetic);
 router.post("/cosmetic/sync", requireAdmin, scraperController.syncCosmetic);
 router.post("/cosmetic/sync-perfumes", requireAdmin, scraperController.syncCosmeticPerfumeCatalog);

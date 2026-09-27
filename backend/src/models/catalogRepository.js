@@ -394,7 +394,7 @@ async function buildProducts() {
   await loadOlfactoryNotesFromDb();
   await loadBaseProductsFromDb();
 
-  const sources = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl", "preunic-cl", "lodoro-cl"];
+  const sources = ["falabella-cl", "ripley-cl", "alisha-cl", "silk-cl", "elite-cl", "cosmetic-cl", "paris-cl", "abc-cl", "preunic-cl", "lodoro-cl", "leparis-cl"];
   const scrapedLists = await Promise.all(sources.map((source) => listScrapedProducts(source)));
   const rawScraped = scrapedLists.flat();
 

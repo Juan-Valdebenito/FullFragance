@@ -13,6 +13,7 @@ const SOURCE_STORES = {
   "abc-cl": { storeId: "abc-online", storeName: "ABC" },
   "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
   "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
+  "leparis-cl": { storeId: "leparis-online", storeName: "Le Paris Parfums" },
 };
 
 function matchesProduct(product, productFilter) {

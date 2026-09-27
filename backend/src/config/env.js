@@ -98,6 +98,15 @@ module.exports = {
   eliteCollectionUrl:
     process.env.ELITE_COLLECTION_URL ||
     "https://www.eliteperfumes.cl/collections/perfumes/products.json",
+  leparisUserAgent:
+    process.env.LEPARIS_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  leparisMinDelayMs: Number(process.env.LEPARIS_MIN_DELAY_MS || 500),
+  leparisMaxDelayMs: Number(process.env.LEPARIS_MAX_DELAY_MS || 1000),
+  leparisRequestTimeoutMs: Number(process.env.LEPARIS_REQUEST_TIMEOUT_MS || 20000),
+  leparisCollectionUrl:
+    process.env.LEPARIS_COLLECTION_URL ||
+    "https://leparisparfums.com/collections/all/products.json",
   cosmeticUserAgent:
     process.env.COSMETIC_USER_AGENT ||
     "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
