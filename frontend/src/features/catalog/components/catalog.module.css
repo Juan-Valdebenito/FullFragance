@@ -442,6 +442,44 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
+/* Perfume en una sola tienda: etiqueta atenuada para no confundirla con una comparación. */
+.badgeSingle {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #d8d2c6;
+}
+
+/* Aviso "Mostrando N comparables · Ver todos" sobre la grilla. */
+.comparableNotice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  border-radius: 12px;
+  background: rgba(197, 160, 89, 0.08);
+  padding: 10px 14px;
+  color: var(--on-surface-muted);
+  font-size: 0.82rem;
+}
+
+.comparableNotice strong {
+  color: var(--on-surface);
+}
+
+.comparableNotice button {
+  border: 0;
+  background: none;
+  color: var(--gold-dark);
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 .favorite {
   position: absolute;
   z-index: 2;
@@ -470,6 +508,14 @@
   border-color: var(--gold);
   background: var(--gold);
   color: #ffffff;
+}
+
+/* En el detalle el botón va sobre la superficie del tema (no sobre la foto
+   blanca como en la tarjeta), así que usa los colores del tema. */
+.favoriteLarge:not([aria-pressed="true"]) {
+  border-color: var(--surface-highest);
+  background: var(--surface-low);
+  color: var(--on-surface);
 }
 
 .favoriteLarge {

@@ -1,5 +1,5 @@
 const { getComparison } = require("./priceService");
-const { normalize } = require("./productMatcher");
+const { normalize, normalizeBrand, identityTokens } = require("./productMatcher");
 const { PERFUME_SEGMENTS, perfumeSegmentForBrand } = require("./perfumeSegments");
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -72,6 +72,7 @@ function parseSearchParams(query = {}) {
     maxPrice: positiveNumber(query.maxPrice),
     store: text(query.store),
     presentation: presentation === "set" || presentation === "individual" ? presentation : "",
+    // "multiple" = sólo perfumes en 2+ tiendas; "all" o vacío = todos.
     comparison: text(query.comparison) === "multiple",
     segment: PERFUME_SEGMENTS.includes(segment) ? segment : "",
     sort: SORT_MODES.has(sort) ? sort : "recommended",
@@ -93,7 +94,6 @@ function matchesFilters(entry, filters) {
     && (!filters.maxPrice || entry.price <= filters.maxPrice)
     && (!filters.store || entry.stores.has(filters.store))
     && (!filters.presentation || (filters.presentation === "set" ? entry.isSet : !entry.isSet))
-    && (!filters.comparison || entry.storeCount >= 2)
     && (!filters.segment || entry.segment === filters.segment);
 }
 
@@ -118,7 +118,12 @@ async function searchCatalog(query) {
   const index = await getSearchIndex();
   const tokens = normalize(filters.q).split(" ").filter((token) => token && !QUERY_STOP_WORDS.has(token));
   const matched = tokens.length ? index.filter((entry) => matchesQuery(entry, tokens)) : index;
-  const results = matched.filter((entry) => matchesFilters(entry, filters)).sort(comparators[filters.sort]);
+  // El filtro de comparación se aplica aparte para poder informar cuántos
+  // perfumes comparables hay dentro del resto de filtros ("Mostrando X de Y").
+  const filtered = matched.filter((entry) => matchesFilters(entry, filters));
+  const comparableTotal = filtered.reduce((count, entry) => count + (entry.storeCount >= 2 ? 1 : 0), 0);
+  const results = (filters.comparison ? filtered.filter((entry) => entry.storeCount >= 2) : filtered)
+    .sort(comparators[filters.sort]);
 
   const total = results.length;
   const totalPages = Math.max(1, Math.ceil(total / filters.pageSize));
@@ -131,6 +136,8 @@ async function searchCatalog(query) {
     page,
     pageSize: filters.pageSize,
     totalPages,
+    comparableTotal,
+    unfilteredTotal: filtered.length,
     // Las opciones de los selectores salen de lo que coincide con la búsqueda
     // de texto, como antes, para que un filtro no esconda las demás opciones.
     facets: {
@@ -150,9 +157,68 @@ async function comparisonsByIds(ids) {
     .map((entry) => entry.item);
 }
 
+// Palabras que no distinguen una fragancia de otra: género, artículos, formato
+// de venta. Las concentraciones y el volumen ya los quita identityTokens.
+const VERSION_NOISE = new Set([
+  "of", "the", "le", "la", "les", "l", "for", "by", "y", "and",
+  "woman", "women", "man", "men", "homme", "femme", "pour", "him", "her",
+  "tester", "recargable", "refill", "recarga",
+]);
+
+// Tokens de identidad por producto (nombre sin marca, volumen ni concentración).
+// Se calculan sólo cuando alguien pide similares y se reusan por versión.
+let cachedIdentity = null;
+let cachedIdentityIndex = null;
+
+function identityOf(index, entry) {
+  if (cachedIdentityIndex !== index) {
+    cachedIdentity = new Map();
+    cachedIdentityIndex = index;
+  }
+  let identity = cachedIdentity.get(entry);
+  if (!identity) {
+    const tokens = identityTokens(entry.item.product).filter((token) => !VERSION_NOISE.has(token));
+    identity = { brandKey: normalizeBrand(entry.item.product.brand), key: [...new Set(tokens)].sort().join(" ") };
+    cachedIdentity.set(entry, identity);
+  }
+  return identity;
+}
+
+
+// El nombre base no distingue la línea masculina de la femenina (Eros vs
+// Eros Pour Femme): se descarta si ambos géneros son conocidos y difieren.
+function sameGenderLine(left, right) {
+  const gendered = new Set(["Masculino", "Femenino"]);
+  return !(gendered.has(left) && gendered.has(right) && left !== right);
+}
+
+// Otras versiones de la misma fragancia (tamaño o concentración distintos) que
+// sí están en 2+ tiendas. Se exige el mismo nombre base, no sólo parecido: así
+// "Omnia" no sugiere "Omnia Coral" ni "Soryani Woman" sugiere "Hawas Woman".
+// Evita que un perfume de una sola tienda sea un callejón sin salida.
+async function similarComparables(productId, limit = 4) {
+  const index = await getSearchIndex();
+  const target = index.find(({ item }) => item.product.id === productId || (item.product.aliases || []).includes(productId));
+  if (!target) return null;
+  const targetIdentity = identityOf(index, target);
+  if (!targetIdentity.key) return [];
+
+  return index
+    .filter((entry) => entry !== target && entry.storeCount >= 2)
+    .filter((entry) => {
+      const identity = identityOf(index, entry);
+      return identity.brandKey === targetIdentity.brandKey
+        && identity.key === targetIdentity.key
+        && sameGenderLine(target.item.product.gender, entry.item.product.gender);
+    })
+    .sort((a, b) => b.storeCount - a.storeCount || (a.item.minPrice ?? 0) - (b.item.minPrice ?? 0))
+    .slice(0, limit)
+    .map((entry) => entry.item);
+}
+
 async function catalogIds() {
   const index = await getSearchIndex();
   return index.map(({ item }) => item.product.id);
 }
 
-module.exports = { searchCatalog, comparisonsByIds, catalogIds, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };
+module.exports = { searchCatalog, comparisonsByIds, catalogIds, similarComparables, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };

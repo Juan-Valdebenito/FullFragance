@@ -149,6 +149,17 @@ async function searchProducts(req, res, next) {
   }
 }
 
+async function similarProducts(req, res, next) {
+  try {
+    const items = await catalogSearch.similarComparables(req.params.productId);
+    if (!items) return res.status(404).json({ error: "Producto no encontrado." });
+    catalogCacheHeader(res);
+    res.json({ items });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // Ids para el sitemap: evita descargar el catálogo completo sólo para listar URLs.
 async function productIds(_req, res, next) {
   try {
@@ -160,4 +171,4 @@ async function productIds(_req, res, next) {
   }
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, productIds, catalogCacheHeader };
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, productIds, similarProducts, catalogCacheHeader };

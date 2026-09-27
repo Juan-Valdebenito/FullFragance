@@ -41,6 +41,7 @@ export const api = {
   // Catálogo completo: sólo para el panel admin (el backend exige rol admin).
   comparisons: (query = "") => request<{ comparison: Comparison[] }>(`/prices?q=${encodeURIComponent(query)}`).then(data => data.comparison),
   comparisonsByIds: (ids: string[]) => request<{ comparison: Comparison[] }>(`/prices?ids=${ids.map(encodeURIComponent).join(",")}`).then(data => data.comparison),
+  similarProducts: (productId: string) => request<{ items: Comparison[] }>(`/catalog/similar/${encodeURIComponent(productId)}`).then(data => data.items),
   searchCatalog: (params: URLSearchParams) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`),
   productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),

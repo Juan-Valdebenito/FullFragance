@@ -19,8 +19,11 @@ const catalog = [
   item("aventus", { brand: "Creed", name: "Aventus EDP", gender: "Masculino", prices: [{ storeName: "Paris", price: 300000 }] }),
   item("set-good-girl", { brand: "Carolina Herrera", name: "Set Good Girl EDP 80 ml + 10 ml", gender: "Femenino", aliases: ["silk-123"] }),
 ];
-priceService.getComparison = async () => catalog;
-const { searchCatalog, comparisonsByIds, parseSearchParams } = require("../src/models/catalogSearch");
+// El módulo guarda la referencia a getComparison al cargarse; se cambia el
+// catálogo actual a través de esta variable.
+let currentCatalog = catalog;
+priceService.getComparison = async () => currentCatalog;
+const { searchCatalog, comparisonsByIds, parseSearchParams, similarComparables: searchSimilar } = require("../src/models/catalogSearch");
 
 test("pagina resultados y respeta el tamaño máximo de página", async () => {
   const first = await searchCatalog({ pageSize: "2" });
@@ -59,4 +62,27 @@ test("ordena por más tiendas primero en el orden recomendado", async () => {
 test("devuelve favoritos por id o por alias de tienda", async () => {
   const result = await comparisonsByIds(["silk-123", "no-existe"]);
   assert.deepEqual(result.map((entry) => entry.product.id), ["set-good-girl"]);
+});
+
+test("sugiere otras versiones comparables de la misma fragancia, sin mezclar líneas", async () => {
+  // Arreglo nuevo: el índice se cachea por identidad del catálogo.
+  const extended = [...catalog,
+    item("eros-edp-single", { brand: "Versace", name: "Versace Eros Pour Homme EDP 100 ml", prices: [{ storeName: "Paris", price: 70000 }] }),
+    item("eros-edt", { brand: "Versace", name: "Perfume Hombre Eros EDT 100Ml", prices: [{ storeName: "Paris", price: 60000 }, { storeName: "Falabella", price: 65000 }] }),
+    item("eros-femme", { brand: "Versace", name: "Perfume Mujer Eros Pour Femme EDT 100Ml", gender: "Femenino", prices: [{ storeName: "Paris", price: 60000 }, { storeName: "Falabella", price: 65000 }] }),
+    item("eros-flame", { brand: "Versace", name: "Eros Flame EDP 100 ml", prices: [{ storeName: "Paris", price: 60000 }, { storeName: "Ripley", price: 65000 }] }),
+  ];
+  currentCatalog = extended;
+  const similar = await searchSimilar("eros-edp-single");
+  assert.deepEqual(similar.map((entry) => entry.product.id), ["eros-edt"]);
+  assert.equal(await searchSimilar("no-existe"), null);
+  currentCatalog = catalog;
+});
+
+test("informa cuántos comparables hay dentro de los filtros activos", async () => {
+  const all = await searchCatalog({ store: "Paris" });
+  const onlyComparable = await searchCatalog({ store: "Paris", comparison: "multiple" });
+  assert.equal(all.unfilteredTotal, all.total);
+  assert.equal(onlyComparable.total, all.comparableTotal);
+  assert.equal(onlyComparable.unfilteredTotal, all.total);
 });

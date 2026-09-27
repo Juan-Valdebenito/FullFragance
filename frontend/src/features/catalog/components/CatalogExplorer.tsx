@@ -15,15 +15,6 @@ const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP
 const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
-function isSetProduct(product: Comparison["product"]) {
-  // Se calcula desde el texto para evitar datos de catálogos previos que
-  // marcaron como set un perfume individual con el volumen repetido.
-  const text = `${product.name} ${product.unit}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  if (/\b(?:set|pack|kit|estuche|cofre|coffret)\b/.test(text)) return true;
-  const volumes = text.match(/\b\d+(?:[.,]\d+)?\s*(?:ml|cl|oz|l)\b/g) ?? [];
-  return new Set(volumes.map((volume) => volume.replace(",", ".").replace(/\s/g, ""))).size >= 2;
-}
-
 export function toProduct(item: Comparison): Product {
   const pricesByChain = [...item.prices]
     .sort((a, b) => a.price - b.price)
@@ -33,16 +24,18 @@ export function toProduct(item: Comparison): Product {
   // El card muestra cinco precios para mantener una altura legible. Conservamos
   // el conteo restante para no dar la impresión de que el distintivo es erróneo.
   const cheapestByChain = pricesByChain.slice(0, 5);
+  // La etiqueta dice si el perfume se puede comparar. Antes un perfume de una
+  // sola tienda mostraba sólo el nombre de la tienda y parecía una comparación.
+  const storeCount = item.product.matchedStores ?? pricesByChain.length;
+  const singleStore = pricesByChain[0]?.storeName ?? (item.product.source ? storeLabels[item.product.source] : undefined);
   const badge =
-    item.product.matchedStores && item.product.matchedStores > 1
-      ? `Comparado en ${item.product.matchedStores} tiendas`
+    storeCount > 1
+      ? `Comparado en ${storeCount} tiendas`
       : item.product.priceIsMock
       ? "Precio demo"
-      : isSetProduct(item.product)
-      ? "Set / Kit"
-      : item.product.source
-      ? storeLabels[item.product.source]
-      : undefined;
+      : singleStore
+      ? `Solo en ${singleStore}`
+      : "Solo en 1 tienda";
   return {
     id: item.product.id,
     aliases: item.product.aliases,
@@ -64,6 +57,7 @@ export function toProduct(item: Comparison): Product {
     })),
     extraStoreCount: Math.max(0, pricesByChain.length - cheapestByChain.length),
     badge,
+    badgeTone: storeCount > 1 ? "compared" : "single",
   };
 }
 
@@ -84,7 +78,12 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const maxPriceParam = searchParams.get("maxPrice") ?? "";
   const store = searchParams.get("store") ?? "";
   const presentation = searchParams.get("presentation") ?? "";
-  const comparison = searchParams.get("comparison") ?? "";
+  // Por defecto se muestran los perfumes comparables (2+ tiendas), que es lo que
+  // promete el sitio. Con una búsqueda de texto se muestran todos: quien busca
+  // un perfume puntual espera encontrarlo aunque esté en una sola tienda.
+  const comparisonParam = searchParams.get("comparison") ?? "";
+  const defaultComparison = urlQuery ? "all" : "multiple";
+  const comparison = comparisonParam === "multiple" || comparisonParam === "all" ? comparisonParam : defaultComparison;
   const segmentParam = searchParams.get("segment") ?? "";
   const segment = isPerfumeSegment(segmentParam) ? segmentParam : "";
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
@@ -123,14 +122,15 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   // visible. La clave reúne los parámetros de la URL que afectan el resultado.
   const searchKey = useMemo(() => {
     const params = new URLSearchParams();
-    for (const key of ["brand", "cat", "gender", "minPrice", "maxPrice", "store", "presentation", "comparison", "segment", "sort", "page"]) {
+    for (const key of ["brand", "cat", "gender", "minPrice", "maxPrice", "store", "presentation", "segment", "sort", "page"]) {
       const value = searchParams.get(key);
       if (value) params.set(key, value);
     }
+    params.set("comparison", comparison);
     if (urlQuery) params.set("q", urlQuery);
     params.set("pageSize", String(PRODUCTS_PER_PAGE));
     return params.toString();
-  }, [searchParams, urlQuery]);
+  }, [searchParams, urlQuery, comparison]);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,6 +180,11 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     const clamped = Math.min(Math.max(nextPage, 1), totalPages);
     applyParams({ page: clamped === 1 ? null : String(clamped) }, "push");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** El filtro de comparación sólo queda en la URL si difiere del valor por defecto */
+  function setComparison(value: string) {
+    setFilter("comparison", value === defaultComparison ? "" : value);
   }
 
   /** Reset de todos los filtros en una sola llamada */
@@ -281,7 +286,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const totalPages   = result?.totalPages ?? 1;
   const currentPage  = result?.page ?? 1;
   const products     = useMemo(() => (result?.items ?? []).map(toProduct), [result]);
-  const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison, segment].filter(Boolean).length;
+  const comparableTotal = result?.comparableTotal ?? 0;
+  const unfilteredTotal = result?.unfilteredTotal ?? 0;
+  const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison !== defaultComparison, segment].filter(Boolean).length;
   const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
 
   const pageNumbers = useMemo(() => {
@@ -429,9 +436,9 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               </label>
               <label>
                 Tiendas
-                <select value={comparison} onChange={e => setFilter("comparison", e.target.value)}>
-                  <option value="">Todas</option>
-                  <option value="multiple">En 2 o más tiendas</option>
+                <select value={comparison} onChange={e => setComparison(e.target.value)}>
+                  <option value="multiple">Solo comparables</option>
+                  <option value="all">Todas</option>
                 </select>
               </label>
             </div>
@@ -464,6 +471,28 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                 {renderPagination(true)}
               </div>
             </div>
+
+            {unfilteredTotal > 0 && (comparison === "multiple" || comparableTotal > 0) && (
+              <p className={styles.comparableNotice}>
+                {comparison === "multiple" ? (
+                  <>
+                    <span>
+                      Mostrando <strong>{comparableTotal.toLocaleString("es-CL")}</strong> {comparableTotal === 1 ? "perfume que puedes comparar" : "perfumes que puedes comparar"} en 2 o más tiendas.
+                    </span>
+                    {unfilteredTotal > comparableTotal && (
+                      <button type="button" onClick={() => setComparison("all")}>Ver todos ({unfilteredTotal.toLocaleString("es-CL")})</button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      <strong>{comparableTotal.toLocaleString("es-CL")}</strong> de {unfilteredTotal.toLocaleString("es-CL")} se pueden comparar entre tiendas.
+                    </span>
+                    <button type="button" onClick={() => setComparison("multiple")}>Ver solo comparables</button>
+                  </>
+                )}
+              </p>
+            )}
 
             <div className={styles.grid}>
               {products.map(product => (

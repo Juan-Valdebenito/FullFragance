@@ -49,7 +49,9 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
             <span className={styles.imagePlaceholder}>FF</span>
           )}
         </Link>
-        {product.badge && <span className={styles.badge}>{product.badge}</span>}
+        {product.badge && (
+          <span className={`${styles.badge} ${product.badgeTone === "single" ? styles.badgeSingle : ""}`}>{product.badge}</span>
+        )}
         <FavoriteButton productId={product.id} aliases={product.aliases} />
       </div>
       <div className={styles.cardBody}>

@@ -64,6 +64,10 @@ export type CatalogSearchResult = {
   page: number;
   pageSize: number;
   totalPages: number;
+  /** Perfumes en 2+ tiendas dentro de los filtros activos (sin el de comparación). */
+  comparableTotal: number;
+  /** Resultados con los filtros activos, ignorando el filtro de comparación. */
+  unfilteredTotal: number;
   facets: { brands: string[]; categories: string[]; stores: string[] };
 };
 

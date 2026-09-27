@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
-import type { ApiPrice, ApiProduct, ProductDetailResult } from "@/shared/api/types";
+import type { ApiPrice, ApiProduct, Comparison, ProductDetailResult } from "@/shared/api/types";
 import { Icon } from "@/shared/components/Icon";
 import { FavoriteButton } from "./FavoriteButton";
 import { PriceHistoryChart } from "./PriceHistoryChart";
@@ -54,6 +54,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
+  const [similar, setSimilar] = useState<Comparison[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -62,6 +63,10 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
         setDetailResult(result);
         setProduct(result.product);
         setPrices(result.prices);
+        // Si está en una sola tienda, se buscan otras versiones que sí se comparan.
+        const storeCount = new Set(result.prices.map(price => price.storeId || price.storeName)).size;
+        setSimilar([]);
+        if (storeCount < 2) api.similarProducts(productId).then(setSimilar).catch(() => setSimilar([]));
       } catch (reason) {
         setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el perfume.");
       } finally { setLoading(false); }
@@ -179,7 +184,7 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
                 <strong>{hasComparison ? `Comparado en ${sortedPrices.length} tiendas` : "Disponible en 1 tienda"}</strong>
                 <small>{hasComparison
                   ? "Verificamos que es el mismo perfume, formato y concentración."
-                  : "Por ahora no encontramos este perfume en otras tiendas."}</small>
+                  : `Por ahora solo lo encontramos en ${sortedPrices[0]?.storeName ?? "una tienda"}.`}</small>
               </div>
             </div>
 
@@ -242,6 +247,23 @@ export function ProductDetail({ productId, backHref = "/dashboard" }: ProductDet
               </div>
             )}
           </aside>
+
+          {!hasComparison && similar.length > 0 && (
+            <section className={styles.similarPanel} aria-labelledby="similar-title">
+              <p className="eyebrow">Sí se pueden comparar</p>
+              <h2 id="similar-title">Otras versiones de este perfume</h2>
+              <p>Mismo perfume en otro tamaño o concentración, disponible en varias tiendas.</p>
+              <div className={styles.similarList}>
+                {similar.map(item => (
+                  <Link key={item.product.id} href={`/perfumes/${item.product.id}`} className={styles.similarItem}>
+                    <strong>{item.product.name}</strong>
+                    <small>Comparado en {item.product.matchedStores ?? item.prices.length} tiendas{item.product.unit ? ` · ${item.product.unit}` : ""}</small>
+                    {item.minPrice ? <span>desde {money.format(item.minPrice)}</span> : null}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </section>
     </main>
