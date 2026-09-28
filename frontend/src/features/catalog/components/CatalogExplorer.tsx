@@ -347,6 +347,18 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         )}
       </div>
 
+      {/* Cuando el texto buscado coincide con una o pocas marcas (ej. "Acqua
+          di Gio" → Giorgio Armani), se sugiere la marca como atajo para ver
+          todo su catálogo. Se oculta si ya hay un filtro de marca activo. */}
+      {urlQuery && !brand && brands.length > 0 && (
+        <div className={styles.brandSuggestions} aria-label="Marcas encontradas">
+          <span>¿Buscabas la marca?</span>
+          {brands.slice(0, 8).map(name => (
+            <button key={name} onClick={() => setFilter("brand", name)}>{name}</button>
+          ))}
+        </div>
+      )}
+
       {syncMessage && <p className={styles.status}>{syncMessage}</p>}
 
       {loading ? (
