@@ -7,6 +7,7 @@ const { scrapeDirectCatalogPage: scrapeAlishaPage } = require("./alishaScraper")
 const { scrapeDirectCatalogPage: scrapeSilkPage } = require("./silkScraper");
 const { scrapeDirectCatalogPage: scrapeElitePage } = require("./eliteScraper");
 const { scrapeDirectCatalogPage: scrapeLeparisPage } = require("./leparisScraper");
+const { scrapeDirectCatalogPage: scrapeDreamsPage } = require("./dreamsScraper");
 const { scrapeDirectCatalogPage: scrapeCosmeticPage } = require("./cosmeticScraper");
 const { scrapeDirectCatalogPage: scrapeParisPage } = require("./parisScraper");
 const { scrapeDirectCatalogPage: scrapeAbcPage } = require("./abcScraper");
@@ -22,6 +23,7 @@ const scrapers = {
   "silk-cl": scrapeSilkPage,
   "elite-cl": scrapeElitePage,
   "leparis-cl": scrapeLeparisPage,
+  "dreams-cl": scrapeDreamsPage,
   "cosmetic-cl": scrapeCosmeticPage,
   "paris-cl": scrapeParisPage,
   "abc-cl": scrapeAbcPage,

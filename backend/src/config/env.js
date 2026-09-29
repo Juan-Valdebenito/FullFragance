@@ -107,6 +107,15 @@ module.exports = {
   leparisCollectionUrl:
     process.env.LEPARIS_COLLECTION_URL ||
     "https://leparisparfums.com/collections/all/products.json",
+  dreamsUserAgent:
+    process.env.DREAMS_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  dreamsMinDelayMs: Number(process.env.DREAMS_MIN_DELAY_MS || 500),
+  dreamsMaxDelayMs: Number(process.env.DREAMS_MAX_DELAY_MS || 1000),
+  dreamsRequestTimeoutMs: Number(process.env.DREAMS_REQUEST_TIMEOUT_MS || 30000),
+  dreamsMcpEndpoint:
+    process.env.DREAMS_MCP_ENDPOINT ||
+    "https://dreamsparfums.cl/api/mcp",
   cosmeticUserAgent:
     process.env.COSMETIC_USER_AGENT ||
     "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",

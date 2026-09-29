@@ -14,6 +14,7 @@ const SOURCE_STORES = {
   "preunic-cl": { storeId: "preunic-online", storeName: "Preunic" },
   "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
   "leparis-cl": { storeId: "leparis-online", storeName: "Le Paris Parfums" },
+  "dreams-cl": { storeId: "dreams-online", storeName: "Dreams Parfums" },
 };
 
 function matchesProduct(product, productFilter) {

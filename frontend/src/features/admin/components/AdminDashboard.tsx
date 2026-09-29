@@ -49,6 +49,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [syncingPreunic,   setSyncingPreunic]   = useState(false);
   const [syncingLodoro,    setSyncingLodoro]    = useState(false);
   const [syncingLeparis,   setSyncingLeparis]   = useState(false);
+  const [syncingDreams,    setSyncingDreams]    = useState(false);
   const [syncingAll,       setSyncingAll]       = useState(false);
 
   const [falabellaJob, setFalabellaJob] = useState<SyncJob | null>(null);
@@ -62,6 +63,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [preunicJob,   setPreunicJob]   = useState<SyncJob | null>(null);
   const [lodoroJob,    setLodoroJob]    = useState<SyncJob | null>(null);
   const [leparisJob,   setLeparisJob]   = useState<SyncJob | null>(null);
+  const [dreamsJob,    setDreamsJob]    = useState<SyncJob | null>(null);
 
   const [falabellaMsg, setFalabellaMsg] = useState("");
   const [ripleyMsg,    setRipleyMsg]    = useState("");
@@ -74,6 +76,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const [preunicMsg,   setPreunicMsg]   = useState("");
   const [lodoroMsg,    setLodoroMsg]    = useState("");
   const [leparisMsg,   setLeparisMsg]   = useState("");
+  const [dreamsMsg,    setDreamsMsg]    = useState("");
 
   // Activity log
   const [activity, setActivity] = useState<{ id: number; title: string; time: string; tag: string; tagClass: string; color: string }[]>([
@@ -314,6 +317,19 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     } finally { setSyncingLeparis(false); }
   }
 
+  async function handleSyncDreams() {
+    setSyncingDreams(true); setDreamsMsg("Iniciando conexión con Dreams Parfums...");
+    addActivity("Sincronización de Dreams Parfums iniciada", "Sync", styles.tagSync, "#3b82f6");
+    try {
+      const { job } = await api.syncDreamsPerfumes();
+      await waitForSync(job, "Dreams Parfums", setDreamsJob, setDreamsMsg);
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Error al sincronizar Dreams Parfums.";
+      setDreamsMsg(msg);
+      addActivity(`Error Dreams Parfums: ${msg}`, "Advertencia", styles.tagWarning, "#f59e0b");
+    } finally { setSyncingDreams(false); }
+  }
+
   async function handleSyncAll() {
     setSyncingAll(true);
     addActivity("Sincronización masiva de todas las tiendas iniciada", "Sync", styles.tagSync, "#3b82f6");
@@ -329,6 +345,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       await handleSyncPreunic();
       await handleSyncLodoro();
       await handleSyncLeparis();
+      await handleSyncDreams();
     } finally {
       setSyncingAll(false);
     }
@@ -348,6 +365,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
   const preunicCount   = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Preunic")).length, [items]);
   const lodoroCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "L'Odoro")).length, [items]);
   const leparisCount   = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Le Paris Parfums")).length, [items]);
+  const dreamsCount    = useMemo(() => items.filter(i => i.prices.some(p => p.storeName === "Dreams Parfums")).length, [items]);
   const withPriceCount = useMemo(() => items.filter(i => (i.minPrice ?? 0) > 0).length, [items]);
   const coveragePct    = totalProducts > 0 ? Math.round((withPriceCount / totalProducts) * 100) : 0;
   const multiStorePct  = totalProducts > 0 ? Math.round((multiStore / totalProducts) * 100) : 0;
@@ -398,6 +416,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
     { label: "Scraper Preunic", sub: "preunic.cl · API de catálogo", status: syncingPreunic ? "Ejecutando..." : preunicJob?.status === "failed" ? "Error" : "Listo", cls: preunicJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🧴" },
     { label: "Scraper L'Odoro", sub: "lodoro.cl · UCP/MCP", status: syncingLodoro ? "Ejecutando..." : lodoroJob?.status === "failed" ? "Error" : "Listo", cls: lodoroJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🌺" },
     { label: "Scraper Le Paris Parfums", sub: "leparis-cl · Shopify JSON API", status: syncingLeparis ? "Ejecutando..." : leparisJob?.status === "failed" ? "Error" : "Listo", cls: leparisJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "🇫🇷" },
+    { label: "Scraper Dreams Parfums", sub: "dreams-cl · Jumpseller MCP", status: syncingDreams ? "Ejecutando..." : dreamsJob?.status === "failed" ? "Error" : "Listo", cls: dreamsJob?.status === "failed" ? styles.healthError : styles.healthOk, icon: "✨" },
   ];
 
   // ── HEADER CONTROL BAR ──────────────────────────────────
@@ -501,8 +520,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <span>Tiendas Conectadas</span>
             <div className={`${styles.kpiIcon} ${styles.iconPurple}`}>🏬</div>
           </div>
-          <strong className={styles.kpiValue}>11</strong>
-          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC, Preunic, L&apos;Odoro y Le Paris Parfums</p>
+          <strong className={styles.kpiValue}>12</strong>
+          <p className={styles.kpiSub}>Falabella, Ripley, Alisha, Silk, Elite, Cosmetic, Paris, ABC, Preunic, L&apos;Odoro, Le Paris Parfums y Dreams Parfums</p>
         </article>
       </section>
 
@@ -510,7 +529,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
       <div className={styles.panelCard}>
         <div className={styles.panelHeader}>
           <h3>Distribución por Tienda Verificada</h3>
-          <span className={styles.panelHeaderBadge}>11 Fuentes de origen</span>
+          <span className={styles.panelHeaderBadge}>12 Fuentes de origen</span>
         </div>
         <div className={styles.storePillsRow}>
           {[
@@ -525,6 +544,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             { name: "Preunic",   count: preunicCount,   color: "#e11d48", tag: "preunic-cl" },
             { name: "L'Odoro",   count: lodoroCount,    color: "#7c3aed", tag: "lodoro-cl" },
             { name: "Le Paris Parfums", count: leparisCount, color: "#1d4ed8", tag: "leparis-cl" },
+            { name: "Dreams Parfums", count: dreamsCount, color: "#8c1d84", tag: "dreams-cl" },
           ].map(s => {
             const pct = totalProducts > 0 ? Math.round((s.count / totalProducts) * 100) : 0;
             return (
@@ -718,7 +738,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           type="button"
           className={styles.syncAllBtn}
           onClick={handleSyncAll}
-          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc || syncingPreunic || syncingLodoro || syncingLeparis}
+          disabled={syncingAll || syncingFalabella || syncingRipley || syncingAlisha || syncingSilk || syncingElite || syncingCosmetic || syncingParis || syncingAbc || syncingPreunic || syncingLodoro || syncingLeparis || syncingDreams}
         >
           {syncingAll ? "⏳ Sincronizando Todo..." : "⚡ Sincronizar Todo el Catálogo"}
         </button>
@@ -1032,6 +1052,34 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
           </button>
           {leparisMsg && <p className={styles.syncMsg}>{leparisMsg}</p>}
         </article>
+
+        {/* Dreams Parfums */}
+        <article className={styles.syncCard}>
+          <div className={styles.syncCardTop}>
+            <div className={styles.syncCardLogoWrap} style={{ background: "rgba(140, 29, 132, 0.1)", color: "#8c1d84" }}>
+              ✨
+            </div>
+            <div>
+              <h3>Dreams Parfums</h3>
+              <small>dreams-cl · Jumpseller MCP</small>
+            </div>
+            <span className={`${styles.syncStateBadge} ${syncingDreams ? styles.stateRunning : dreamsJob?.status === "completed" ? styles.stateOk : styles.stateIdle}`}>
+              {syncingDreams ? "Ejecutando..." : dreamsJob?.status === "completed" ? "Completado" : "Listo"}
+            </span>
+          </div>
+          {dreamsJob && (
+            <div className={styles.syncProgressContainer}>
+              <div className={styles.syncProgressBar}>
+                <div className={styles.syncProgressFill} style={{ width: `${dreamsJob.targetProducts ? Math.min(100, Math.round((dreamsJob.imported / dreamsJob.targetProducts) * 100)) : (dreamsJob.status === "completed" ? 100 : 10)}%` }} />
+              </div>
+              <small>{dreamsJob.imported} productos importados · pág {dreamsJob.currentPage}/{dreamsJob.totalPages}</small>
+            </div>
+          )}
+          <button type="button" className={styles.syncRunBtn} onClick={handleSyncDreams} disabled={syncingDreams || syncingAll}>
+            {syncingDreams ? "Iniciando scraper..." : "🔄 Sincronizar Dreams Parfums"}
+          </button>
+          {dreamsMsg && <p className={styles.syncMsg}>{dreamsMsg}</p>}
+        </article>
       </div>
 
       {/* Sync history timeline */}
@@ -1095,6 +1143,7 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
               <option value="preunic">Preunic</option>
               <option value="lodoro">L&apos;Odoro</option>
               <option value="leparis">Le Paris Parfums</option>
+              <option value="dreams">Dreams Parfums</option>
             </select>
           </div>
         </div>
@@ -1117,8 +1166,8 @@ export function AdminDashboard({ user, initialQuery = "" }: AdminDashboardProps)
             <tbody>
               {filteredTableItems.length ? filteredTableItems.map(item => {
                 const src = item.product.source;
-                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : src === "preunic-cl" ? styles.badgePreunic : src === "lodoro-cl" ? styles.badgeLodoro : src === "leparis-cl" ? styles.badgeLeparis : styles.badgeMulti;
-                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : src === "preunic-cl" ? "Preunic" : src === "lodoro-cl" ? "L'Odoro" : src === "leparis-cl" ? "Le Paris Parfums" : "Multi-tienda";
+                const srcCls = src === "falabella-cl" ? styles.badgeFalabella : src === "ripley-cl" ? styles.badgeRipley : src === "alisha-cl" ? styles.badgeAlisha : src === "silk-cl" ? styles.badgeSilk : src === "elite-cl" ? styles.badgeElite : src === "cosmetic-cl" ? styles.badgeCosmetic : src === "paris-cl" ? styles.badgeParis : src === "abc-cl" ? styles.badgeAbc : src === "preunic-cl" ? styles.badgePreunic : src === "lodoro-cl" ? styles.badgeLodoro : src === "leparis-cl" ? styles.badgeLeparis : src === "dreams-cl" ? styles.badgeDreams : styles.badgeMulti;
+                const srcLabel = src === "falabella-cl" ? "Falabella" : src === "ripley-cl" ? "Ripley" : src === "alisha-cl" ? "Alisha" : src === "silk-cl" ? "Silk" : src === "elite-cl" ? "Elite" : src === "cosmetic-cl" ? "Cosmetic" : src === "paris-cl" ? "Paris" : src === "abc-cl" ? "ABC" : src === "preunic-cl" ? "Preunic" : src === "lodoro-cl" ? "L'Odoro" : src === "leparis-cl" ? "Le Paris Parfums" : src === "dreams-cl" ? "Dreams Parfums" : "Multi-tienda";
                 const avail = item.product.available !== false;
                 const matchedCount = item.product.matchedStores ?? 1;
 

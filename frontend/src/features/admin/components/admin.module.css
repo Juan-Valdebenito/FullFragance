@@ -927,6 +927,7 @@
 .badgePreunic   { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
 .badgeLodoro    { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
 .badgeLeparis   { background: rgba(29, 78, 216, 0.1); color: #1d4ed8; }
+.badgeDreams    { background: rgba(140, 29, 132, 0.1); color: #8c1d84; }
 .badgeMulti     { background: rgba(197, 160, 89, 0.15); color: var(--gold-dark); }
 
 .priceText {
