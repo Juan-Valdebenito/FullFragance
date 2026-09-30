@@ -1,88 +1,176 @@
+/* ─── Login ──────────────────────────────────────────── */
+
 .loginWrap {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface, #f4f1ea);
+  background: var(--page-header-bg);
   padding: 24px;
+  overflow: hidden;
+}
+
+.loginWrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(600px 400px at 15% 10%, var(--gold-light), transparent 60%),
+    radial-gradient(500px 380px at 85% 90%, var(--gold-light), transparent 60%);
+  pointer-events: none;
+}
+
+.topRight {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
 }
 
 .loginCard {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
   display: grid;
-  gap: 16px;
-  background: var(--surface-bright, #fff);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
-  padding: 32px 28px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  gap: 18px;
+  background: var(--surface-bright);
+  border: 1px solid var(--outline-variant);
+  border-top: 3px solid var(--gold);
+  border-radius: 18px;
+  padding: 40px 34px 32px;
+  box-shadow: var(--shadow-lg);
 }
 
-.loginCard h1 {
+.loginBrand {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.loginBrand h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.7rem;
 }
 
 .subtitle {
-  margin: -8px 0 4px;
-  color: var(--on-surface-muted, #666);
+  margin: 0;
+  color: var(--on-surface-muted);
   font-size: 0.85rem;
 }
 
 .loginCard label {
   display: grid;
   gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--on-surface-muted);
 }
 
 .loginCard input {
-  border: 1px solid var(--outline-variant, #ddd);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--on-surface);
+  padding: 12px 14px;
   font-size: 0.95rem;
+  font-weight: 500;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.loginCard button {
+.loginCard input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-light);
+}
+
+.loginCard button[type="submit"] {
   margin-top: 6px;
   border: 0;
-  border-radius: 10px;
-  background: var(--gold, #9c7a3c);
-  color: #fff;
+  border-radius: 12px;
+  background: var(--gold);
+  color: var(--on-primary);
   font-weight: 700;
-  padding: 12px;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  padding: 13px;
   cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
 }
 
-.loginCard button:disabled {
+.loginCard button[type="submit"]:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.loginCard button[type="submit"]:disabled {
   opacity: 0.6;
   cursor: wait;
 }
 
 .error {
-  color: #b3261e;
+  border: 1px solid rgba(179, 38, 30, 0.35);
+  background: rgba(179, 38, 30, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #d64a41;
   font-size: 0.82rem;
   margin: 0;
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  background: var(--surface-bright, #fff);
-  border-bottom: 1px solid var(--outline-variant, #eee);
-  font-weight: 700;
-  font-size: 0.85rem;
+.footnote {
+  margin: 4px 0 0;
+  text-align: center;
+  color: var(--on-surface-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
 }
 
-.panelHeader button {
-  border: 1px solid var(--outline-variant, #ddd);
-  border-radius: 8px;
+/* ─── Panel (autenticado) ────────────────────────────── */
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.userChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--on-surface-muted);
+}
+
+.logoutButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
   background: transparent;
-  padding: 6px 14px;
+  color: var(--gold);
+  padding: 7px 16px;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logoutButton:hover {
+  background: var(--gold);
+  color: var(--on-primary);
+}
+
+.body {
+  padding-block: 32px 60px;
 }
