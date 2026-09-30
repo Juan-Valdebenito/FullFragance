@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { api, session } from "@/shared/api/client";
-import type { User } from "@/shared/api/types";
+import { useEffect } from "react";
+import { session } from "@/shared/api/client";
 import { SessionProvider } from "@/shared/auth/SessionContext";
 
-/** Carga la sesión de forma opcional para toda la app (invitado o autenticado). */
+/**
+ * A diferencia del sitio publico, este panel NO restaura sesiones guardadas:
+ * cada vez que se abre o recarga la pagina exige ingresar el correo y
+ * contraseña de nuevo. Es una herramienta administrativa; que el navegador
+ * "recuerde" el login solo es justo lo que no queremos aca (cualquiera que
+ * use ese mismo navegador despues entraria directo, sin credenciales).
+ */
 export function OptionalSessionProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
   useEffect(() => {
-    if (!session.hasToken()) return;
-    api.me()
-      .then(setUser)
-      .catch(() => session.clear());
+    session.clear();
   }, []);
 
   return (
-    <SessionProvider key={user?.id ?? "guest"} initialUser={user}>
+    <SessionProvider key="guest" initialUser={null}>
       {children}
     </SessionProvider>
   );
