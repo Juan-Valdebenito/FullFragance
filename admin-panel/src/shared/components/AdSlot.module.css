@@ -1,0 +1,27 @@
+/* ══════════════════════════════════════════════════════════════
+   AdSlot — Bloque real de Google AdSense
+   ══════════════════════════════════════════════════════════════ */
+
+.adSlotWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.adLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+  opacity: 0.5;
+  padding-left: 2px;
+}
+
+/* El <ins> de AdSense necesita dimensiones mínimas */
+.adSlotWrapper :global(.adsbygoogle) {
+  display: block;
+  min-width: 120px;
+  min-height: 90px;
+}

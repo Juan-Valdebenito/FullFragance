@@ -1,0 +1,51 @@
+/* ══════════════════════════════════════════════════════════════
+   AdSidebarLayout — Layout con columnas de anuncios laterales
+   ══════════════════════════════════════════════════════════════ */
+
+.layout {
+  display: grid;
+  /* El catálogo conserva un ancho legible y los anuncios quedan en una
+     franja periférica, con aire suficiente para no competir con las tarjetas. */
+  grid-template-columns: 170px minmax(0, 1180px) 170px;
+  grid-template-areas: "left content right";
+  column-gap: clamp(32px, 3vw, 72px);
+  max-width: 1920px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 3vw, 72px);
+  align-items: start;
+}
+
+.sidebarLeft  { grid-area: left;    }
+.content      { grid-area: content; min-width: 0; }
+.sidebarRight { grid-area: right;   }
+
+/* Sticky: el anuncio se queda fijo al hacer scroll */
+.stickyAd {
+  position: sticky;
+  top: 90px; /* debajo del header */
+}
+
+/* ── Pantallas medianas: reducir sidebars ───────────────────── */
+@media (max-width: 1440px) {
+  .layout {
+    grid-template-columns: 160px minmax(0, 1fr) 160px;
+    column-gap: clamp(20px, 2vw, 40px);
+    padding-inline: clamp(16px, 2.5vw, 48px);
+  }
+}
+
+/* ── En pantallas menores a 1600px: colapsar sidebars ─────────
+   Los dos rieles se llevan ~400px (160 + 160 + gaps + padding). El
+   catálogo que va dentro necesita ~1080px para no desbordar, así que
+   por debajo de 1600px el contenido se queda con el ancho completo. */
+@media (max-width: 1600px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas: "content";
+    padding-inline: clamp(16px, 3vw, 40px);
+  }
+  .sidebarLeft,
+  .sidebarRight {
+    display: none;
+  }
+}
