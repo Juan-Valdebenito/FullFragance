@@ -9,7 +9,7 @@ import { HeroBanner } from "@/features/catalog/components/HeroBanner";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = {
-  title: "FullFragrance | Comparador de precios de perfumes en Chile",
+  title: "FullFragance | Comparador de precios de perfumes en Chile",
   description: "Compara más de 13.000 perfumes originales en 12 tiendas de Chile y encuentra dónde está más barato antes de comprar.",
 };
 
@@ -35,7 +35,7 @@ export default function HomePage() {
       <main>
         <div className="container">
           <HeroBanner />
-          <ul className={styles.features} aria-label="Qué hace FullFragrance">
+          <ul className={styles.features} aria-label="Qué hace FullFragance">
             {features.map(feature => (
               <li key={feature.title}>
                 <Icon name={feature.icon} size={26} />

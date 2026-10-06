@@ -5,8 +5,8 @@ import { Header } from "@/shared/components/Header";
 import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "Política de uso | FullFragrance",
-  description: "Condiciones de uso y alcance de la plataforma FullFragrance.",
+  title: "Política de uso | FullFragance",
+  description: "Condiciones de uso y alcance de la plataforma FullFragance.",
 };
 
 export default function UsePolicyPage() {
@@ -16,14 +16,14 @@ export default function UsePolicyPage() {
       <section className={styles.hero}>
         <p className="eyebrow">Legal</p>
         <h1>Política de uso de la web</h1>
-        <p>FullFragrance es una herramienta informativa para comparar perfumes y precios publicados por tiendas. Estas condiciones explican qué hacemos, qué no hacemos y las reglas para utilizar la plataforma de forma segura.</p>
+        <p>FullFragance es una herramienta informativa para comparar perfumes y precios publicados por tiendas. Estas condiciones explican qué hacemos, qué no hacemos y las reglas para utilizar la plataforma de forma segura.</p>
         <div className={styles.meta}><span>Versión 1.0 · 30 de julio de 2026</span><span>Aplica a visitantes y cuentas registradas</span></div>
       </section>
 
       <section className={styles.content}>
         <article className={styles.section}>
           <h2>1. Aceptación y naturaleza del servicio</h2>
-          <p>Al navegar, crear una cuenta o usar cualquier función de FullFragrance aceptas estas condiciones y nuestra <Link href="/politica-de-datos">Política de datos y privacidad</Link>. La plataforma compara información de perfumes y precios para apoyar una decisión de compra; no es una tienda, no vende productos, no procesa pagos y no actúa como representante de los comercios mostrados, salvo que se indique expresamente.</p>
+          <p>Al navegar, crear una cuenta o usar cualquier función de FullFragance aceptas estas condiciones y nuestra <Link href="/politica-de-datos">Política de datos y privacidad</Link>. La plataforma compara información de perfumes y precios para apoyar una decisión de compra; no es una tienda, no vende productos, no procesa pagos y no actúa como representante de los comercios mostrados, salvo que se indique expresamente.</p>
         </article>
 
         <article className={styles.section}>
@@ -38,7 +38,7 @@ export default function UsePolicyPage() {
 
         <article className={styles.section}>
           <h2>3. Enlaces, marcas y contenido de terceros</h2>
-          <p>Podemos incluir enlaces a sitios de terceros para facilitar la consulta de una oferta. Al salir de FullFragrance se aplican las condiciones, privacidad y prácticas del sitio de destino. Las marcas, nombres comerciales, imágenes y contenidos de tiendas pertenecen a sus respectivos titulares; su presencia sirve para identificar y comparar productos y no implica patrocinio, afiliación, aprobación o relación comercial con FullFragrance.</p>
+          <p>Podemos incluir enlaces a sitios de terceros para facilitar la consulta de una oferta. Al salir de FullFragance se aplican las condiciones, privacidad y prácticas del sitio de destino. Las marcas, nombres comerciales, imágenes y contenidos de tiendas pertenecen a sus respectivos titulares; su presencia sirve para identificar y comparar productos y no implica patrocinio, afiliación, aprobación o relación comercial con FullFragance.</p>
         </article>
 
         <article className={styles.section}>
@@ -46,7 +46,7 @@ export default function UsePolicyPage() {
           <ul>
             <li>Usar la web para comparar perfumes, explorar precios, guardar favoritos y recibir recomendaciones personales.</li>
             <li>Crear una cuenta con información correcta y mantener protegidas tus credenciales.</li>
-            <li>Usar los resultados como apoyo informativo, respetando los derechos de FullFragrance, de las tiendas y de otros usuarios.</li>
+            <li>Usar los resultados como apoyo informativo, respetando los derechos de FullFragance, de las tiendas y de otros usuarios.</li>
           </ul>
         </article>
 
@@ -67,7 +67,7 @@ export default function UsePolicyPage() {
         <article className={styles.section}>
           <h2>7. Disponibilidad, cambios y responsabilidad</h2>
           <p>Podemos actualizar, corregir, limitar o retirar funciones, fuentes de información y contenidos cuando sea necesario para operar, mejorar o proteger la plataforma. Procuramos que la información sea útil y actual, pero no garantizamos que el servicio esté disponible sin interrupciones ni que los datos de terceros sean completos o estén libres de errores.</p>
-          <p>En la máxima medida permitida por la ley, FullFragrance no responde por pérdidas derivadas de decisiones tomadas exclusivamente con base en información referencial de la plataforma o por la relación entre el usuario y una tienda externa. Esta regla no limita derechos irrenunciables ni responsabilidades que la ley prohíba excluir.</p>
+          <p>En la máxima medida permitida por la ley, FullFragance no responde por pérdidas derivadas de decisiones tomadas exclusivamente con base en información referencial de la plataforma o por la relación entre el usuario y una tienda externa. Esta regla no limita derechos irrenunciables ni responsabilidades que la ley prohíba excluir.</p>
         </article>
 
         <article className={styles.section}>
@@ -79,8 +79,7 @@ export default function UsePolicyPage() {
           <h2>9. Contacto</h2>
           <div className={styles.contact}>
             <p>Para consultas sobre estas condiciones, errores de información o solicitudes de corrección, contáctanos en:</p>
-            <Link href="mailto:contacto@fullfragrance.cl">contacto@fullfragrance.cl</Link>
-            <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link>
+            <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a>
           </div>
         </article>
       </section>

@@ -1,8 +1,9 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { api, ApiError, productImageCandidates, productImageUrl } from "@/shared/api/client";
-import type { CatalogSearchResult, Comparison, SyncJob } from "@/shared/api/types";
+import type { CatalogSearchResult, Comparison } from "@/shared/api/types";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
 import type { Product } from "../domain/product";
 import { storeLabels } from "../domain/stores";
@@ -16,8 +17,10 @@ const PRODUCTS_PER_PAGE = 12;
 type SortMode = "recommended" | "price" | "price-desc" | "savings" | "stores" | "name" | "name-desc";
 
 export function toProduct(item: Comparison): Product {
+  // Primero las tiendas con stock: una tienda agotada no puede quedar como la
+  // más barata de la tarjeta.
   const pricesByChain = [...item.prices]
-    .sort((a, b) => a.price - b.price)
+    .sort((a, b) => Number(b.available !== false) - Number(a.available !== false) || a.price - b.price)
     .filter((price, priceIndex, prices) =>
       prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex
     );
@@ -30,7 +33,7 @@ export function toProduct(item: Comparison): Product {
   const singleStore = pricesByChain[0]?.storeName ?? (item.product.source ? storeLabels[item.product.source] : undefined);
   const badge =
     storeCount > 1
-      ? `Comparado en ${storeCount} tiendas`
+      ? `En ${storeCount} tiendas`
       : item.product.priceIsMock
       ? "Precio demo"
       : singleStore
@@ -103,17 +106,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   // ── Datos del catálogo ──────────────────────────────────────────────────
   const [result, setResult] = useState<CatalogSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-  const [syncingRipley, setSyncingRipley] = useState(false);
-  const [syncingAlisha, setSyncingAlisha] = useState(false);
-  const [syncingSilk, setSyncingSilk] = useState(false);
-  const [syncingElite, setSyncingElite] = useState(false);
-  const [syncingCosmetic, setSyncingCosmetic] = useState(false);
-  const [syncingParis, setSyncingParis] = useState(false);
-  const [syncingAbc, setSyncingAbc] = useState(false);
   const [error, setError] = useState("");
-  const [syncMessage, setSyncMessage] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Filtros, orden y paginación se resuelven en el backend: sólo viaja la página
@@ -144,10 +137,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       }
     }, 150);
     return () => { cancelled = true; window.clearTimeout(timeout); };
-  }, [searchKey, reloadToken]);
-
-  // Tras sincronizar una tienda (admin) se vuelve a pedir la página actual.
-  const loadCatalog = useCallback(async () => { setReloadToken(token => token + 1); }, []);
+  }, [searchKey]);
 
   // ── Helpers para actualizar la URL ──────────────────────────────────────
 
@@ -209,76 +199,6 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     return `/perfumes/${productId}?back=${encodeURIComponent(back)}`;
   }
 
-  // ── Sync jobs (admin) ───────────────────────────────────────────────────
-  async function waitForSync(initialJob: SyncJob, storeName: string) {
-    let job = initialJob;
-    while (job.status === "running") {
-      const progress = job.currentPage > 0 ? ` página ${job.currentPage} procesada` : "";
-      const target = job.targetProducts ? ` de aproximadamente ${job.targetProducts}` : "";
-      setSyncMessage(`${storeName}: recorriendo catálogo${progress} · ${job.imported}${target} productos directos encontrados.`);
-      await new Promise(resolve => window.setTimeout(resolve, 2000));
-      job = await api.syncJob(job.id);
-    }
-    if (job.status === "failed") throw new ApiError(job.error || `Falló la sincronización de ${storeName}.`, 500);
-    setSyncMessage(`${storeName} actualizado: ${job.imported} perfumes.`);
-  }
-
-  async function updateFalabella() {
-    setSyncing(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncFalabellaPerfumes(); await waitForSync(job, "Falabella"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Falabella."); }
-    finally { setSyncing(false); }
-  }
-
-  async function updateRipley() {
-    setSyncingRipley(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncRipleyPerfumes(); await waitForSync(job, "Ripley"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Ripley."); }
-    finally { setSyncingRipley(false); }
-  }
-
-  async function updateAlisha() {
-    setSyncingAlisha(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncAlishaPerfumes(); await waitForSync(job, "Alisha"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Alisha."); }
-    finally { setSyncingAlisha(false); }
-  }
-
-  async function updateSilk() {
-    setSyncingSilk(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncSilkPerfumes(); await waitForSync(job, "Silk"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Silk."); }
-    finally { setSyncingSilk(false); }
-  }
-
-  async function updateElite() {
-    setSyncingElite(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncElitePerfumes(); await waitForSync(job, "Elite"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Elite."); }
-    finally { setSyncingElite(false); }
-  }
-
-  async function updateCosmetic() {
-    setSyncingCosmetic(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncCosmeticPerfumes(); await waitForSync(job, "Cosmetic"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Cosmetic."); }
-    finally { setSyncingCosmetic(false); }
-  }
-
-  async function updateParis() {
-    setSyncingParis(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncParisPerfumes(); await waitForSync(job, "Paris"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar Paris."); }
-    finally { setSyncingParis(false); }
-  }
-
-  async function updateAbc() {
-    setSyncingAbc(true); setError(""); setSyncMessage("");
-    try { const { job } = await api.syncAbcPerfumes(); await waitForSync(job, "ABC"); await loadCatalog(); }
-    catch (reason) { setError(reason instanceof ApiError ? reason.message : "No se pudo actualizar ABC."); }
-    finally { setSyncingAbc(false); }
-  }
-
   // ── Resultado paginado del backend ──────────────────────────────────────
   const brands       = result?.facets.brands ?? [];
   const categories   = result?.facets.categories ?? [];
@@ -298,12 +218,13 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   }, [currentPage, totalPages]);
 
   // ── Paginación ──────────────────────────────────────────────────────────
-  function renderPagination(compact = false) {
+  function renderPagination() {
     if (total <= PRODUCTS_PER_PAGE) return null;
     return (
-      <nav className={`${styles.pagination} ${compact ? styles.compactPagination : ""}`} aria-label="Páginas del catálogo">
-        <button className={styles.pageArrow} onClick={() => goToPage(1)} disabled={currentPage === 1} aria-label="Primera página">|←</button>
-        <button className={styles.pageArrow} onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Página anterior">←</button>
+      <nav className={styles.pagination} aria-label="Páginas del catálogo">
+        <button className={styles.pageArrow} onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} aria-label="Página anterior">
+          <Icon name="arrow" size={16} />
+        </button>
         <div className={styles.pageNumbers}>
           {pageNumbers.map(n => (
             <button key={n} className={n === currentPage ? styles.activePage : ""} onClick={() => goToPage(n)} aria-current={n === currentPage ? "page" : undefined}>
@@ -312,40 +233,81 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
           ))}
         </div>
         <div className={styles.pageIndicator}><strong>{currentPage}</strong><span>de {totalPages}</span></div>
-        <button className={styles.pageArrow} onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Página siguiente">→</button>
-        <button className={styles.pageArrow} onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} aria-label="Última página">→|</button>
+        <button className={styles.pageArrow} onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Página siguiente">
+          <Icon name="arrow" size={16} />
+        </button>
       </nav>
     );
   }
 
+  const firstShown = Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, total);
+  const lastShown = Math.min(currentPage * PRODUCTS_PER_PAGE, total);
+
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <section className={styles.explorer}>
-      {/* Barra de búsqueda */}
+      {/* Encabezado: título del segmento, conteo y orden */}
+      <div className={styles.catalogHead}>
+        <div>
+          <h1>{activeSegment.title}</h1>
+          <p>
+            {loading
+              ? "Buscando precios en 12 tiendas…"
+              : total
+              ? <>Mostrando {firstShown}–{lastShown} de <strong>{total.toLocaleString("es-CL")}</strong> perfumes</>
+              : "Sin resultados"}
+          </p>
+        </div>
+        <label className={styles.sort}>
+          <span>Ordenar por</span>
+          <select value={sort} onChange={e => setFilter("sort", e.target.value)}>
+            <option value="recommended">Mejor comparación</option>
+            <option value="price">Precio: menor a mayor</option>
+            <option value="price-desc">Precio: mayor a menor</option>
+            <option value="savings">Mayor ahorro entre tiendas</option>
+            <option value="stores">Más tiendas comparadas</option>
+            <option value="name">Nombre: A a Z</option>
+            <option value="name-desc">Nombre: Z a A</option>
+          </select>
+        </label>
+      </div>
+
+      {/* Segmentos como chips, igual que las categorías de la home */}
+      <div className={styles.segments} role="group" aria-label="Tipo de perfumería">
+        {perfumeSegments.map(option => (
+          <button
+            key={option.value || "all"}
+            type="button"
+            className={option.value === segment ? styles.segmentActive : undefined}
+            aria-pressed={option.value === segment}
+            onClick={() => setFilter("segment", option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Búsqueda en vivo dentro del catálogo */}
       <div className={styles.search}>
-        <Icon name="search" />
+        <Icon name="search" size={18} />
+        <label className="srOnly" htmlFor="catalog-search">Buscar en el catálogo</label>
         <input
+          id="catalog-search"
           value={inputValue}
           onChange={e => handleSearchChange(e.target.value)}
-          placeholder="Busca por marca, familia olfativa o nombre..."
+          placeholder="Filtra por marca, nombre o familia olfativa"
         />
-        <button aria-expanded={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
-          <Icon name="filter" />
+        <button type="button" className={styles.filterToggle} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
+          <Icon name="filter" size={18} />
           <span>Filtros{filterCount ? ` (${filterCount})` : ""}</span>
         </button>
-        {isAdmin && (
-          <>
-            <button onClick={updateFalabella} disabled={syncing}>{syncing ? "Actualizando…" : "Actualizar Falabella"}</button>
-            <button onClick={updateRipley}    disabled={syncingRipley}>{syncingRipley ? "Actualizando…" : "Actualizar Ripley"}</button>
-            <button onClick={updateAlisha}    disabled={syncingAlisha}>{syncingAlisha ? "Actualizando…" : "Actualizar Alisha"}</button>
-            <button onClick={updateSilk}      disabled={syncingSilk}>{syncingSilk ? "Actualizando…" : "Actualizar Silk"}</button>
-            <button onClick={updateElite}     disabled={syncingElite}>{syncingElite ? "Actualizando…" : "Actualizar Elite"}</button>
-            <button onClick={updateCosmetic}  disabled={syncingCosmetic}>{syncingCosmetic ? "Actualizando…" : "Actualizar Cosmetic"}</button>
-            <button onClick={updateParis}     disabled={syncingParis}>{syncingParis ? "Actualizando…" : "Actualizar Paris"}</button>
-            <button onClick={updateAbc}       disabled={syncingAbc}>{syncingAbc ? "Actualizando…" : "Actualizar ABC"}</button>
-          </>
-        )}
       </div>
+
+      {isAdmin && (
+        <p className={styles.adminNote}>
+          Eres admin: la sincronización de las 12 tiendas está en <Link href="/admin/sincronizacion">Panel → Sincronización</Link>.
+        </p>
+      )}
 
       {/* Cuando el texto buscado coincide con una o pocas marcas (ej. "Acqua
           di Gio" → Giorgio Armani), se sugiere la marca como atajo para ver
@@ -359,29 +321,22 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         </div>
       )}
 
-      {syncMessage && <p className={styles.status}>{syncMessage}</p>}
-
-      {loading ? (
-        <p className={styles.empty}>Consultando precios…</p>
-      ) : error ? (
+      {error ? (
         <p className={styles.error} role="alert">{error}</p>
       ) : (
         <div className={styles.catalogShell}>
-          {/* ── Rail de filtros ── */}
-          <aside className={`${styles.filterRail} ${filtersOpen ? styles.openFilters : ""}`}>
+          {/* ── Filtros ── */}
+          <aside className={`${styles.filterRail} ${filtersOpen ? styles.openFilters : ""}`} aria-label="Filtros">
             <div className={styles.filterIntro}>
-              <div>
-                <span>Perfumes</span>
-                <strong>{total.toLocaleString("es-CL")} {total === 1 ? "resultado" : "resultados"}</strong>
-              </div>
+              <h2>Filtros</h2>
               <button onClick={resetFilters} disabled={!filterCount}>Borrar filtros</button>
             </div>
             <div className={styles.filters}>
               <fieldset className={styles.priceRange}>
-                <legend>Rango de precio</legend>
+                <legend>Precio</legend>
                 <div>
                   <label>
-                    Desde
+                    <span className="srOnly">Desde</span>
                     <input
                       type="number"
                       inputMode="numeric"
@@ -389,11 +344,11 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                       step="1000"
                       value={minPriceParam}
                       onChange={e => setFilter("minPrice", e.target.value)}
-                      placeholder="$1.000"
+                      placeholder="Desde"
                     />
                   </label>
                   <label>
-                    Hasta
+                    <span className="srOnly">Hasta</span>
                     <input
                       type="number"
                       inputMode="numeric"
@@ -401,7 +356,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                       step="1000"
                       value={maxPriceParam}
                       onChange={e => setFilter("maxPrice", e.target.value)}
-                      placeholder="$10.000"
+                      placeholder="Hasta"
                     />
                   </label>
                 </div>
@@ -414,7 +369,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                 </select>
               </label>
               <label>
-                Disponible en
+                Tienda
                 <select value={store} onChange={e => setFilter("store", e.target.value)}>
                   <option value="">Todas las tiendas</option>
                   {stores.map(value => <option key={value}>{value}</option>)}
@@ -448,49 +403,24 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
                 </select>
               </label>
               <label>
-                Tiendas
+                Comparación
                 <select value={comparison} onChange={e => setComparison(e.target.value)}>
-                  <option value="multiple">Solo comparables</option>
-                  <option value="all">Todas</option>
+                  <option value="multiple">En 2 o más tiendas</option>
+                  <option value="all">Todos los perfumes</option>
                 </select>
               </label>
             </div>
             <p className={styles.filterNote}>Solo ofertas vendidas directamente por tiendas verificadas.</p>
           </aside>
 
-          {/* ── Stage principal ── */}
+          {/* ── Resultados ── */}
           <div className={styles.catalogStage}>
-            <div className={styles.catalogToolbar}>
-              <div>
-                <p>Inicio · Perfumes{segment ? ` · ${activeSegment.label}` : ""}</p>
-                <h2>{activeSegment.title}</h2>
-              </div>
-              <label>
-                Ordenar por
-                <select value={sort} onChange={e => setFilter("sort", e.target.value)}>
-                  <option value="recommended">Mejor comparación</option>
-                  <option value="price">Precio: menor a mayor</option>
-                  <option value="price-desc">Precio: mayor a menor</option>
-                  <option value="savings">Mayor ahorro entre tiendas</option>
-                  <option value="stores">Más tiendas comparadas</option>
-                  <option value="name">Nombre: A a Z</option>
-                  <option value="name-desc">Nombre: Z a A</option>
-                </select>
-              </label>
-              <div className={styles.topPager}>
-                <span>
-                  {Math.min((currentPage - 1) * PRODUCTS_PER_PAGE + 1, total)}–{Math.min(currentPage * PRODUCTS_PER_PAGE, total)} de {total.toLocaleString("es-CL")}
-                </span>
-                {renderPagination(true)}
-              </div>
-            </div>
-
-            {unfilteredTotal > 0 && (comparison === "multiple" || comparableTotal > 0) && (
+            {!loading && unfilteredTotal > 0 && (comparison === "multiple" || comparableTotal > 0) && (
               <p className={styles.comparableNotice}>
                 {comparison === "multiple" ? (
                   <>
                     <span>
-                      Mostrando <strong>{comparableTotal.toLocaleString("es-CL")}</strong> {comparableTotal === 1 ? "perfume que puedes comparar" : "perfumes que puedes comparar"} en 2 o más tiendas.
+                      Ves los <strong>{comparableTotal.toLocaleString("es-CL")}</strong> perfumes que están en 2 o más tiendas.
                     </span>
                     {unfilteredTotal > comparableTotal && (
                       <button type="button" onClick={() => setComparison("all")}>Ver todos ({unfilteredTotal.toLocaleString("es-CL")})</button>
@@ -507,25 +437,39 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
               </p>
             )}
 
-            <div className={styles.grid}>
-              {products.map(product => (
-                <ProductCard key={product.id} product={product} href={productHref(product.id)} />
-              ))}
-            </div>
+            {loading ? (
+              <div className={styles.grid} aria-busy="true">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div key={index} className={styles.cardSkeleton}>
+                    <span className={styles.skeleton} />
+                    <span className={styles.skeleton} style={{ width: "40%", height: 12 }} />
+                    <span className={styles.skeleton} style={{ width: "85%", height: 16 }} />
+                    <span className={styles.skeleton} style={{ height: 70 }} />
+                  </div>
+                ))}
+              </div>
+            ) : total === 0 ? (
+              <div className={styles.empty}>
+                <p>
+                  {urlQuery.trim()
+                    ? `No encontramos perfumes para "${urlQuery.trim()}".`
+                    : "Ningún perfume coincide con los filtros elegidos."}
+                </p>
+                {filterCount > 0 && <button type="button" onClick={resetFilters}>Borrar filtros</button>}
+              </div>
+            ) : (
+              <div className={styles.grid}>
+                {products.map(product => (
+                  <ProductCard key={product.id} product={product} href={productHref(product.id)} />
+                ))}
+              </div>
+            )}
 
-            {total > PRODUCTS_PER_PAGE && (
+            {!loading && total > PRODUCTS_PER_PAGE && (
               <div className={styles.paginationWrap}>{renderPagination()}</div>
             )}
           </div>
         </div>
-      )}
-
-      {!loading && !error && total === 0 && (
-        <p className={styles.empty}>
-          {urlQuery.trim()
-            ? `No encontramos fragancias para "${urlQuery.trim()}".`
-            : "Ninguna fragancia coincide con los filtros elegidos."}
-        </p>
       )}
     </section>
   );

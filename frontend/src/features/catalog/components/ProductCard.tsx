@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "../domain/product";
+import { BrandIcon } from "@/shared/components/BrandIcon";
 import { Icon } from "@/shared/components/Icon";
 import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import { FavoriteButton } from "./FavoriteButton";
@@ -38,7 +39,7 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
               onError={() => markFailed(image)}
             />
           ) : (
-            <span className={styles.imagePlaceholder}>FF</span>
+            <span className={styles.imagePlaceholder}><BrandIcon size={56} /></span>
           )}
         </Link>
         {product.badge && (
@@ -48,9 +49,11 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
       </div>
       <div className={styles.cardBody}>
         <div className={styles.cardHeader}>
-          <p className="eyebrow">{product.brand}</p>
-          <h3>{product.name}</h3>
-          <p className={styles.notes}>{[product.size, ...product.notes].filter(Boolean).join(" · ")}</p>
+          <small className={styles.cardBrand}>{product.brand}</small>
+          <h3><Link href={detailHref}>{product.name}</Link></h3>
+          {[product.size, ...product.notes].filter(Boolean).length > 0 && (
+            <p className={styles.notes}>{[product.size, ...product.notes].filter(Boolean).join(" · ")}</p>
+          )}
         </div>
         <div className={styles.prices}>
           {product.prices.length ? (
@@ -60,26 +63,25 @@ export function ProductCard({ product, recommendation = false, href }: ProductCa
                   className={`${styles.priceRow} ${index === 0 ? styles.bestPriceRow : ""}`}
                   key={price.id ?? `${price.store}-${price.price}-${index}`}
                 >
-                  <span className={styles.storeName}>
+                  <span className={styles.storeName} title={index === 0 ? `Más barato en ${price.store}` : undefined}>
                     {price.store}
-                    {index === 0 ? <em className={styles.bestBadge}>Mejor precio</em> : price.offer && <em>Oferta</em>}
                   </span>
                   <strong>{price.price}</strong>
                 </div>
               ))}
               {product.extraStoreCount ? (
-                <p className={styles.moreStores}>+{product.extraStoreCount} {product.extraStoreCount === 1 ? "tienda más" : "tiendas más"} en el detalle</p>
+                <p className={styles.moreStores}>y {product.extraStoreCount} {product.extraStoreCount === 1 ? "tienda más" : "tiendas más"}</p>
               ) : null}
             </>
           ) : (
-            <div className={styles.priceRow}><span>Tienda</span><strong>Precio pendiente</strong></div>
+            <div className={styles.priceRow}><span className={styles.storeName}>Tienda</span><strong>Precio pendiente</strong></div>
           )}
         </div>
         <Link className={styles.storeButton} href={detailHref}>
           {recommendation ? (
             <><span>Comparar</span><Icon name="chart" size={16} /></>
           ) : (
-            <><span>Ver precios y tiendas</span><Icon name="arrow" size={16} /></>
+            <><span>Ver precios</span><Icon name="arrow" size={16} /></>
           )}
         </Link>
       </div>

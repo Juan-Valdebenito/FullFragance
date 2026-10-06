@@ -1,4 +1,4 @@
-# FullFragrance Frontend
+# FullFragance Frontend
 
 Aplicación web modular construida con Next.js, React y TypeScript.
 

@@ -29,8 +29,8 @@ const SITE_URL = "https://fullfragance.cl";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "FullFragrance | Comparador de Precios de Perfumes en Chile",
-    template: "%s | FullFragrance",
+    default: "FullFragance | Comparador de Precios de Perfumes en Chile",
+    template: "%s | FullFragance",
   },
   description:
     "Compara precios de perfumes originales entre tiendas verificadas de Chile (Falabella, Ripley, Paris, ABC y más) y encuentra la oferta más barata antes de comprar.",
@@ -45,15 +45,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_CL",
-    siteName: "FullFragrance",
+    siteName: "FullFragance",
     url: SITE_URL,
-    title: "FullFragrance | Comparador de Precios de Perfumes en Chile",
+    title: "FullFragance | Comparador de Precios de Perfumes en Chile",
     description:
       "Compara precios de perfumes originales entre tiendas verificadas de Chile y encuentra la oferta más barata antes de comprar.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FullFragrance | Comparador de Precios de Perfumes en Chile",
+    title: "FullFragance | Comparador de Precios de Perfumes en Chile",
     description: "Compara precios de perfumes originales entre tiendas verificadas de Chile.",
   },
 };

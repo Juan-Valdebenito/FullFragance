@@ -4,7 +4,9 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // La URL del backend en producción puede venir de NEXT_PUBLIC_API_URL.
 // Extraemos el origen (protocolo + host) para usarlo en la CSP.
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "").replace(/\/$/, "") || "";
+// Una URL relativa (proxy de desarrollo) ya queda cubierta por 'self'.
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+const apiOrigin = apiUrl.startsWith("http") ? apiUrl.replace(/\/api\/?$/, "").replace(/\/$/, "") : "";
 
 // En producción también permitimos pagead2 y otros dominios de AdSense en connect-src
 const connectSources = [

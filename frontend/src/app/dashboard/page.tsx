@@ -20,7 +20,7 @@ export default async function DashboardPage({
 
   return (
     <>
-      <Header active="catalog" />
+      <Header active="catalog" search={false} />
       <DashboardContent initialQuery={initialQuery} />
       <Footer />
     </>

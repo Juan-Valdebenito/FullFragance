@@ -27,6 +27,21 @@ function matchesProduct(product, productFilter) {
   return queryTokens.every((token) => haystack.includes(token));
 }
 
+// Primero las tiendas con stock y, dentro de cada grupo, de más barata a más
+// cara: así prices[0] es siempre la mejor compra posible y una tienda sin stock
+// no aparece como "más barata" en la tarjeta ni en el detalle.
+function byAvailabilityThenPrice(a, b) {
+  return Number(b.available) - Number(a.available) || a.price - b.price;
+}
+
+// Rango de precios de lo que se puede comprar. Si ninguna tienda tiene stock se
+// usa el rango completo para no dejar el perfume sin precio.
+function priceRange(prices) {
+  const buyable = prices.filter((price) => price.available);
+  const pool = (buyable.length ? buyable : prices).map((price) => price.price);
+  return pool.length ? { min: Math.min(...pool), max: Math.max(...pool) } : { min: null, max: null };
+}
+
 function pricesForRealProduct(product) {
   if (Array.isArray(product.offers)) {
     return product.offers
@@ -41,7 +56,7 @@ function pricesForRealProduct(product) {
           productUrl: offer.productUrl,
         };
       })
-      .sort((a, b) => a.price - b.price);
+      .sort(byAvailabilityThenPrice);
   }
   const sourceStore = SOURCE_STORES[product.source];
   return product.price || product.basePrice
@@ -107,13 +122,15 @@ async function getComparison(productFilter) {
   const products = realProducts.length ? realProducts : matches;
   const comparison = products.map((product) => {
     const prices = pricesForProduct(product);
+    const range = priceRange(prices);
     return {
       product: listProduct(product),
-      // La tarjeta sólo imprime tienda y precio; el enlace a la tienda y la
-      // etiqueta de oportunidad viven en el detalle, que se pide por producto.
-      prices: prices.map(({ storeId, storeName, price }) => ({ storeId, storeName, price })),
-      minPrice: prices[0]?.price ?? null,
-      maxPrice: prices[prices.length - 1]?.price ?? null,
+      // La tarjeta imprime tienda, precio y si hay stock (para no destacar una
+      // tienda agotada); el enlace y la etiqueta de oportunidad viven en el
+      // detalle, que se pide por producto.
+      prices: prices.map(({ storeId, storeName, price, available }) => ({ storeId, storeName, price, available })),
+      minPrice: range.min,
+      maxPrice: range.max,
     };
   });
 
@@ -195,15 +212,16 @@ async function getComparisonForProduct(productId) {
   const product = await getProductById(productId);
   if (!product) return null;
   const prices = pricesForProduct(product);
+  const range = priceRange(prices);
 
-  const currentMinPrice = prices[0]?.price || product.basePrice || 0;
+  const currentMinPrice = range.min || product.basePrice || 0;
   const historyData = generatePriceHistory(product.id, currentMinPrice);
 
   return {
     product,
     prices,
     minPrice: currentMinPrice,
-    maxPrice: prices[prices.length - 1]?.price || currentMinPrice,
+    maxPrice: range.max || currentMinPrice,
     priceHistory: historyData.history90d,
     priceHistory30d: historyData.history30d,
     opportunity: historyData.opportunity,
@@ -215,4 +233,4 @@ async function getComparisonForProduct(productId) {
   };
 }
 
-module.exports = { getComparison, getComparisonForProduct, generatePriceHistory };
+module.exports = { getComparison, getComparisonForProduct, generatePriceHistory, pricesForProduct, priceRange };

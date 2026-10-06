@@ -101,7 +101,7 @@ export function HeroBanner() {
     <section
       className={styles.banner}
       aria-roledescription="carrusel"
-      aria-label="Destacados de FullFragrance"
+      aria-label="Destacados de FullFragance"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}

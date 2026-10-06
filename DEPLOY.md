@@ -1,4 +1,4 @@
-# Guía de Deploy — FullFragrance
+# Guía de Deploy — FullFragance
 
 **Stack de producción (100% gratuito):**
 - 🎨 **Frontend** → [Vercel](https://vercel.com) (Next.js)
@@ -100,7 +100,7 @@ En Railway → tu servicio → pestaña **Variables** → agrega una por una:
 2. Ve a **Settings** → **Networking** → **Generate Domain** para obtener tu URL pública
 3. Guarda la URL: `https://tu-app.up.railway.app`
 4. Prueba que funciona: `https://tu-app.up.railway.app/`
-   - Debe responder: `{"name":"FullFragrance API","frontend":"..."}`
+   - Debe responder: `{"name":"FullFragance API","frontend":"..."}`
 
 ### 2.4 Scraping automático (cron)
 

@@ -46,7 +46,7 @@ export function AdminLogin() {
     <main className={styles.loginPage}>
       <form className={styles.loginCard} onSubmit={submit}>
         <div>
-          <p className={styles.brand}>FullFragrance <span>Admin</span></p>
+          <p className={styles.brand}>FullFragance <span>Admin</span></p>
           <h1>Iniciar sesión</h1>
           <p>Acceso exclusivo para administradores.</p>
         </div>

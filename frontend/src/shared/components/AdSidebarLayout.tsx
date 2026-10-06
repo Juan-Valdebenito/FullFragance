@@ -39,7 +39,7 @@ export function AdSidebarLayout({
         </aside>
       )}
 
-      <main className={styles.content}>{children}</main>
+      <div className={styles.content}>{children}</div>
 
       {right && (
         <aside className={styles.sidebarRight} aria-label="Anuncio derecho">

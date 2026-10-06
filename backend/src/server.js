@@ -7,7 +7,7 @@ const { searchCatalog } = require("./models/catalogSearch");
 async function start() {
   await initDatabase();
   app.listen(port, () => {
-    console.log(`FullFragrance backend escuchando en http://localhost:${port}`);
+    console.log(`FullFragance backend escuchando en http://localhost:${port}`);
   });
   startScraperScheduler();
 

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Footer } from "@/shared/components/Footer";
 import { Header } from "@/shared/components/Header";
 import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "Política de datos y privacidad | FullFragrance",
-  description: "Información clara sobre el tratamiento de datos personales en FullFragrance.",
+  title: "Política de datos y privacidad | FullFragance",
+  description: "Información clara sobre el tratamiento de datos personales en FullFragance.",
 };
 
 export default function DataPolicyPage() {
@@ -16,14 +15,14 @@ export default function DataPolicyPage() {
       <section className={styles.hero}>
         <p className="eyebrow">Legal</p>
         <h1>Política de datos y privacidad</h1>
-        <p>En esta política explicamos, en lenguaje claro, qué datos usa FullFragrance, para qué los necesita y cómo puedes ejercer control sobre ellos. No vendemos tus datos personales ni los usamos para fines ajenos a los descritos aquí.</p>
+        <p>En esta política explicamos, en lenguaje claro, qué datos usa FullFragance, para qué los necesita y cómo puedes ejercer control sobre ellos. No vendemos tus datos personales ni los usamos para fines ajenos a los descritos aquí.</p>
         <div className={styles.meta}><span>Versión 1.0 · 30 de julio de 2026</span><span>Aplica a visitantes y cuentas registradas</span></div>
       </section>
 
       <section className={styles.content}>
         <article className={styles.section}>
           <h2>1. Responsable y alcance</h2>
-          <p>FullFragrance es responsable del tratamiento de los datos personales que recopila directamente a través de esta plataforma. Para consultas, solicitudes de privacidad o reclamos, puedes escribir a <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link>. Esta política cubre la navegación, las cuentas, favoritos y preferencias del test olfativo.</p>
+          <p>FullFragance es responsable del tratamiento de los datos personales que recopila directamente a través de esta plataforma. Para consultas, solicitudes de privacidad o reclamos, puedes escribir a <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a>. Esta política cubre la navegación, las cuentas, favoritos y preferencias del test olfativo.</p>
         </article>
 
         <article className={styles.section}>
@@ -59,8 +58,8 @@ export default function DataPolicyPage() {
 
         <article className={styles.section}>
           <h2>5. Comunicaciones y terceros</h2>
-          <p>No vendemos ni arrendamos datos personales. Solo podemos comunicar datos cuando sea necesario para operar la plataforma, usar proveedores tecnológicos bajo instrucciones de confidencialidad, atender una solicitud tuya, cumplir una obligación legal o proteger la seguridad y derechos de FullFragrance o de terceros. Si inicias sesión con Google, también aplican las condiciones y políticas de ese proveedor.</p>
-          <p>La información de productos, tiendas y precios se usa para comparación. No compartimos tus datos de cuenta con las tiendas para realizar compras, porque FullFragrance no procesa pagos ni vende productos en su nombre.</p>
+          <p>No vendemos ni arrendamos datos personales. Solo podemos comunicar datos cuando sea necesario para operar la plataforma, usar proveedores tecnológicos bajo instrucciones de confidencialidad, atender una solicitud tuya, cumplir una obligación legal o proteger la seguridad y derechos de FullFragance o de terceros. Si inicias sesión con Google, también aplican las condiciones y políticas de ese proveedor.</p>
+          <p>La información de productos, tiendas y precios se usa para comparación. No compartimos tus datos de cuenta con las tiendas para realizar compras, porque FullFragance no procesa pagos ni vende productos en su nombre.</p>
         </article>
 
         <article className={styles.section}>
@@ -70,7 +69,7 @@ export default function DataPolicyPage() {
 
         <article className={styles.section}>
           <h2>7. Tus derechos y cómo ejercerlos</h2>
-          <p>Puedes solicitar acceso, rectificación, eliminación, oposición o bloqueo de datos, y los demás derechos que reconozca la normativa aplicable, incluida la portabilidad cuando corresponda. Envía tu solicitud a <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link> indicando tu nombre, correo de la cuenta, petición concreta y un medio para responderte. Podremos pedir información razonable para verificar tu identidad y proteger tu cuenta.</p>
+          <p>Puedes solicitar acceso, rectificación, eliminación, oposición o bloqueo de datos, y los demás derechos que reconozca la normativa aplicable, incluida la portabilidad cuando corresponda. Envía tu solicitud a <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a> indicando tu nombre, correo de la cuenta, petición concreta y un medio para responderte. Podremos pedir información razonable para verificar tu identidad y proteger tu cuenta.</p>
           <p>Esta política se interpreta de acuerdo con la Ley N.º 19.628 y sus modificaciones, además de las demás normas chilenas aplicables en materia de datos personales.</p>
         </article>
 
@@ -83,8 +82,7 @@ export default function DataPolicyPage() {
           <h2>9. Cambios y contacto</h2>
           <div className={styles.contact}>
             <p>Podemos actualizar esta política si cambian nuestras funciones o la normativa. Publicaremos la versión y fecha de actualización en esta página.</p>
-            <Link href="mailto:datos@fullfragrance.cl">datos@fullfragrance.cl</Link>
-            <Link href="mailto:contacto@fullfragrance.cl">contacto@fullfragrance.cl</Link>
+            <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a>
           </div>
         </article>
       </section>

@@ -9,7 +9,7 @@ const analyticsRoutes = require("./analyticsRoutes");
 
 const router = Router();
 
-router.get("/", (_req, res) => res.json({ name: "FullFragrance API", status: "ok" }));
+router.get("/", (_req, res) => res.json({ name: "FullFragance API", status: "ok" }));
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);

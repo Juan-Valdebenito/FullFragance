@@ -91,7 +91,7 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
       <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ""}`} aria-label="Navegación del panel">
         <div className={styles.sidebarHead}>
           <Link href="/admin" className={styles.brand} onClick={() => setMenuOpen(false)}>
-            FullFragrance <span>Admin</span>
+            FullFragance <span>Admin</span>
           </Link>
           <button type="button" className={styles.iconButton} onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">
             <AdminIcon name="close" />

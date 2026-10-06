@@ -49,14 +49,14 @@ if (!isProduction) {
     "/api/docs",
     swaggerUi.serve,
     swaggerUi.setup(openapi, {
-      customSiteTitle: "FullFragrance API - Swagger",
+      customSiteTitle: "FullFragance API - Swagger",
       swaggerOptions: { persistAuthorization: false },
     })
   );
 }
 
 app.use("/api", apiRoutes);
-app.get("/", (_req, res) => res.json({ name: "FullFragrance API", frontend: "http://localhost:3001" }));
+app.get("/", (_req, res) => res.json({ name: "FullFragance API", frontend: "http://localhost:3001" }));
 
 app.use("/api", notFoundHandler);
 app.use(errorHandler);

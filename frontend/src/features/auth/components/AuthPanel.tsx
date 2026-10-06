@@ -30,7 +30,7 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
   };
 
   return <section className={styles.card} aria-label={mode === "register" ? "Crear cuenta" : "Iniciar sesión"}>
-    <div className={styles.heading}><p className="eyebrow">{mode === "register" ? "Únete a FullFragrance" : "Bienvenido de vuelta"}</p><h2>{mode === "register" ? "Crear una cuenta" : "Iniciar sesión"}</h2></div>
+    <div className={styles.heading}><p className="eyebrow">{mode === "register" ? "Únete a FullFragance" : "Bienvenido de vuelta"}</p><h2>{mode === "register" ? "Crear una cuenta" : "Iniciar sesión"}</h2></div>
     <div className={styles.form}>
       <GoogleAuthButton onSuccess={handleSuccessRedirect} onError={(msg) => setError(msg)} />
       <div className={styles.divider}>o ingresa con tu correo</div>

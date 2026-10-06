@@ -30,7 +30,7 @@ const errorResponses = {
 const openapi = {
   openapi: "3.0.3",
   info: {
-    title: "FullFragrance API",
+    title: "FullFragance API",
     version: "1.0.0",
     description:
       "API para autenticacion, catalogo, recomendaciones, favoritos, tiendas cercanas, precios y sincronizacion de scrapers.",
@@ -671,7 +671,7 @@ const openapi = {
       ApiStatus: {
         type: "object",
         properties: {
-          name: { type: "string", example: "FullFragrance API" },
+          name: { type: "string", example: "FullFragance API" },
           status: { type: "string", example: "ok" },
         },
       },

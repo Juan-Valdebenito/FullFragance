@@ -13,7 +13,7 @@ export function ProfileSummary() {
         <div className={styles.avatar}>?</div>
         <div>
           <p className="eyebrow">Tu cuenta</p>
-          <h1>Inicia sesión en FullFragrance</h1>
+          <h1>Inicia sesión en FullFragance</h1>
           <p>Accede a tu perfil olfativo, perfumes favoritos y preferencias regionales.</p>
         </div>
         <Link href="/login">Iniciar sesión</Link>

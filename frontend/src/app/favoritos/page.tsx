@@ -6,7 +6,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { FavoritesCatalog } from "@/features/catalog/components/FavoritesCatalog";
 import styles from "./favorites.module.css";
 
-export const metadata: Metadata = { title: "Mis favoritos | FullFragrance" };
+export const metadata: Metadata = { title: "Mis favoritos | FullFragance" };
 
 export default function FavoritesPage() {
   return (

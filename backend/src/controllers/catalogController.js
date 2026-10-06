@@ -107,9 +107,13 @@ function realisticPrices(offers) {
 async function getBestDeals() {
   const allProducts = await catalogRepository.getProducts();
   const products = allProducts
-    .filter((product) => product.available && product.basePrice > 0 && product.offers?.length > 1)
-    .map((product) => {
-      const prices = realisticPrices(product.offers);
+    .filter((product) => product.available && product.basePrice > 0)
+    // El ahorro se mide solo entre tiendas con stock: comparar contra una
+    // tienda agotada inflaba el descuento de la oferta.
+    .map((product) => ({ product, offers: (product.offers ?? []).filter((offer) => offer.available) }))
+    .filter(({ offers }) => offers.length > 1)
+    .map(({ product, offers }) => {
+      const prices = realisticPrices(offers);
       const minPrice = Math.min(...prices);
       const maxPrice = Math.max(...prices);
       const savings = maxPrice - minPrice;

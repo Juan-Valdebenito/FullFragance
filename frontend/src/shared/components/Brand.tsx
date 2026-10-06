@@ -4,10 +4,10 @@ import styles from "./shared.module.css";
 
 export function Brand() {
   return (
-    <Link className={styles.brand} href="/" aria-label="FullFragrance, ir al inicio">
+    <Link className={styles.brand} href="/" aria-label="FullFragance, ir al inicio">
       <BrandIcon size={34} />
       <span className={styles.wordmark}>
-        <span>Full</span>Fragrance
+        <span>Full</span>Fragance
       </span>
     </Link>
   );

@@ -1,6 +1,6 @@
-# Estado actual del proyecto FullFragrance
+# Estado actual del proyecto FullFragance
 
-FullFragrance es una aplicación web modular orientada al descubrimiento de perfumes, la comparación de precios por ciudad y la generación de recomendaciones personalizadas según los gustos de cada usuario.
+FullFragance es una aplicación web modular orientada al descubrimiento de perfumes, la comparación de precios por ciudad y la generación de recomendaciones personalizadas según los gustos de cada usuario.
 
 Actualmente, el proyecto cuenta con las siguientes funcionalidades:
 
@@ -115,7 +115,7 @@ Permite:
 
 ## Mapa de tiendas físicas
 
-FullFragrance incluye un mapa geográfico funcional desarrollado con Leaflet y OpenStreetMap.
+FullFragance incluye un mapa geográfico funcional desarrollado con Leaflet y OpenStreetMap.
 
 El mapa permite:
 
@@ -220,7 +220,7 @@ El servidor exige PostgreSQL al iniciar. El modo en memoria sólo está disponib
 
 4. Copia `frontend/.env.example` como `frontend/.env.local` si aún no existe y reinicia frontend y backend.
 
-El backend valida la firma, la audiencia y que el correo de Google esté verificado antes de emitir el JWT de FullFragrance. No acepta correos ni perfiles enviados directamente por el navegador.
+El backend valida la firma, la audiencia y que el correo de Google esté verificado antes de emitir el JWT de FullFragance. No acepta correos ni perfiles enviados directamente por el navegador.
 
 ### 3. Tema visual
 
@@ -271,6 +271,6 @@ Para probar rutas protegidas desde Swagger, inicia sesión en `/api/auth/login`,
 
 ## Resumen del avance
 
-FullFragrance ya cuenta con una base funcional sólida. El sistema permite registrar usuarios, iniciar sesión, realizar un test olfativo, recibir recomendaciones personalizadas, explorar un catálogo de perfumes, gestionar favoritos, consultar tiendas físicas cercanas y comparar precios entre distintas tiendas.
+FullFragance ya cuenta con una base funcional sólida. El sistema permite registrar usuarios, iniciar sesión, realizar un test olfativo, recibir recomendaciones personalizadas, explorar un catálogo de perfumes, gestionar favoritos, consultar tiendas físicas cercanas y comparar precios entre distintas tiendas.
 
 La principal funcionalidad pendiente para convertir el proyecto en una plataforma comercial es reemplazar los precios simulados por precios reales obtenidos desde tiendas externas, ya sea mediante scraping, APIs o acuerdos con comercios. También será necesario enlazar cada botón directamente al producto correspondiente dentro de cada tienda.

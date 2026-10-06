@@ -39,13 +39,19 @@
    catálogo que va dentro necesita ~1080px para no desbordar, así que
    por debajo de 1600px el contenido se queda con el ancho completo. */
 @media (max-width: 1600px) {
+  /* Mismo ancho y márgenes que .container, para alinear con el header */
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: min(calc(100% - 40px), var(--max-width));
     grid-template-areas: "content";
-    padding-inline: clamp(16px, 3vw, 40px);
+    justify-content: center;
+    padding-inline: 0;
   }
   .sidebarLeft,
   .sidebarRight {
     display: none;
   }
+}
+
+@media (max-width: 700px) {
+  .layout { grid-template-columns: calc(100% - 28px); }
 }

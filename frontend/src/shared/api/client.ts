@@ -4,7 +4,13 @@ import type { ApiNote, Comparison, Recommendation, SyncJob, User } from "./types
 // computador que ejecuta el backend. Sin variable de entorno, conservamos el
 // hostname actual y sólo cambiamos al puerto de la API.
 function apiUrl() {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  const configured = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  // Ruta relativa (proxy de desarrollo, ver app/api-proxy): en el navegador
+  // va al mismo origen; en el servidor hay que darle el host de Next.
+  if (configured?.startsWith("/")) {
+    return typeof window !== "undefined" ? configured : `http://localhost:${process.env.PORT ?? 3001}${configured}`;
+  }
+  if (configured) return configured;
   if (typeof window !== "undefined") return `${window.location.protocol}//${window.location.hostname}:3000/api`;
   return "http://localhost:3000/api";
 }

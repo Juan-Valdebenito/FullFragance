@@ -27,8 +27,8 @@ export function Footer({ compact = false }: { compact?: boolean }) {
     </section>
     <section className={styles.footerColumn}>
       <h2>Contacto</h2>
-      <Link href="mailto:fullfragance67@gmail.com">Soporte comercial</Link>
-      <Link href="mailto:fullfragance67@gmail.com">Correcciones de datos</Link>
+      <a href="mailto:fullfragance67@gmail.com">Soporte comercial</a>
+      <a href="mailto:fullfragance67@gmail.com">Correcciones de datos</a>
       <Link href="/politica-de-datos">Política de datos</Link>
       <Link href="/politica-de-uso">Política de uso</Link>
     </section>
