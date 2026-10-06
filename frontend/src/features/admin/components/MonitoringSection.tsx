@@ -13,6 +13,10 @@ function weekday(date: string) {
   return new Date(`${date}T12:00:00`).toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "");
 }
 
+function monthLabel(month: string) {
+  return new Date(`${month}-01T12:00:00`).toLocaleDateString("es-CL", { month: "short", year: "2-digit" }).replace(".", "");
+}
+
 export function MonitoringSection() {
   const { metrics, loadingMetrics, saveAdRevenue } = useAdmin();
   const [revenueInput, setRevenueInput] = useState("");
@@ -41,6 +45,7 @@ export function MonitoringSection() {
 
   const count = (value: number | undefined) => (value ?? 0).toLocaleString("es-CL");
   const series = (metrics?.views.series ?? []).map((point) => ({ label: weekday(point.date), value: point.views }));
+  const monthlySeries = (metrics?.views.monthly ?? []).map((point) => ({ label: monthLabel(point.month), value: point.views }));
 
   return (
     <>
@@ -76,6 +81,10 @@ export function MonitoringSection() {
           )}
         </Panel>
       </div>
+
+      <Panel title="Vistas por mes" meta={`${count(metrics?.views.allTime)} vistas en total`}>
+        {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" />}
+      </Panel>
 
       <Panel title="Ingreso publicitario del mes" meta="Registro manual">
         <form className={styles.inlineForm} onSubmit={submit}>

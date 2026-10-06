@@ -16,7 +16,7 @@ function niceMax(value: number) {
 }
 
 // Gráfico de área en SVG puro: una serie, ejes mínimos y un punto por día.
-export function AreaChart({ points, unit }: { points: Point[]; unit: string }) {
+export function AreaChart({ points, unit, periodLabel = "por día" }: { points: Point[]; unit: string; periodLabel?: string }) {
   const gradientId = useId();
   if (!points.length) return <p className={styles.empty}>Aún no hay datos para graficar.</p>;
 
@@ -30,7 +30,7 @@ export function AreaChart({ points, unit }: { points: Point[]; unit: string }) {
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => Math.round(max * fraction));
 
   return (
-    <svg className={styles.chart} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Gráfico de ${unit} por día`}>
+    <svg className={styles.chart} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Gráfico de ${unit} ${periodLabel}`}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.22" />
