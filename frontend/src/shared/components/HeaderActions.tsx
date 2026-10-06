@@ -40,7 +40,7 @@ export function HeaderActions() {
     <div className={styles.actions}>
       {isAdmin && (
         <Link
-          href="/dashboard"
+          href="/admin"
           style={{
             background: "var(--gold-light)",
             border: "1px solid var(--gold)",
@@ -53,7 +53,7 @@ export function HeaderActions() {
             textTransform: "uppercase",
           }}
         >
-          ⚙️ Admin Panel
+          Panel admin
         </Link>
       )}
       <ThemeToggle />

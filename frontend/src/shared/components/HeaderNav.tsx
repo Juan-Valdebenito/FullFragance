@@ -187,7 +187,7 @@ export function HeaderNav({ active }: { active?: "catalog" | "test" }) {
   const isAdmin = user?.role === "admin";
 
   const items: NavItem[] = isAdmin
-    ? [{ href: "/dashboard", label: "Panel Admin", activeKey: "catalog" }]
+    ? [{ href: "/admin", label: "Panel Admin", activeKey: "catalog" }]
     : filterNavItems(HEADER_NAV_ITEMS, user);
   const showPersonalTools = !isAdmin && Boolean(user);
 

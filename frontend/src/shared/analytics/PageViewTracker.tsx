@@ -8,7 +8,8 @@ export function PageViewTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!pathname || navigator.doNotTrack === "1") return;
+    // El panel admin no es tráfico del sitio: no se cuenta en las métricas.
+    if (!pathname || pathname.startsWith("/admin") || navigator.doNotTrack === "1") return;
     void api.trackPageView(pathname).catch(() => undefined);
   }, [pathname]);
 

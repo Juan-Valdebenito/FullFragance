@@ -13,9 +13,11 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSuccessRedirect = () => {
+  const handleSuccessRedirect = async () => {
+    const user = await optionalSession?.refreshUser();
     const next = new URLSearchParams(window.location.search).get("next");
-    router.push(next || (mode === "register" ? "/test" : "/dashboard"));
+    const home = user?.role === "admin" ? "/admin" : "/dashboard";
+    router.push(next || (mode === "register" ? "/test" : home));
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -23,8 +25,7 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
     try {
       if (mode === "register") await api.register({ name: String(form.get("name")), email: String(form.get("email")), password: String(form.get("password")) });
       else await api.login({ email: String(form.get("email")), password: String(form.get("password")) });
-      await optionalSession?.refreshUser();
-      handleSuccessRedirect();
+      await handleSuccessRedirect();
     } catch (reason) { setError(reason instanceof ApiError ? reason.message : "No fue posible completar la solicitud."); setLoading(false); }
   };
 
