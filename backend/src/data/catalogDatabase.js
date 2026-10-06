@@ -1,10 +1,10 @@
-const { query } = require("./pgDatabase");
+const { query, transaction } = require("./pgDatabase");
 
-async function upsertProduct(product) {
+async function upsertProduct(product, run = query) {
   const now = new Date().toISOString();
   const rawJson = JSON.stringify(product.raw || {});
   
-  await query(
+  await run(
     `INSERT INTO scraped_products (
       source, sku, brand, name, price, currency, presentation, image_url,
       available, product_url, raw_json, first_seen_at, last_seen_at
@@ -62,10 +62,14 @@ async function replaceProducts(source, products) {
   if (!source || products.some((product) => product.source !== source)) {
     throw new Error("La fuente de los productos no coincide con el catálogo a reemplazar.");
   }
-  await query("DELETE FROM scraped_products WHERE source = $1", [source]);
-  for (const product of products) {
-    await upsertProduct(product);
-  }
+  // Borrar e insertar en una sola transacción: si el proceso se corta a mitad
+  // de camino se conserva el catálogo anterior en vez de quedar a medias.
+  await transaction(async (run) => {
+    await run("DELETE FROM scraped_products WHERE source = $1", [source]);
+    for (const product of products) {
+      await upsertProduct(product, run);
+    }
+  });
 }
 
 module.exports = { upsertProduct, listProducts, replaceProducts };

@@ -88,6 +88,26 @@ async function query(text, params) {
   return p.query(text, params);
 }
 
+// Ejecuta fn con una función de consulta ligada a una transacción: o se
+// aplican todas las consultas o ninguna, y los lectores no ven estados a
+// medias. El respaldo en memoria no tiene transacciones; ahí corre directo.
+async function transaction(fn) {
+  await ensureInitialized();
+  if (useMemoryFallback) return fn(memoryQuery);
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn((text, params) => client.query(text, params));
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function initDatabase() {
   if (isInitialized) return;
   if (initPromise) return initPromise;
@@ -523,6 +543,7 @@ function userToPgRow(u) {
 
 module.exports = {
   query,
+  transaction,
   initDatabase,
   getPool,
 };

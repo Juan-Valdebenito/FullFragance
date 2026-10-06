@@ -123,7 +123,7 @@ async function syncRipleyPerfumeCatalog(req, res, next) {
     const results = await scrapeRipleyPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
     if (products.length) {
-      replaceProducts("ripley-cl", products);
+      await replaceProducts("ripley-cl", products);
       invalidateCatalogCache();
     }
     res.status(results.every((result) => result.ok) ? 200 : 207).json({ results });
@@ -421,7 +421,7 @@ async function syncParis(req, res, next) {
     const results = await scrapeParisPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
     if (products.length) {
-      replaceProducts("paris-cl", products);
+      await replaceProducts("paris-cl", products);
       invalidateCatalogCache();
     }
     res.status(200).json({ results });
@@ -454,7 +454,7 @@ async function syncAbc(req, res, next) {
     const results = await scrapeAbcPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
     if (products.length) {
-      replaceProducts("abc-cl", products);
+      await replaceProducts("abc-cl", products);
       invalidateCatalogCache();
     }
     res.status(200).json({ results });
@@ -487,7 +487,7 @@ async function syncPreunic(req, res, next) {
     const results = await scrapePreunicPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
     if (products.length) {
-      replaceProducts("preunic-cl", products);
+      await replaceProducts("preunic-cl", products);
       invalidateCatalogCache();
     }
     res.status(200).json({ results });
@@ -520,7 +520,7 @@ async function syncLodoro(req, res, next) {
     const results = await scrapeLodoroPerfumeCatalog(maxProducts);
     const products = results.filter((result) => result.ok).map((result) => result.product);
     if (products.length) {
-      replaceProducts("lodoro-cl", products);
+      await replaceProducts("lodoro-cl", products);
       invalidateCatalogCache();
     }
     res.status(200).json({ results });

@@ -59,7 +59,7 @@ async function run(job) {
       result.products.forEach((product) => products.set(product.sku, product));
       job.imported = products.size;
     }
-    replaceProducts(job.source, [...products.values()]);
+    await replaceProducts(job.source, [...products.values()]);
     invalidateCatalogCache();
     job.status = "completed";
   } catch (error) {
