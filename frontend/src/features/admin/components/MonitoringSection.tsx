@@ -17,11 +17,20 @@ function monthLabel(month: string) {
   return new Date(`${month}-01T12:00:00`).toLocaleDateString("es-CL", { month: "short", year: "2-digit" }).replace(".", "");
 }
 
+const MONTH_RANGE_OPTIONS = [
+  { value: 1, label: "1 mes" },
+  { value: 2, label: "2 meses" },
+  { value: 3, label: "3 meses" },
+  { value: 6, label: "6 meses" },
+  { value: 12, label: "1 año" },
+];
+
 export function MonitoringSection() {
   const { metrics, loadingMetrics, saveAdRevenue } = useAdmin();
   const [revenueInput, setRevenueInput] = useState("");
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [monthsRange, setMonthsRange] = useState(12);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +54,9 @@ export function MonitoringSection() {
 
   const count = (value: number | undefined) => (value ?? 0).toLocaleString("es-CL");
   const series = (metrics?.views.series ?? []).map((point) => ({ label: weekday(point.date), value: point.views }));
-  const monthlySeries = (metrics?.views.monthly ?? []).map((point) => ({ label: monthLabel(point.month), value: point.views }));
+  const visibleMonthly = (metrics?.views.monthly ?? []).slice(-monthsRange);
+  const monthlySeries = visibleMonthly.map((point) => ({ label: monthLabel(point.month), value: point.views }));
+  const monthlyTotal = visibleMonthly.reduce((sum, point) => sum + point.views, 0);
 
   return (
     <>
@@ -82,15 +93,30 @@ export function MonitoringSection() {
         </Panel>
       </div>
 
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <label className={styles.panelMeta} htmlFor="months-range">Período</label>
+        <select
+          id="months-range"
+          className={styles.select}
+          value={monthsRange}
+          onChange={(event) => setMonthsRange(Number(event.target.value))}
+          aria-label="Meses a mostrar"
+        >
+          {MONTH_RANGE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div className={styles.split}>
-        <Panel title="Vistas por mes" meta={`${count(metrics?.views.allTime)} vistas en total`}>
+        <Panel title="Vistas por mes" meta={`${count(monthlyTotal)} vistas en el período`}>
           {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" />}
         </Panel>
 
         <Panel title="Detalle por mes" meta="Vistas acumuladas">
-          {metrics?.views.monthly.length ? (
+          {visibleMonthly.length ? (
             <ol className={styles.rankList}>
-              {[...metrics.views.monthly].reverse().map((point) => (
+              {[...visibleMonthly].reverse().map((point) => (
                 <li key={point.month}>
                   <code>{monthLabel(point.month)}</code>
                   <span>{point.views.toLocaleString("es-CL")}</span>
