@@ -16,13 +16,20 @@ type Access = { status: "checking" } | { status: "granted"; user: User };
 // /admin no hereda la sesión opcional del sitio: valida el token antes de
 // montar el panel y saca a quien no sea admin.
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const isLogin = usePathname() === "/admin/login";
+  // El login comparte el layout de /admin pero no pasa por el guard.
+  if (isLogin) return children;
+  return <AdminGuard>{children}</AdminGuard>;
+}
+
+function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [access, setAccess] = useState<Access>({ status: "checking" });
 
   useEffect(() => {
     let cancelled = false;
     if (!session.hasToken()) {
-      router.replace("/login?next=/admin");
+      router.replace("/admin/login");
       return;
     }
     api.me()
@@ -33,7 +40,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         session.clear();
-        if (!cancelled) router.replace("/login?next=/admin");
+        if (!cancelled) router.replace("/admin/login");
       });
     return () => { cancelled = true; };
   }, [router]);
@@ -74,7 +81,7 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
 
   function logout() {
     session.clear();
-    router.push("/login");
+    router.push("/admin/login");
   }
 
   const displayName = user.name?.trim() || user.email;
