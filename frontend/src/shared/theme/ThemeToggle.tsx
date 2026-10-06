@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Theme, useTheme } from "./ThemeContext";
+import styles from "./ThemeToggle.module.css";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -27,52 +28,25 @@ export function ThemeToggle() {
   const currentOption = options.find((o) => o.id === theme) || options[0];
 
   return (
-    <div ref={dropdownRef} style={{ position: "relative", display: "inline-block" }}>
+    <div ref={dropdownRef} className={styles.root}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-label="Cambiar tema de color"
+        aria-expanded={open}
         title="Cambiar tema de color"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "7px 12px",
-          borderRadius: "99px",
-          border: "1px solid var(--outline-variant)",
-          background: "var(--surface-bright)",
-          color: "var(--on-surface)",
-          fontSize: ".75rem",
-          fontWeight: 600,
-          cursor: "pointer",
-          transition: "border-color .2s, background .2s",
-        }}
+        className={styles.trigger}
       >
         <span>{currentOption.icon}</span>
         {/* En móvil solo queda el icono: la etiqueta no cabe junto a la marca
             y el botón de menú (ver .themeToggleLabel en globals.css). */}
-        <span className="themeToggleLabel" style={{ fontSize: ".72rem" }}>
+        <span className={`themeToggleLabel ${styles.triggerLabel}`}>
           {currentOption.label}
         </span>
       </button>
 
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 50,
-            minWidth: "160px",
-            padding: "6px",
-            borderRadius: "12px",
-            border: "1px solid var(--outline-variant)",
-            background: "var(--surface-bright)",
-            boxShadow: "var(--shadow-md)",
-            display: "grid",
-            gap: "2px",
-          }}
-        >
+        <div className={styles.menu}>
           {options.map((opt) => {
             const isSelected = opt.id === theme;
             return (
@@ -84,24 +58,10 @@ export function ThemeToggle() {
                   setOpen(false);
                 }}
                 title={opt.title}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "8px 10px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: isSelected ? "var(--gold-light)" : "transparent",
-                  color: isSelected ? "var(--gold-dark)" : "var(--on-surface)",
-                  fontWeight: isSelected ? 700 : 500,
-                  fontSize: ".78rem",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  width: "100%",
-                }}
+                className={`${styles.option} ${isSelected ? styles.optionSelected : ""}`}
               >
                 <span>{opt.icon}</span>
-                <span style={{ flex: 1 }}>{opt.label}</span>
+                <span className={styles.optionLabel}>{opt.label}</span>
                 {isSelected && <span>✓</span>}
               </button>
             );

@@ -99,7 +99,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 2px 7px;
   width: fit-content;
   backdrop-filter: blur(4px);
@@ -115,7 +115,7 @@
 }
 
 .adHeadline {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;

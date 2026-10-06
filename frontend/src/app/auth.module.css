@@ -7,7 +7,7 @@
 .pitch h1 span { color: var(--gold); }
 .lead { max-width: 560px; color: var(--on-surface-muted); font-size: 1.12rem; line-height: 1.75; }
 .benefits { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.benefits span { display: flex; align-items: center; gap: 8px; border: 1px solid var(--outline-variant); background: var(--surface-bright); border-radius: 99px; padding: 10px 14px; font-size: .82rem; }
+.benefits span { display: flex; align-items: center; gap: 8px; border: 1px solid var(--outline-variant); background: var(--surface-bright); border-radius: 999px; padding: 10px 14px; font-size: .82rem; }
 .benefits svg { color: var(--gold); }
 @media (max-width: 850px) { .grid { grid-template-columns: 1fr; gap: 44px; } .pitch { text-align: center; margin-inline: auto; } .benefits { justify-content: center; } }
 @media (max-width: 550px) { .main { padding-top: 28px; } }

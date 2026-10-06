@@ -3,8 +3,8 @@
   flex-direction: column;
   gap: 16px;
   margin-top: 1.75rem;
-  border: 1px solid rgba(197, 160, 89, 0.24);
-  border-radius: 18px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
   background: linear-gradient(145deg, var(--surface-lowest) 0%, var(--surface-bright) 70%);
   padding: 18px;
   box-shadow: 0 12px 30px rgba(72, 56, 28, 0.05);
@@ -49,7 +49,7 @@
   font-weight: 700;
 }
 
-.tagGreatDeal { border: 1px solid rgba(40, 123, 67, 0.3); background: rgba(40, 123, 67, 0.1); color: #287b43; }
+.tagGreatDeal { border: 1px solid rgb(var(--success-rgb) / 0.3); background: rgb(var(--success-rgb) / 0.1); color: var(--success); }
 .tagStable { border: 1px solid rgba(70, 109, 150, 0.25); background: rgba(89, 117, 147, 0.1); color: #466d96; }
 .tagTrendingUp { border: 1px solid rgba(181, 120, 41, 0.3); background: rgba(181, 120, 41, 0.11); color: #94601d; }
 
@@ -57,8 +57,8 @@
   display: flex;
   gap: 2px;
   flex: none;
-  border-radius: 9px;
-  background: #f4f0e8;
+  border-radius: var(--radius-md);
+  background: var(--surface-low);
   padding: 3px;
 }
 
@@ -87,15 +87,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  border: 1px solid rgba(130, 101, 57, 0.1);
-  border-radius: 10px;
-  background: #fcfaf6;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-lowest);
   padding: 0.75rem;
 }
 
 .statLabel { color: var(--on-surface-muted); font-size: 0.68rem; }
 .statValue { color: var(--on-surface); font-size: 1rem; font-weight: 750; letter-spacing: -0.02em; }
-.statMin { color: #287b43; }
+.statMin { color: var(--success); }
 
 .chartHeader {
   justify-content: space-between;
@@ -105,19 +105,19 @@
   font-weight: 600;
 }
 
-.chartHeader span:last-child { color: #907f68; }
+.chartHeader span:last-child { color: var(--on-surface-muted); }
 
 .chartWrapper {
   position: relative;
   width: 100%;
   height: 196px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(246, 240, 230, 0.38), rgba(255, 255, 255, 0));
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgb(var(--gold-rgb) / 0.05), transparent);
 }
 
 .svgChart { width: 100%; height: 100%; overflow: visible; cursor: crosshair; }
-.gridLine { stroke: rgba(126, 96, 53, 0.14); stroke-dasharray: 3 4; }
-.axisLabel { fill: #9b8b77; font-size: 10px; font-family: inherit; }
+.gridLine { stroke: rgb(var(--gold-rgb) / 0.18); stroke-dasharray: 3 4; }
+.axisLabel { fill: var(--on-surface-muted); font-size: 10px; font-family: inherit; }
 
 .tooltip {
   position: absolute;
@@ -126,9 +126,9 @@
   flex-direction: column;
   align-items: center;
   transform: translate(-50%, -100%);
-  border: 1px solid rgba(197, 160, 89, 0.45);
-  border-radius: 8px;
-  background: #29231d;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  background: var(--surface-inverse);
   padding: 0.4rem 0.6rem;
   box-shadow: 0 10px 25px rgba(42, 31, 17, 0.24);
   pointer-events: none;
@@ -141,7 +141,7 @@
 .footerNote {
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid rgba(130, 101, 57, 0.1);
+  border-top: 1px solid var(--border-subtle);
   padding-top: 12px;
   color: var(--on-surface-muted);
   font-size: 0.68rem;
@@ -155,3 +155,10 @@
   .statValue { font-size: 0.87rem; }
   .chartHeader span:last-child, .footerNote span:last-child { display: none; }
 }
+
+/* Colores del SVG desde los tokens del tema (las clases pisan los atributos) */
+.gradientStop { stop-color: var(--gold); }
+.priceLine { stroke: var(--gold-dark); }
+.minMarker { fill: var(--success); stroke: var(--surface-lowest); }
+.hoverLine { stroke: rgb(var(--gold-rgb) / 0.45); }
+.hoverMarker { fill: var(--gold-dark); stroke: var(--surface-lowest); }

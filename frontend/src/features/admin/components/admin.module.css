@@ -50,7 +50,7 @@
 
 .brand {
   color: var(--on-surface);
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -304,7 +304,7 @@
 }
 
 .sectionHeader h1 {
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -347,7 +347,7 @@
 }
 
 .statValue {
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 1.75rem;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -816,7 +816,7 @@
 
 .loginCard h1 {
   margin-top: 20px;
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: -0.02em;

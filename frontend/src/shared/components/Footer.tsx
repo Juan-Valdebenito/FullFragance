@@ -32,10 +32,5 @@ export function Footer({ compact = false }: { compact?: boolean }) {
       <Link href="/politica-de-datos">Política de datos</Link>
       <Link href="/politica-de-uso">Política de uso</Link>
     </section>
-    <aside className={styles.footerTrust}>
-      <span>Tiendas verificadas</span>
-      <strong>Comparación multi-tienda</strong>
-      <p>Catálogo orientado a perfumería, sin productos marketplace en las comparaciones principales.</p>
-    </aside>
   </div></footer>;
 }

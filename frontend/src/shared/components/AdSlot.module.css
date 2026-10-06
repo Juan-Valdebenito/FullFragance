@@ -25,3 +25,9 @@
   min-width: 120px;
   min-height: 90px;
 }
+
+/* Si AdSense no tiene anuncio para el bloque, ocultamos todo (etiqueta
+   incluida) en vez de dejar un hueco vacío de 90px. */
+.adSlotWrapper:has(:global(.adsbygoogle)[data-ad-status="unfilled"]) {
+  display: none;
+}

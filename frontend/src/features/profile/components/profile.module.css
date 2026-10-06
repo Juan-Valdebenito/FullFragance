@@ -18,15 +18,15 @@
   border-radius: 50%;
   background: var(--primary);
   color: var(--on-primary);
-  font: 600 1.5rem "Space Grotesk", sans-serif;
+  font: 600 1.5rem var(--font-display);
 }
 
-.summary h1 { margin: 5px 0; font: 600 1.55rem "Space Grotesk", sans-serif; }
+.summary h1 { margin: 5px 0; font: 600 1.55rem var(--font-display); }
 .summary div > p:last-child { color: var(--on-surface-muted); font-size: .8rem; }
 
 .stats { display: flex; gap: 22px; }
 .stats span { display: flex; flex-direction: column; color: var(--on-surface-muted); font-size: .68rem; }
-.stats strong { color: var(--on-surface); font: 600 1.3rem "Space Grotesk", sans-serif; }
+.stats strong { color: var(--on-surface); font: 600 1.3rem var(--font-body); }
 
 .summary > a,
 .primaryAction {
@@ -77,7 +77,7 @@
 .shortcuts {
   display: grid;
   gap: 22px;
-  border: 1px solid var(--outline-variant);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-bright);
   padding: 26px;
@@ -85,8 +85,8 @@
 }
 
 .sectionHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.sectionHeading h2 { margin-top: 6px; font: 600 1.25rem "Space Grotesk", sans-serif; }
-.sectionHeading > span { border-radius: 99px; background: var(--surface-low); padding: 6px 9px; color: var(--on-surface-muted); font-size: .64rem; font-weight: 700; text-transform: uppercase; }
+.sectionHeading h2 { margin-top: 6px; font: 600 1.25rem var(--font-body); }
+.sectionHeading > span { border-radius: 999px; background: var(--surface-low); padding: 6px 9px; color: var(--on-surface-muted); font-size: .64rem; font-weight: 700; text-transform: uppercase; }
 
 .accountForm { display: grid; gap: 16px; }
 .accountForm .primaryAction { justify-self: start; border: 0; cursor: pointer; }
@@ -100,7 +100,7 @@
 }
 
 .securitySection h3,
-.dangerZone h3 { margin-top: 5px; color: var(--on-surface); font: 600 1rem "Space Grotesk", sans-serif; }
+.dangerZone h3 { margin-top: 5px; color: var(--on-surface); font: 600 1rem var(--font-body); }
 .passwordForm,
 .deleteForm {
   display: grid;
@@ -190,7 +190,7 @@
   align-items: center;
   gap: 12px;
   border: 1px solid var(--surface-container);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface-low);
   padding: 12px;
   transition: border-color var(--transition), background var(--transition), transform var(--transition);

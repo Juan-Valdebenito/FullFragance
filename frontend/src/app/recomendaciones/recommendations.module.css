@@ -24,11 +24,11 @@
 
 .sectionTitle h2 {
   margin-top: 7px;
-  font: 600 1.8rem "Space Grotesk", "Segoe UI", sans-serif;
+  font: 600 1.8rem var(--font-display);
 }
 
 .sectionTitle > span {
-  border-radius: 99px;
+  border-radius: 999px;
   background: var(--surface-container);
   padding: 7px 11px;
   color: var(--on-surface-muted);
@@ -78,7 +78,7 @@
 
 .cta h2 {
   margin-bottom: 9px;
-  font: 600 1.55rem "Space Grotesk", "Segoe UI", sans-serif;
+  font: 600 1.55rem var(--font-display);
 }
 
 .cta p {

@@ -163,8 +163,8 @@ export function PriceHistoryChart({
         >
           <defs>
             <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#987148" stopOpacity="0.26" />
-              <stop offset="100%" stopColor="#987148" stopOpacity="0.01" />
+              <stop offset="0%" className={styles.gradientStop} stopOpacity="0.26" />
+              <stop offset="100%" className={styles.gradientStop} stopOpacity="0.01" />
             </linearGradient>
           </defs>
 
@@ -182,12 +182,12 @@ export function PriceHistoryChart({
           <path d={areaPath} fill="url(#priceGradient)" />
 
           {/* Línea principal del gráfico */}
-          <path d={svgPath} fill="none" stroke="#9a6a36" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPath} fill="none" className={styles.priceLine} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Marcador de precio mínimo */}
           {minPointIndex >= 0 && (
             <g transform={`translate(${points[minPointIndex].x}, ${points[minPointIndex].y})`}>
-              <circle r="5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+              <circle r="5" className={styles.minMarker} strokeWidth="2" />
             </g>
           )}
 
@@ -199,11 +199,11 @@ export function PriceHistoryChart({
                 y1={CHART_PADDING.top}
                 x2={hoveredPoint.x}
                 y2={CHART_HEIGHT - CHART_PADDING.bottom}
-                stroke="rgba(111, 78, 40, 0.38)"
+                className={styles.hoverLine}
                 strokeDasharray="3 3"
                 strokeWidth="1"
               />
-              <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="6" fill="#9a6a36" stroke="#ffffff" strokeWidth="2.5" />
+              <circle cx={hoveredPoint.x} cy={hoveredPoint.y} r="6" className={styles.hoverMarker} strokeWidth="2.5" />
             </g>
           )}
 

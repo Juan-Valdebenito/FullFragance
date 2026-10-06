@@ -26,6 +26,10 @@ interface AdBannerProps {
 
 /* ─── Anuncios demo (se muestran sin AdSense configurado) ───── */
 
+// Mismo bloque oscuro con brillo dorado que la CTA de la home, para que los
+// anuncios de demo no traigan colores fuera de la paleta.
+const DEMO_AD_BG = "radial-gradient(circle at 100% 0%, rgb(var(--gold-rgb) / 0.18), transparent 50%), var(--surface-inverse)";
+
 const DEMO_ADS = [
   {
     brand: "Armaf",
@@ -34,8 +38,8 @@ const DEMO_ADS = [
     cta: "Ver en catálogo →",
     href: "/dashboard?q=Club+de+nuit",
     badge: "OFERTA",
-    color: "#c5a059",
-    bg: "linear-gradient(135deg,#1a1410 0%,#2e2518 100%)",
+    color: "var(--gold)",
+    bg: DEMO_AD_BG,
   },
   {
     brand: "Lattafa",
@@ -44,8 +48,8 @@ const DEMO_ADS = [
     cta: "Comparar precio →",
     href: "/dashboard?q=Bade+oud",
     badge: "TENDENCIA",
-    color: "#9b7fd4",
-    bg: "linear-gradient(135deg,#120d1f 0%,#1e1535 100%)",
+    color: "var(--gold)",
+    bg: DEMO_AD_BG,
   },
   {
     brand: "Creed",
@@ -54,8 +58,8 @@ const DEMO_ADS = [
     cta: "Ver comparativa →",
     href: "/dashboard?q=Aventus+Creed",
     badge: "NICHO",
-    color: "#60a5fa",
-    bg: "linear-gradient(135deg,#0a1120 0%,#0f1e3a 100%)",
+    color: "var(--gold)",
+    bg: DEMO_AD_BG,
   },
 ];
 
@@ -148,7 +152,7 @@ export function AdBanner({
 
             <span
               className={styles.adBadge}
-              style={{ color: ad.color, borderColor: `${ad.color}40` }}
+              style={{ color: ad.color, borderColor: `color-mix(in srgb, ${ad.color} 25%, transparent)` }}
             >
               {ad.badge}
             </span>

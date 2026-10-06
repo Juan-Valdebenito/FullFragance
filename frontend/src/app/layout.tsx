@@ -1,9 +1,28 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans, Josefin_Sans } from "next/font/google";
 import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
 import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
 import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
 import "./globals.css";
+
+// Fuentes servidas desde el propio dominio por next/font: no dependen de
+// fonts.googleapis.com (bloqueado por la CSP) y no retrasan el render.
+// Josefin Sans es la letra geométrica del logo: títulos y marca la usan para
+// que el sitio y el logo se vean como una sola identidad.
+const displayFont = Josefin_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "700"],
+  display: "swap",
+  variable: "--font-josefin",
+});
+
+const bodyFont = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-plex",
+});
 
 const SITE_URL = "https://fullfragance.cl";
 
@@ -45,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="es" className={`${displayFont.variable} ${bodyFont.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Aplica el tema guardado antes del primer render para evitar el flash claro→oscuro */}
         <script

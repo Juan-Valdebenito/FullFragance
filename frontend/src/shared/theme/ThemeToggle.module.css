@@ -1,0 +1,72 @@
+.root {
+  position: relative;
+  display: inline-block;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-gold);
+  background: var(--surface-bright);
+  color: var(--on-surface);
+  font-size: .75rem;
+  font-weight: 600;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  border-color: var(--border-gold-hover);
+}
+
+.triggerLabel {
+  font-size: .72rem;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  padding: 6px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-bright);
+  box-shadow: var(--shadow-md);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--on-surface);
+  font-size: .78rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.option:hover {
+  background: var(--surface-low);
+}
+
+.optionSelected,
+.optionSelected:hover {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+
+.optionLabel {
+  flex: 1;
+}

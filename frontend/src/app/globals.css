@@ -1,7 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
 :root {
   color-scheme: light;
+  /* Tipografía: Josefin Sans (la del logo) para títulos, Plex Sans para el resto */
+  --font-display:     var(--font-josefin), "Century Gothic", "Futura", sans-serif;
+  --font-body:        var(--font-plex), "Segoe UI", Arial, sans-serif;
+
   /* Surfaces */
   --surface:          #f8f7f5;
   --surface-dim:      #dadada;
@@ -23,10 +25,12 @@
   /* Brand */
   --primary:          #121212;
   --on-primary:       #fff;
-  --gold:             #c5a059;
-  --gold-dark:        #8a6a2c;
-  --gold-light:       rgb(197 160 89 / 14%);
-  --accent:           #b8923f;
+  /* Colores tomados del logo (public/logo.jpeg) */
+  --gold:             #aa7e3f;
+  --gold-dark:        #87622b;
+  --gold-light:       rgb(170 126 63 / 14%);
+  --accent:           #aa7e3f;
+  --cream:            #f1e9de;
 
   /* Semantic */
   --lavender:         #e6e0eb;
@@ -36,10 +40,9 @@
 
   /* Radii */
   --radius-sm:        4px;
-  --radius-md:        8px;
+  --radius-md:        10px;
   --radius-lg:        12px;
   --radius-xl:        18px;
-  --card-radius:      14px;
 
   /* Shadows */
   --shadow:           0 8px 32px rgb(0 0 0 / 6%);
@@ -55,7 +58,37 @@
 
   /* Page header */
   --page-header-bg:   linear-gradient(160deg, #f9f8f6 0%, #f0ede8 100%);
-  --page-header-border: rgb(197 160 89 / 20%);
+  --page-header-border: rgb(170 126 63 / 20%);
+
+  /* Canales RGB para usar el color con opacidad: rgb(var(--gold-rgb) / 12%) */
+  --gold-rgb:         170 126 63;
+  --success-rgb:      40 123 67;
+
+  /* Bordes de cards: sutiles por defecto, dorado solo como acento */
+  --border-subtle:    rgb(18 18 18 / 7%);
+  --border-gold:      rgb(var(--gold-rgb) / 22%);
+  --border-gold-hover:rgb(var(--gold-rgb) / 50%);
+
+  /* Bloques oscuros (CTA) que no cambian con el tema */
+  --surface-inverse:     #151412;
+  --on-surface-inverse:  #f5f2eb;
+  --on-gold:             #1a1712;
+
+  /* Fondos cálidos para imágenes de producto y skeletons */
+  --surface-warm:     linear-gradient(145deg, #fbfaf7 0%, #f1ede5 100%);
+  --skeleton-base:    #f0ede7;
+  --skeleton-shine:   #faf8f4;
+  /* Fondo plano de las fotos de producto (las fotos vienen sobre blanco) */
+  --tile:             #ffffff;
+
+  /* Mensajes de error */
+  --error-container:    #ffdad6;
+  --error-border:       #f2b8b5;
+  --on-error-container: #93000a;
+
+  /* Espaciado vertical entre secciones */
+  --space-section:    clamp(40px, 6vw, 64px);
+  --space-section-sm: clamp(24px, 4vw, 36px);
 }
 
 /* ─── Warm Dark Theme (Espresso & Champagne Gold) ─────── */
@@ -76,12 +109,12 @@
   --outline:          #595249;
   --outline-variant:  #3d3832;
 
-  --primary:          #e5c687;
+  --primary:          #e0bd85;
   --on-primary:       #1c160a;
-  --gold:             #d4af37;
-  --gold-dark:        #f0cf65;
-  --gold-light:       rgba(212, 175, 55, 0.18);
-  --accent:           #e2b857;
+  --gold:             #c9a063;
+  --gold-dark:        #e0bd85;
+  --gold-light:       rgb(201 160 99 / 18%);
+  --accent:           #c9a063;
 
   --lavender:         #332d3d;
   --rose:             #3b2a2a;
@@ -91,7 +124,22 @@
   --shadow-lg:        0 24px 60px rgba(0, 0, 0, 0.75);
 
   --page-header-bg:   linear-gradient(160deg, #1f1b18 0%, #161412 100%);
-  --page-header-border: rgba(212, 175, 55, 0.22);
+  --page-header-border: rgb(201 160 99 / 22%);
+
+  --gold-rgb:         201 160 99;
+  --success-rgb:      111 191 133;
+  --success:          #6fbf85;
+  --border-subtle:    rgb(255 255 255 / 8%);
+  --border-gold:      rgb(var(--gold-rgb) / 24%);
+  --surface-inverse:  #0e0c0b;
+  --surface-warm:     linear-gradient(145deg, #23201d 0%, #1c1917 100%);
+  --skeleton-base:    #262320;
+  --skeleton-shine:   #2e2925;
+  --tile:             #f1e9de;
+  --cream:            #2a251f;
+  --error-container:    #3b1a17;
+  --error-border:       #7a2b25;
+  --on-error-container: #ffb4ab;
 }
 
 /* ─── Pitch Black Theme (Pure OLED Black) ─────────────── */
@@ -114,10 +162,10 @@
 
   --primary:          #ffffff;
   --on-primary:       #000000;
-  --gold:             #d4af37;
-  --gold-dark:        #e5c158;
-  --gold-light:       rgba(212, 175, 55, 0.2);
-  --accent:           #e2b857;
+  --gold:             #c9a063;
+  --gold-dark:        #e0bd85;
+  --gold-light:       rgb(201 160 99 / 20%);
+  --accent:           #c9a063;
 
   --lavender:         #222026;
   --rose:             #291e1e;
@@ -128,6 +176,21 @@
 
   --page-header-bg:   linear-gradient(160deg, #121212 0%, #000000 100%);
   --page-header-border: rgba(255, 255, 255, 0.15);
+
+  --gold-rgb:         201 160 99;
+  --success-rgb:      111 191 133;
+  --success:          #6fbf85;
+  --border-subtle:    rgb(255 255 255 / 9%);
+  --border-gold:      rgb(var(--gold-rgb) / 26%);
+  --surface-inverse:  #111111;
+  --surface-warm:     linear-gradient(145deg, #141414 0%, #0a0a0a 100%);
+  --skeleton-base:    #161616;
+  --skeleton-shine:   #222222;
+  --tile:             #ececec;
+  --cream:            #181818;
+  --error-container:    #2a0f0d;
+  --error-border:       #6b221c;
+  --on-error-container: #ffb4ab;
 }
 
 /* ─── Reset ─────────────────────────────────────────── */
@@ -137,7 +200,7 @@ body {
   min-height: 100vh;
   color: var(--on-surface);
   background: var(--surface);
-  font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
@@ -153,11 +216,11 @@ img { display: block; max-width: 100%; }
 
 /* ─── Typography utilities ───────────────────────────── */
 .display {
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
-  font-size: clamp(2.2rem, 4.8vw, 3rem);
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 4.4vw, 3rem);
   font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -.03em;
+  letter-spacing: -.01em;
 }
 
 .muted { color: var(--on-surface-muted); }
