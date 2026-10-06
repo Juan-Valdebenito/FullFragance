@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/shared/api/client";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
-import { GoogleAuthButton } from "./GoogleAuthButton";
+import { GOOGLE_LOGIN_ENABLED, GoogleAuthButton } from "./GoogleAuthButton";
 import styles from "./AuthPanel.module.css";
 
 export function AuthPanel({ mode }: { mode: "register" | "login" }) {
@@ -29,21 +29,37 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
     } catch (reason) { setError(reason instanceof ApiError ? reason.message : "No fue posible completar la solicitud."); setLoading(false); }
   };
 
-  return <section className={styles.card} aria-label={mode === "register" ? "Crear cuenta" : "Iniciar sesión"}>
-    <div className={styles.heading}><p className="eyebrow">{mode === "register" ? "Únete a FullFragance" : "Bienvenido de vuelta"}</p><h2>{mode === "register" ? "Crear una cuenta" : "Iniciar sesión"}</h2></div>
-    <div className={styles.form}>
-      <GoogleAuthButton onSuccess={handleSuccessRedirect} onError={(msg) => setError(msg)} />
-      <div className={styles.divider}>o ingresa con tu correo</div>
-      <form onSubmit={submit} style={{ display: "grid", gap: "18px" }}>
-        {mode === "register" && <label>Nombre completo<input name="name" required placeholder="Ej: Julian Casablancas" /></label>}
-        <label>Email<input name="email" required type="email" placeholder="nombre@dominio.com" /></label>
-        <label>Contraseña<input name="password" required minLength={6} type="password" placeholder="••••••••" /></label>
-        {mode === "login" && <a href="#">¿Olvidaste tu contraseña?</a>}
+  return (
+    <section className={styles.card} aria-labelledby="auth-title">
+      <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : "Iniciar sesión"}</h2>
+      {GOOGLE_LOGIN_ENABLED && (
+        <>
+          <GoogleAuthButton onSuccess={handleSuccessRedirect} onError={(msg) => setError(msg)} />
+          <div className={styles.divider}>o con tu correo</div>
+        </>
+      )}
+      <form onSubmit={submit} className={styles.form}>
+        {mode === "register" && (
+          <label>Nombre<input name="name" required autoComplete="name" placeholder="Cómo te llamamos" /></label>
+        )}
+        <label>Correo<input name="email" required type="email" autoComplete="email" placeholder="nombre@correo.com" /></label>
+        <label>
+          Contraseña
+          <input name="password" required minLength={6} type="password" autoComplete={mode === "register" ? "new-password" : "current-password"} placeholder={mode === "register" ? "Mínimo 6 caracteres" : ""} />
+        </label>
         {error && <p className={styles.error} role="alert">{error}</p>}
-        <button disabled={loading} className={styles.submit} type="submit">{loading ? "Conectando…" : mode === "register" ? "Crear mi cuenta" : "Iniciar sesión"}</button>
+        <button disabled={loading} className={styles.submit} type="submit">
+          {loading ? (mode === "register" ? "Creando cuenta…" : "Iniciando sesión…") : mode === "register" ? "Crear cuenta" : "Iniciar sesión"}
+        </button>
       </form>
-      {mode === "register" && <p>Al crear una cuenta aceptas la <Link href="/politica-de-uso">política de uso</Link> y la <Link href="/politica-de-datos">política de datos</Link>.</p>}
-      <p>{mode === "register" ? <>¿Ya tienes cuenta? <Link href="/login">Inicia sesión</Link></> : <>¿Aún no tienes cuenta? <Link href="/registro">Créala aquí</Link></>}</p>
-    </div>
-  </section>;
+      {mode === "register" && (
+        <p className={styles.legal}>Al crear una cuenta aceptas la <Link href="/politica-de-uso">política de uso</Link> y la <Link href="/politica-de-datos">política de datos</Link>.</p>
+      )}
+      <p className={styles.switch}>
+        {mode === "register"
+          ? <>¿Ya tienes cuenta? <Link href="/login">Inicia sesión</Link></>
+          : <>¿No tienes cuenta? <Link href="/registro">Crea una</Link></>}
+      </p>
+    </section>
+  );
 }

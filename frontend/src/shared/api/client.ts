@@ -53,6 +53,7 @@ export const api = {
   comparisons: (query = "") => request<{ comparison: Comparison[] }>(`/prices?q=${encodeURIComponent(query)}`).then(data => data.comparison),
   comparisonsByIds: (ids: string[]) => request<{ comparison: Comparison[] }>(`/prices?ids=${ids.map(encodeURIComponent).join(",")}`).then(data => data.comparison),
   similarProducts: (productId: string) => request<{ items: Comparison[] }>(`/catalog/similar/${encodeURIComponent(productId)}`).then(data => data.items),
+  suggest: (query: string, signal?: AbortSignal) => request<import("./types").SuggestResult>(`/catalog/suggest?q=${encodeURIComponent(query)}`, { signal, authenticated: false }),
   searchCatalog: (params: URLSearchParams) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`),
   productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),

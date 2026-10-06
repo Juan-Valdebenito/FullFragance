@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { OpportunityTag, PriceHistoryPoint } from "@/shared/api/types";
 import styles from "./PriceHistoryChart.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const CHART_WIDTH = 500;
+const DEFAULT_WIDTH = 500;
 const CHART_HEIGHT = 196;
-const CHART_PADDING = { top: 16, right: 16, bottom: 30, left: 46 };
+const CHART_PADDING = { top: 18, right: 18, bottom: 30, left: 64 };
 
 const shortDate = (date: string) => new Date(date).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
 
@@ -26,6 +26,11 @@ export function PriceHistoryChart({
 }: PriceHistoryChartProps) {
   const [range, setRange] = useState<"30" | "90">("30");
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  // El SVG se dibuja al ancho real del contenedor: estirarlo deformaba los
+  // textos de los ejes y volvía ovalados los puntos.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(DEFAULT_WIDTH);
+
 
   const activePoints = useMemo(() => {
     if (range === "30") {
@@ -33,6 +38,18 @@ export function PriceHistoryChart({
     }
     return history90d.length ? history90d : history30d;
   }, [range, history30d, history90d]);
+
+  const hasPoints = activePoints.length > 0;
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = Math.round(entry.contentRect.width);
+      if (next > 0) setChartWidth(next);
+    });
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [hasPoints]);
 
   const { minPrice, maxPrice, avgPrice, points, minPointIndex } = useMemo(() => {
     if (!activePoints.length) {
@@ -45,7 +62,7 @@ export function PriceHistoryChart({
     const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
     const minIdx = prices.lastIndexOf(min);
 
-    const width = CHART_WIDTH - CHART_PADDING.left - CHART_PADDING.right;
+    const width = chartWidth - CHART_PADDING.left - CHART_PADDING.right;
     const height = CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom;
 
     const rangeY = max - min || 1;
@@ -58,11 +75,18 @@ export function PriceHistoryChart({
     });
 
     return { minPrice: min, maxPrice: max, avgPrice: avg, points: mapped, minPointIndex: minIdx };
-  }, [activePoints]);
+  }, [activePoints, chartWidth]);
 
+  // Curva suave: cada tramo es una cúbica con los puntos de control a mitad de
+  // camino en x, así la línea no sobrepasa los precios reales.
   const svgPath = useMemo(() => {
     if (!points.length) return "";
-    return points.reduce((acc, p, i) => `${acc} ${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, "");
+    return points.reduce((acc, p, i) => {
+      if (i === 0) return `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+      const prev = points[i - 1];
+      const midX = ((prev.x + p.x) / 2).toFixed(1);
+      return `${acc} C ${midX} ${prev.y.toFixed(1)} ${midX} ${p.y.toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    }, "");
   }, [points]);
 
   const areaPath = useMemo(() => {
@@ -88,15 +112,8 @@ export function PriceHistoryChart({
     <section className={styles.container} aria-label="Historial y gráfico de tendencia de precios">
       <header className={styles.header}>
         <div>
-          <div className={styles.headerTitle}>
-            <h3>Tendencia de precios</h3>
-            {opportunity && (
-              <span className={`${styles.opportunityTag} ${tagClass}`}>
-                {opportunity.label}
-              </span>
-            )}
-          </div>
-          <p className={styles.headerHint}>Evolución del menor precio disponible en tiendas locales.</p>
+          <h2>Historial de precios</h2>
+          <p className={styles.headerHint}>Menor precio disponible entre las tiendas.</p>
         </div>
         <div className={styles.toggleGroup} role="radiogroup" aria-label="Rango de tiempo">
           <button
@@ -120,33 +137,30 @@ export function PriceHistoryChart({
         </div>
       </header>
 
-      {/* Tarjetas de Métricas de Resumen */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Precio actual</span>
-          <strong className={styles.statValue}>{money.format(currentPrice)}</strong>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Mínimo ({range}d)</span>
-          <strong className={`${styles.statValue} ${styles.statMin}`}>{money.format(minPrice)}</strong>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Promedio ({range}d)</span>
-          <strong className={styles.statValue}>{money.format(avgPrice)}</strong>
-        </div>
-      </div>
+      {opportunity && (
+        <span className={`${styles.opportunityTag} ${tagClass}`}>{opportunity.label}</span>
+      )}
 
-      <div className={styles.chartHeader}>
-        <span>Historial de {range} días</span>
-        <span>Desliza sobre el gráfico para ver el detalle</span>
-      </div>
+      <dl className={styles.statsGrid}>
+        <div>
+          <dt>Hoy</dt>
+          <dd>{money.format(currentPrice)}</dd>
+        </div>
+        <div>
+          <dt>Mínimo {range} días</dt>
+          <dd className={styles.statMin}>{money.format(minPrice)}</dd>
+        </div>
+        <div>
+          <dt>Promedio {range} días</dt>
+          <dd>{money.format(avgPrice)}</dd>
+        </div>
+      </dl>
 
       {/* Gráfico interactivo SVG */}
-      <div className={styles.chartWrapper}>
+      <div className={styles.chartWrapper} ref={wrapperRef}>
         <svg
           className={styles.svgChart}
-          viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-          preserveAspectRatio="none"
+          viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}
           role="img"
           aria-label={`Gráfico de precios entre ${money.format(minPrice)} y ${money.format(maxPrice)} durante los últimos ${range} días`}
           onMouseLeave={() => setHoverIndex(null)}
@@ -172,7 +186,7 @@ export function PriceHistoryChart({
             const y = CHART_PADDING.top + ((maxPrice - value) / (maxPrice - minPrice || 1)) * (CHART_HEIGHT - CHART_PADDING.top - CHART_PADDING.bottom);
             return (
               <g key={`${value}-${index}`}>
-                <line x1={CHART_PADDING.left} x2={CHART_WIDTH - CHART_PADDING.right} y1={y} y2={y} className={styles.gridLine} />
+                <line x1={CHART_PADDING.left} x2={chartWidth - CHART_PADDING.right} y1={y} y2={y} className={styles.gridLine} />
                 <text x={CHART_PADDING.left - 8} y={y + 4} className={styles.axisLabel} textAnchor="end">{money.format(value)}</text>
               </g>
             );
@@ -182,7 +196,7 @@ export function PriceHistoryChart({
           <path d={areaPath} fill="url(#priceGradient)" />
 
           {/* Línea principal del gráfico */}
-          <path d={svgPath} fill="none" className={styles.priceLine} strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPath} fill="none" className={styles.priceLine} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
           {/* Marcador de precio mínimo */}
           {minPointIndex >= 0 && (
@@ -217,7 +231,7 @@ export function PriceHistoryChart({
           <div
             className={styles.tooltip}
             style={{
-              left: `${(hoveredPoint.x / CHART_WIDTH) * 100}%`,
+              left: `${(hoveredPoint.x / chartWidth) * 100}%`,
               top: `${Math.max(18, (hoveredPoint.y / CHART_HEIGHT) * 100 - 8)}%`,
             }}
           >
@@ -229,10 +243,9 @@ export function PriceHistoryChart({
         )}
       </div>
 
-      <footer className={styles.footerNote}>
-        <span>El punto verde marca el precio más bajo del período.</span>
-        <span>Monitoreamos ofertas cada día.</span>
-      </footer>
+      <p className={styles.footerNote}>
+        <span className={styles.legendDot} aria-hidden="true" /> Precio más bajo del período. Pasa el cursor por el gráfico para ver cada día.
+      </p>
     </section>
   );
 }

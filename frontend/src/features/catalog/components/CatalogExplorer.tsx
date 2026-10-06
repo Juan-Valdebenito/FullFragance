@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { api, ApiError, productImageCandidates, productImageUrl } from "@/shared/api/client";
@@ -89,20 +89,6 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const segment = isPerfumeSegment(segmentParam) ? segmentParam : "";
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
 
-  // ── Estado local solo para el input de búsqueda (tipeo rápido) ──────────
-  // El valor del input vive en React state para respuesta inmediata.
-  // Solo se sincroniza a la URL después de 300 ms de inactividad.
-  const [inputValue, setInputValue] = useState(urlQuery);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Mantener el input sincronizado si la URL cambia desde afuera (Back/Forward).
-  // Se ajusta durante el render para evitar un render extra desde un efecto.
-  const [syncedQuery, setSyncedQuery] = useState(urlQuery);
-  if (syncedQuery !== urlQuery) {
-    setSyncedQuery(urlQuery);
-    setInputValue(urlQuery);
-  }
-
   // ── Datos del catálogo ──────────────────────────────────────────────────
   const [result, setResult] = useState<CatalogSearchResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,21 +169,24 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
     applyParams({ brand: null, cat: null, gender: null, minPrice: null, maxPrice: null, store: null, presentation: null, comparison: null, segment: null, sort: null, page: null });
   }
 
-  /** Input de búsqueda: actualización local inmediata + debounce a URL */
-  function handleSearchChange(value: string) {
-    setInputValue(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      applyParams({ q: value || null, page: null });
-    }, 300);
-  }
-
   /** Construye el href del detalle incluyendo la URL actual como "back" */
   function productHref(productId: string) {
     const currentParams = searchParams.toString();
     const back = `/dashboard${currentParams ? `?${currentParams}` : ""}`;
     return `/perfumes/${productId}?back=${encodeURIComponent(back)}`;
   }
+
+  // Si el texto traía intención ("perfume de hombre", "nicho bajo 50 mil") el
+  // backend la aplicó como filtros: se pasan a la URL para que se vean en los
+  // controles y se puedan quitar, y la búsqueda queda solo con el texto.
+  useEffect(() => {
+    if (!result?.intent?.length) return;
+    const changes: Record<string, string | null> = { q: result.text || null, page: null };
+    for (const chip of result.intent) changes[chip.key] = chip.value;
+    applyParams(changes);
+    // applyParams lee la URL actual; sólo debe correr cuando llega un resultado nuevo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   // ── Resultado paginado del backend ──────────────────────────────────────
   const brands       = result?.facets.brands ?? [];
@@ -208,6 +197,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const currentPage  = result?.page ?? 1;
   const products     = useMemo(() => (result?.items ?? []).map(toProduct), [result]);
   const comparableTotal = result?.comparableTotal ?? 0;
+  const correctedQuery = result?.correctedQuery ?? null;
   const unfilteredTotal = result?.unfilteredTotal ?? 0;
   const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison !== defaultComparison, segment].filter(Boolean).length;
   const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
@@ -249,7 +239,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
       {/* Encabezado: título del segmento, conteo y orden */}
       <div className={styles.catalogHead}>
         <div>
-          <h1>{activeSegment.title}</h1>
+          <h1>{urlQuery ? <>Resultados para «{correctedQuery ?? urlQuery}»</> : activeSegment.title}</h1>
           <p>
             {loading
               ? "Buscando precios en 12 tiendas…"
@@ -287,21 +277,18 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
         ))}
       </div>
 
-      {/* Búsqueda en vivo dentro del catálogo */}
-      <div className={styles.search}>
-        <Icon name="search" size={18} />
-        <label className="srOnly" htmlFor="catalog-search">Buscar en el catálogo</label>
-        <input
-          id="catalog-search"
-          value={inputValue}
-          onChange={e => handleSearchChange(e.target.value)}
-          placeholder="Filtra por marca, nombre o familia olfativa"
-        />
-        <button type="button" className={styles.filterToggle} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
-          <Icon name="filter" size={18} />
-          <span>Filtros{filterCount ? ` (${filterCount})` : ""}</span>
-        </button>
-      </div>
+      {/* La búsqueda vive en el header (SmartSearch). Aquí solo se avisa si se
+          corrigió un error de tipeo, y en móvil se abren los filtros. */}
+      {correctedQuery && (
+        <p className={styles.correction}>
+          Mostramos resultados para <strong>{correctedQuery}</strong>. No encontramos «{urlQuery}» tal como se escribió.
+        </p>
+      )}
+
+      <button type="button" className={styles.filterToggle} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(o => !o)}>
+        <Icon name="filter" size={18} />
+        <span>Filtros{filterCount ? ` (${filterCount})` : ""}</span>
+      </button>
 
       {isAdmin && (
         <p className={styles.adminNote}>

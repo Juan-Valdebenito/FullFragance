@@ -23,7 +23,7 @@ const catalog = [
 // catálogo actual a través de esta variable.
 let currentCatalog = catalog;
 priceService.getComparison = async () => currentCatalog;
-const { searchCatalog, comparisonsByIds, parseSearchParams, similarComparables: searchSimilar } = require("../src/models/catalogSearch");
+const { searchCatalog, suggest, comparisonsByIds, parseSearchParams, similarComparables: searchSimilar } = require("../src/models/catalogSearch");
 
 test("pagina resultados y respeta el tamaño máximo de página", async () => {
   const first = await searchCatalog({ pageSize: "2" });
@@ -85,4 +85,48 @@ test("informa cuántos comparables hay dentro de los filtros activos", async () 
   assert.equal(all.unfilteredTotal, all.total);
   assert.equal(onlyComparable.total, all.comparableTotal);
   assert.equal(onlyComparable.unfilteredTotal, all.total);
+});
+
+test("aplica la intención escrita como filtros y la informa", async () => {
+  const result = await searchCatalog({ q: "perfume arabe bajo 30 mil" });
+  assert.deepEqual(result.items.map((entry) => entry.product.id), ["asad"]);
+  assert.deepEqual(result.intent.map((chip) => chip.key), ["segment", "maxPrice"]);
+  // Un filtro explícito en la URL gana sobre la intención escrita.
+  const explicit = await searchCatalog({ q: "nicho", segment: "arabic" });
+  assert.deepEqual(explicit.items.map((entry) => entry.product.id), ["asad"]);
+  assert.deepEqual(explicit.intent, []);
+});
+
+test("corrige errores de tipeo cuando no hay coincidencias exactas", async () => {
+  const result = await searchCatalog({ q: "sauvaje" });
+  assert.deepEqual(result.items.map((entry) => entry.product.id), ["sauvage"]);
+  assert.equal(result.correctedQuery, "sauvage");
+  assert.equal((await searchCatalog({ q: "sauvage" })).correctedQuery, null);
+});
+
+test("sugiere perfumes y marcas mientras se escribe", async () => {
+  const result = await suggest("lat");
+  assert.deepEqual(result.brands, [{ name: "Lattafa", count: 1 }]);
+  assert.deepEqual(result.products.map((product) => product.id), ["asad"]);
+  assert.equal(result.products[0].minPrice, 25000);
+
+  const typo = await suggest("carolina herera");
+  assert.equal(typo.correctedQuery, "carolina herrera");
+  assert.deepEqual(typo.products.map((product) => product.id), ["set-good-girl"]);
+
+  const intent = await suggest("perfume de mujer");
+  assert.equal(intent.text, "");
+  assert.deepEqual(intent.chips.map((chip) => chip.label), ["Mujer"]);
+  assert.equal(intent.total, 1);
+});
+
+test("deduce el género desde el nombre cuando el catálogo no lo trae", async () => {
+  currentCatalog = [...catalog,
+    item("eros-sin-genero", { brand: "Versace", name: "Eros Pour Homme EDT 100 ml", gender: "", prices: [{ storeName: "Paris", price: 60000 }] }),
+    item("idole-sin-genero", { brand: "Lancome", name: "Perfume Mujer Idole EDP 50 ml", gender: undefined, prices: [{ storeName: "Paris", price: 70000 }] }),
+  ];
+  const ids = async (query) => (await searchCatalog(query)).items.map((entry) => entry.product.id).sort();
+  assert.deepEqual(await ids({ gender: "Masculino", q: "eros" }), ["eros-sin-genero"]);
+  assert.deepEqual(await ids({ q: "perfume de mujer" }), ["idole-sin-genero", "set-good-girl"]);
+  currentCatalog = catalog;
 });

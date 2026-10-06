@@ -1,0 +1,236 @@
+/* ─── Barra de búsqueda inteligente (header) ─── */
+
+.search {
+  position: relative;
+  grid-area: search;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 640px;
+  justify-self: center;
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  background: var(--surface-lowest);
+  padding: 4px 4px 4px 18px;
+  color: var(--on-surface-muted);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.search:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-light);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--on-surface);
+  padding-block: 8px;
+}
+
+.search input::placeholder {
+  color: var(--on-surface-muted);
+}
+
+.clear {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on-surface-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.clear:hover {
+  background: var(--surface-low);
+  color: var(--on-surface);
+}
+
+.submit {
+  display: grid;
+  width: 40px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--on-gold);
+  transition: background var(--transition);
+}
+
+.submit:hover {
+  background: var(--gold-dark);
+}
+
+/* ─── Panel de sugerencias ─── */
+.panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-lowest);
+  padding: 8px;
+  box-shadow: var(--shadow-lg);
+  color: var(--on-surface);
+}
+
+/* Lo que se entendió de la búsqueda, antes de las opciones */
+.intent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 6px 8px;
+  color: var(--on-surface-muted);
+  font-size: .85rem;
+}
+
+.intent em {
+  border-radius: 999px;
+  background: var(--cream);
+  padding: 3px 10px;
+  color: var(--on-surface);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.options {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.optionActive {
+  background: var(--cream);
+}
+
+.correction {
+  color: var(--on-surface-muted);
+}
+
+.correction strong {
+  color: var(--gold-dark);
+}
+
+.brandIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-inverse);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--tile);
+}
+
+.thumb img {
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  padding: 4px;
+}
+
+.optionText {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.optionText strong {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionText small {
+  color: var(--on-surface-muted);
+  font-size: .8rem;
+}
+
+.optionPrice {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.optionPrice small {
+  color: var(--on-surface-muted);
+  font-size: .78rem;
+}
+
+.all {
+  flex: 1;
+  color: var(--gold-dark);
+  font-weight: 600;
+}
+
+.option:has(.all) {
+  margin-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding-block: 12px;
+  color: var(--gold-dark);
+}
+
+.empty {
+  padding: 14px 10px;
+  color: var(--on-surface-muted);
+}
+
+.empty strong {
+  color: var(--on-surface);
+}
+
+@media (max-width: 900px) {
+  .search {
+    max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .search {
+    padding-left: 14px;
+  }
+
+  .search input::placeholder {
+    font-size: .9rem;
+  }
+}

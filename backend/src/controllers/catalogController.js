@@ -153,6 +153,16 @@ async function searchProducts(req, res, next) {
   }
 }
 
+async function suggest(req, res, next) {
+  try {
+    const result = await catalogSearch.suggest(req.query.q);
+    catalogCacheHeader(res);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function similarProducts(req, res, next) {
   try {
     const items = await catalogSearch.similarComparables(req.params.productId);
@@ -175,4 +185,4 @@ async function productIds(_req, res, next) {
   }
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, productIds, similarProducts, catalogCacheHeader };
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, suggest, productIds, similarProducts, catalogCacheHeader };

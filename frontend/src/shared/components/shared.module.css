@@ -53,56 +53,6 @@
 .headerGrid > .actions { grid-area: actions; }
 .headerGrid > .menuButton { grid-area: menu; }
 
-.headerSearch {
-  grid-area: search;
-  display: flex;
-  align-items: center;
-  max-width: 640px;
-  width: 100%;
-  justify-self: center;
-  border: 1px solid var(--outline-variant);
-  border-radius: 999px;
-  background: var(--surface-lowest);
-  padding: 4px 4px 4px 20px;
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.headerSearch:focus-within {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px var(--gold-light);
-}
-
-.headerSearch input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--on-surface);
-  padding-block: 8px;
-}
-
-.headerSearch input::placeholder {
-  color: var(--on-surface-muted);
-}
-
-.headerSearch button {
-  display: grid;
-  width: 40px;
-  height: 36px;
-  flex: none;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: var(--gold);
-  color: var(--on-gold);
-  transition: background var(--transition);
-}
-
-.headerSearch button:hover {
-  background: var(--gold-dark);
-}
-
 /* Barra de categorías bajo el buscador, con la línea bronce del logo */
 .headerGrid > nav {
   grid-area: nav;
@@ -461,9 +411,22 @@
 /* ─── Footer ─────────────────────────────────────────────────────────────── */
 
 .footer {
+  --footer-text: rgb(247 241 232 / 70%);
+  --footer-strong: #f7f1e8;
   margin-top: var(--space-section);
-  background: var(--surface-container);
-  border-top: 1px solid var(--border-subtle);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(var(--gold-rgb) / 18%), transparent 40%),
+    var(--surface-inverse);
+  color: var(--footer-text);
+}
+
+/* La línea bronce del header, repetida al cerrar la página */
+.footer::before {
+  content: "";
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  opacity: .6;
 }
 
 .compact { margin-top: 0; }
@@ -476,39 +439,40 @@
   display: grid;
   grid-template-columns: minmax(280px, 1.6fr) minmax(150px, .7fr) minmax(170px, .7fr);
   gap: clamp(28px, 4vw, 58px);
-  padding-block: 36px;
+  padding-block: 48px 40px;
   align-items: start;
 }
 
+.footer .brand { color: var(--footer-strong); }
+/* El recorte de la etiqueta del ícono toma el fondo del footer */
+.footer .brand svg { --surface: var(--surface-inverse); }
+
 .footerProfile {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .footerProfile p {
-  max-width: 440px;
-  color: var(--on-surface-muted);
-  font-size: .84rem;
+  max-width: 42ch;
+  font-size: .92rem;
   line-height: 1.6;
 }
 
 .footerContact {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  font-size: .9rem;
 }
 
-.footerContact {
-  column-gap: 18px;
+.footerContact a,
+.footerColumn a {
+  transition: color var(--transition);
 }
 
-.footerContact > * {
-  color: var(--on-surface-muted);
-  font-size: .84rem;
-}
-
-.footerContact > a:hover {
-  color: var(--on-surface);
+.footerContact a:hover,
+.footerColumn a:hover {
+  color: var(--gold);
 }
 
 .footerColumn {
@@ -518,20 +482,41 @@
 
 .footerColumn h2 {
   margin-bottom: 4px;
-  color: var(--on-surface);
-  font-size: .9rem;
-  font-weight: 600;
+  color: var(--footer-strong);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
 }
 
 .footerColumn a {
-  color: var(--on-surface-muted);
-  font-size: .88rem;
+  font-size: .9rem;
   line-height: 1.35;
-  transition: color var(--transition);
 }
 
-.footerColumn a:hover {
-  color: var(--on-surface);
+.footer a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* Barra final: derechos y créditos de los autores */
+.footerBottom {
+  border-top: 1px solid rgb(247 241 232 / 10%);
+}
+
+.footerBottom > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-block: 18px;
+  font-size: .85rem;
+}
+
+.footerCredits strong {
+  color: var(--gold);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
@@ -560,7 +545,6 @@
   }
   .headerGrid > .brand { min-height: 64px; }
   .headerGrid > nav { display: none; }
-  .headerSearch { max-width: none; }
   .menuButton { display: grid; }
   .mobilePanel {
     position: fixed;
@@ -606,8 +590,9 @@
   .wordmark { font-size: .95rem; letter-spacing: .12em; }
   .loginLink,
   .registerLink { padding: 8px 10px; font-size: .78rem; white-space: nowrap; }
-  .footerInner { grid-template-columns: 1fr; padding-block: 36px; }
-  .footerContact > * { width: 100%; }
+  .footerInner { grid-template-columns: 1fr 1fr; padding-block: 36px 28px; }
+  .footerProfile { grid-column: 1 / -1; }
+  .footerBottom > div { flex-direction: column; align-items: flex-start; }
   .megaGrid {
     grid-template-columns: 1fr;
     padding-top: 24px;

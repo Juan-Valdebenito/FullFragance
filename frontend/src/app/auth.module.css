@@ -1,13 +1,120 @@
-.shell { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 15% 55%, var(--rose), transparent 25%), linear-gradient(135deg, var(--surface), var(--surface-low)); }
-.header { min-height: 88px; display: flex; align-items: center; justify-content: space-between; }
-.main { flex: 1; display: grid; align-items: center; padding: 56px 0 72px; }
-.grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 72px; align-items: center; }
-.pitch { max-width: 590px; }
-.pitch h1 { margin: 18px 0 24px; }
-.pitch h1 span { color: var(--gold); }
-.lead { max-width: 560px; color: var(--on-surface-muted); font-size: 1.12rem; line-height: 1.75; }
-.benefits { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.benefits span { display: flex; align-items: center; gap: 8px; border: 1px solid var(--outline-variant); background: var(--surface-bright); border-radius: 999px; padding: 10px 14px; font-size: .82rem; }
-.benefits svg { color: var(--gold); }
-@media (max-width: 850px) { .grid { grid-template-columns: 1fr; gap: 44px; } .pitch { text-align: center; margin-inline: auto; } .benefits { justify-content: center; } }
-@media (max-width: 550px) { .main { padding-top: 28px; } }
+/* ─── Login y registro ─── */
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  align-items: center;
+  gap: clamp(32px, 6vw, 88px);
+  padding-block: clamp(32px, 6vw, 80px);
+}
+
+.pitch h1 {
+  max-width: 16ch;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.lead {
+  max-width: 46ch;
+  margin-top: 16px;
+  color: var(--on-surface-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.benefits {
+  display: grid;
+  gap: 16px;
+  margin-top: 32px;
+  list-style: none;
+}
+
+.benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: var(--on-surface-muted);
+  line-height: 1.45;
+}
+
+.benefits strong {
+  display: block;
+  color: var(--on-surface);
+}
+
+.benefitIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--gold-dark);
+}
+
+/* ─── Cuentas desactivadas ─── */
+.disabled {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding-block: clamp(56px, 10vw, 112px);
+  text-align: center;
+}
+
+.disabled h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 700;
+}
+
+.disabled .lead {
+  margin-top: 0;
+}
+
+.emblem {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 8px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--on-surface);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.primary,
+.secondary {
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-weight: 600;
+}
+
+.primary {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.secondary {
+  border: 1px solid var(--outline-variant);
+}
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pitch {
+    max-width: 560px;
+  }
+}

@@ -17,7 +17,10 @@ function StoreSyncCard({ store, count }: { store: AdminStore; count: number }) {
   const state = running ? "En curso" : failed ? "Error" : done ? "Completado" : "Listo";
 
   return (
-    <article className={styles.storeCard}>
+    <article
+      className={`${styles.storeCard} ${count === 0 ? styles.storeEmpty : ""}`}
+      style={{ "--store": store.color } as React.CSSProperties}
+    >
       <header>
         <span className={styles.dot} style={{ background: store.color }} />
         <div>
@@ -28,7 +31,9 @@ function StoreSyncCard({ store, count }: { store: AdminStore; count: number }) {
       </header>
 
       <p className={styles.storeCount}>
-        <strong>{count.toLocaleString("es-CL")}</strong> perfumes en catálogo
+        {count === 0
+          ? <>Sin perfumes: <strong className={styles.storeWarn}>revisa el scraper</strong></>
+          : <><strong>{count.toLocaleString("es-CL")}</strong> perfumes en catálogo</>}
       </p>
 
       {running && (
@@ -72,7 +77,7 @@ export function SyncSection() {
       </div>
 
       <Panel title="Historial" meta="Esta sesión">
-        <ActivityList events={activity} empty="Aún no se ejecutan sincronizaciones." />
+        <ActivityList events={activity} empty="Aún no se ejecutan sincronizaciones." showAction={false} />
       </Panel>
     </>
   );

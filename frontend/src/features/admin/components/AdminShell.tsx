@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api, session } from "@/shared/api/client";
 import type { User } from "@/shared/api/types";
 import { SessionProvider } from "@/shared/auth/SessionContext";
+import { BrandIcon } from "@/shared/components/BrandIcon";
 import { ThemeToggle } from "@/shared/theme/ThemeToggle";
 import { AdminProvider, useAdmin } from "../AdminContext";
 import { AdminIcon } from "./AdminIcon";
@@ -90,8 +91,10 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
     <div className={styles.shell}>
       <aside className={`${styles.sidebar} ${menuOpen ? styles.sidebarOpen : ""}`} aria-label="Navegación del panel">
         <div className={styles.sidebarHead}>
-          <Link href="/admin" className={styles.brand} onClick={() => setMenuOpen(false)}>
-            FullFragance <span>Admin</span>
+          <Link href="/admin" className={styles.brand} onClick={() => setMenuOpen(false)} aria-label="FullFragance Admin, ir al resumen">
+            <BrandIcon size={26} />
+            <span className={styles.wordmark}><span>Full</span>Fragance</span>
+            <span className={styles.adminBadge}>Admin</span>
           </Link>
           <button type="button" className={styles.iconButton} onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">
             <AdminIcon name="close" />

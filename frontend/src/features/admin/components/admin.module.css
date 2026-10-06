@@ -12,7 +12,7 @@
 }
 
 .shell {
-  --admin-line: var(--outline-variant);
+  --admin-line: var(--border-subtle);
   --admin-bg: var(--surface);
   --admin-panel: var(--surface-lowest);
   --admin-sidebar: 248px;
@@ -43,27 +43,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 10px 0;
+  padding: 4px 6px 0;
+}
+
+/* En el menú lateral el wordmark va más chico para que quepa la etiqueta */
+.sidebarHead .wordmark {
+  font-size: .82rem;
+  letter-spacing: .1em;
 }
 
 .sidebarHead .iconButton { display: none; }
 
+/* Misma marca que el sitio: ícono del logo + wordmark, más la etiqueta Admin */
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--on-surface);
-  font-family: var(--font-body);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
   text-decoration: none;
 }
 
-.brand span {
-  margin-left: 6px;
-  color: var(--on-surface-muted);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 300;
+  letter-spacing: .14em;
   text-transform: uppercase;
+  transform: translateY(2px);
+}
+
+.wordmark span {
+  color: var(--gold);
+  font-weight: 400;
+}
+
+.adminBadge {
+  border-radius: 999px;
+  background: var(--cream);
+  padding: 2px 8px;
+  color: var(--on-surface-muted);
+  font-size: .72rem;
+  font-weight: 600;
 }
 
 .nav {
@@ -78,10 +98,8 @@
   margin-bottom: 6px;
   padding: 0 10px;
   color: var(--on-surface-muted);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .navItem {
@@ -304,10 +322,10 @@
 }
 
 .sectionHeader h1 {
-  font-family: var(--font-body);
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .sectionHeader p {
@@ -347,12 +365,11 @@
 }
 
 .statValue {
-  font-family: var(--font-body);
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .statHint {
@@ -387,8 +404,9 @@
 }
 
 .panelHeader h2 {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .panelMeta {
@@ -690,11 +708,9 @@
   padding: 10px 20px;
   border-bottom: 1px solid var(--admin-line);
   color: var(--on-surface-muted);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  font-weight: 600;
   text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -807,52 +823,354 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  width: min(100%, 380px);
+  width: min(100%, 400px);
   padding: 32px 28px;
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
   background: var(--surface-lowest);
+  box-shadow: var(--shadow);
 }
 
 .loginCard h1 {
-  margin-top: 20px;
-  font-family: var(--font-body);
-  font-size: 1.4rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  margin-top: 22px;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .loginCard h1 + p {
   margin-top: 4px;
   color: var(--on-surface-muted);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .loginCard label {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: var(--on-surface-muted);
-  font-size: 0.78rem;
+  color: var(--on-surface);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .loginCard input {
-  height: 40px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 14px;
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-md);
-  background: var(--surface);
+  background: var(--surface-lowest);
   color: var(--on-surface);
   font: inherit;
-  font-size: 0.9rem;
+  font-weight: 400;
 }
 
-.loginCard input:focus { border-color: var(--gold); outline: 0; }
-.loginCard .primaryButton { height: 40px; margin-top: 4px; }
+.loginCard input:focus { border-color: var(--gold); outline: 0; box-shadow: 0 0 0 3px var(--gold-light); }
+
+.loginCard .primaryButton {
+  height: 46px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-size: .95rem;
+  font-weight: 600;
+}
+
+.loginCard .primaryButton:hover:not(:disabled) { background: var(--gold-dark); }
 
 .loginError {
+  border-radius: var(--radius-md);
+  background: var(--error-container);
+  padding: 10px 12px;
+  color: var(--on-error-container);
+  font-size: 0.85rem;
+}
+
+.loginBack {
+  color: var(--on-surface-muted);
+  font-size: .85rem;
+  text-align: center;
+}
+
+.loginBack:hover { color: var(--on-surface); text-decoration: underline; }
+
+/* ═══ Identidad del panel ═══════════════════════════════════════════════
+   Menú lateral oscuro (el negro cálido del logo) con la sección activa en
+   bronce, bienvenida con el mismo brillo del banner de la home y tarjetas
+   con ícono. Va antes de "Responsive" para que los ajustes móviles ganen. */
+
+.sidebar {
+  --side-text: rgb(247 241 232 / 72%);
+  --side-strong: #f7f1e8;
+  border-right: 0;
+  background:
+    radial-gradient(circle at 0% 100%, rgb(var(--gold-rgb) / 22%), transparent 45%),
+    var(--surface-inverse);
+  color: var(--side-text);
+}
+
+.sidebar .brand { color: var(--side-strong); }
+.sidebar .adminBadge { background: rgb(247 241 232 / 12%); color: var(--side-strong); }
+.sidebar .navLabel { color: rgb(247 241 232 / 45%); }
+.sidebar .navItem { color: var(--side-text); }
+.sidebar .navItem:hover { background: rgb(247 241 232 / 7%); color: var(--side-strong); }
+
+.sidebar .navItemActive,
+.sidebar .navItemActive:hover {
+  background: rgb(var(--gold-rgb) / 22%);
+  color: var(--side-strong);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.sidebar .navItemActive svg { color: var(--gold); }
+.sidebar .navCount { color: rgb(247 241 232 / 55%); }
+.sidebar .iconButton { color: var(--side-strong); }
+
+/* ─── Bienvenida ─── */
+.welcome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 85% 40%, rgb(var(--gold-rgb) / 34%), transparent 40%),
+    linear-gradient(120deg, #1f1a15 0%, var(--surface-inverse) 60%, #221b13 100%);
+  padding: clamp(22px, 3vw, 32px);
+  color: rgb(247 241 232 / 78%);
+}
+
+.welcomeDate {
+  font-size: .85rem;
+}
+
+.welcome h1 {
+  margin-top: 4px;
+  color: #f7f1e8;
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.welcomeText {
+  max-width: 60ch;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.welcomeText strong { color: #f7f1e8; }
+
+.welcomeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.welcomePrimary,
+.welcomeSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: .88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.welcomePrimary {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.welcomePrimary:hover { background: #f7f1e8; }
+
+.welcomeSecondary {
+  border: 1px solid rgb(247 241 232 / 24%);
+  color: #f7f1e8;
+}
+
+.welcomeSecondary:hover { border-color: var(--gold); background: rgb(var(--gold-rgb) / 18%); }
+
+.welcomeEmblem {
+  display: grid;
+  width: 168px;
+  height: 168px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f7f1e8 0%, #f1e9de 70%);
+  color: #151412;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 40%);
+  --surface: #f1e9de;
+}
+
+/* ─── Tarjetas de cifras ─── */
+.stat {
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.stat:hover {
+  border-color: var(--border-gold-hover);
+  box-shadow: var(--shadow);
+}
+
+.statTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.statIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--gold-dark);
+}
+
+.statProgress {
+  display: block;
+  height: 6px;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-container);
+}
+
+.statProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+}
+
+/* ─── Barras ─── */
+.barTrack { height: 8px; }
+
+.barFill {
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+}
+
+.barValueZero {
   color: var(--error);
-  font-size: 0.82rem;
+  font-size: .78rem;
+  text-align: right;
+}
+
+.rank {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--gold-dark);
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.panelHeader h2::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: .9em;
+  margin-right: 10px;
+  border-radius: 2px;
+  background: var(--gold);
+  vertical-align: -1px;
+}
+
+/* ─── Tiendas en sincronización: franja con el color de cada tienda ─── */
+.storeCard {
+  border-top: 3px solid var(--store, var(--gold));
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.storeCard:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.storeEmpty {
+  background: color-mix(in srgb, var(--error) 5%, var(--admin-panel));
+}
+
+.storeWarn {
+  color: var(--error) !important;
+  font-size: .9rem !important;
+}
+
+/* La acción principal del panel usa el bronce de la marca */
+.sectionActions .primaryButton {
+  border-color: var(--gold);
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-weight: 600;
+}
+
+.sectionActions .primaryButton:hover:not(:disabled) {
+  background: var(--gold-dark);
+  opacity: 1;
+}
+
+/* ─── Estado vacío de actividad ─── */
+.emptyState {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.emptyEmblem {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--on-surface);
+}
+
+.emptyState p { font-weight: 600; }
+
+.emptyState small {
+  max-width: 32ch;
+  color: var(--on-surface-muted);
+  font-size: .82rem;
+}
+
+.emptyState a {
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--on-gold);
+  padding: 8px 16px;
+  font-size: .85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .welcomeEmblem { display: none; }
 }
 
 /* ─── Responsive ─── */
@@ -894,7 +1212,11 @@
 }
 
 @media (max-width: 520px) {
-  .statGrid { grid-template-columns: minmax(0, 1fr); }
+  /* Dos cifras por fila: en una sola columna el resumen se hacía muy largo */
+  .statGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { padding: 14px; }
+  .statValue { font-size: 1.5rem; }
+  .statIcon { width: 30px; height: 30px; }
   .barList li { grid-template-columns: minmax(90px, 120px) minmax(0, 1fr) 48px; }
   .inlineForm input { width: 100%; }
   .inlineForm label { flex: 1 1 100%; }

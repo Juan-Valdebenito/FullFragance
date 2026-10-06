@@ -1,7 +1,8 @@
 import { Brand } from "./Brand";
 import { HeaderNav } from "./HeaderNav";
 import { HeaderActions } from "./HeaderActions";
-import { Icon } from "./Icon";
+import { Suspense } from "react";
+import { SmartSearch, SmartSearchFallback } from "@/shared/search/SmartSearch";
 import styles from "./shared.module.css";
 
 export function Header({ active, search = true }: { active?: "catalog" | "test"; search?: boolean }) {
@@ -11,13 +12,12 @@ export function Header({ active, search = true }: { active?: "catalog" | "test";
           categorías; en móvil el buscador baja a su propia fila. */}
       <div className={`container ${styles.headerGrid}`}>
         <Brand />
-        {/* El catálogo tiene su propio buscador en vivo: ahí no se repite */}
+        {/* Una sola barra para todo el sitio. Suspense: lee la URL (useSearchParams)
+            y sin él las páginas estáticas no podrían prerenderizarse. */}
         {search && (
-          <form className={styles.headerSearch} action="/dashboard" role="search">
-            <label className="srOnly" htmlFor="header-search">Buscar perfume</label>
-            <input id="header-search" name="q" placeholder="¿Qué perfume buscas?" autoComplete="off" />
-            <button aria-label="Buscar"><Icon name="search" size={18} /></button>
-          </form>
+          <Suspense fallback={<SmartSearchFallback />}>
+            <SmartSearch />
+          </Suspense>
         )}
         <HeaderActions />
         <HeaderNav active={active} />

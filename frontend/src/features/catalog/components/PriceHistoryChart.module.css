@@ -1,164 +1,168 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 1.75rem;
-  border: 1px solid var(--border-gold);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, var(--surface-lowest) 0%, var(--surface-bright) 70%);
-  padding: 18px;
-  box-shadow: 0 12px 30px rgba(72, 56, 28, 0.05);
-}
+/* ─── Historial de precios ─────────────────────────────────────────────
+   Mismo patrón que la ficha: título en la letra del logo, cifras sin cajas
+   y el gráfico en una tarjeta blanca con la línea en bronce. */
 
-.header,
-.headerTitle,
-.chartHeader,
-.footerNote {
-  display: flex;
-  align-items: center;
+.container {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
-.headerTitle { gap: 10px; flex-wrap: wrap; }
-
-.headerTitle h3 {
-  margin: 0;
-  color: var(--on-surface);
-  font-size: 1.05rem;
-  font-weight: 750;
-}
-
-.headerHint {
-  margin: 5px 0 0;
-  color: var(--on-surface-muted);
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-
-.opportunityTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-radius: 999px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.68rem;
+.header h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
-.tagGreatDeal { border: 1px solid rgb(var(--success-rgb) / 0.3); background: rgb(var(--success-rgb) / 0.1); color: var(--success); }
-.tagStable { border: 1px solid rgba(70, 109, 150, 0.25); background: rgba(89, 117, 147, 0.1); color: #466d96; }
-.tagTrendingUp { border: 1px solid rgba(181, 120, 41, 0.3); background: rgba(181, 120, 41, 0.11); color: #94601d; }
+.headerHint {
+  margin-top: 4px;
+  color: var(--on-surface-muted);
+  font-size: .88rem;
+}
 
+/* Selector 30 / 90 días como píldoras */
 .toggleGroup {
   display: flex;
-  gap: 2px;
   flex: none;
-  border-radius: var(--radius-md);
-  background: var(--surface-low);
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--cream);
   padding: 3px;
 }
 
 .toggleBtn {
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
-  padding: 0.38rem 0.75rem;
   color: var(--on-surface-muted);
-  cursor: pointer;
-  font-size: 0.76rem;
-  font-weight: 650;
-  transition: all 0.2s ease;
+  padding: 7px 14px;
+  font-size: .85rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition);
 }
 
 .toggleBtn:hover { color: var(--on-surface); }
-.toggleActive { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 6px rgba(26, 28, 28, 0.16); }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 9px;
+.toggleActive,
+.toggleActive:hover {
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
-.statCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-lowest);
-  padding: 0.75rem;
-}
-
-.statLabel { color: var(--on-surface-muted); font-size: 0.68rem; }
-.statValue { color: var(--on-surface); font-size: 1rem; font-weight: 750; letter-spacing: -0.02em; }
-.statMin { color: var(--success); }
-
-.chartHeader {
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--on-surface-muted);
-  font-size: 0.67rem;
+.opportunityTag {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: .85rem;
   font-weight: 600;
 }
 
-.chartHeader span:last-child { color: var(--on-surface-muted); }
+.tagGreatDeal { background: rgb(var(--success-rgb) / 12%); color: var(--success); }
+.tagStable { background: var(--cream); color: var(--on-surface); }
+.tagTrendingUp { background: var(--gold-light); color: var(--gold-dark); }
 
+/* Cifras en una fila, separadas por líneas finas */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.statsGrid > div {
+  display: grid;
+  gap: 2px;
+  padding-inline: 16px;
+}
+
+.statsGrid > div:first-child { padding-left: 0; }
+
+.statsGrid > div + div {
+  border-left: 1px solid var(--border-subtle);
+}
+
+.statsGrid dt {
+  color: var(--on-surface-muted);
+  font-size: .82rem;
+}
+
+.statsGrid dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.statMin { color: var(--success); }
+
+/* ─── Gráfico ─── */
 .chartWrapper {
   position: relative;
   width: 100%;
-  height: 196px;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgb(var(--gold-rgb) / 0.05), transparent);
+  background: var(--surface-lowest);
 }
 
-.svgChart { width: 100%; height: 100%; overflow: visible; cursor: crosshair; }
-.gridLine { stroke: rgb(var(--gold-rgb) / 0.18); stroke-dasharray: 3 4; }
-.axisLabel { fill: var(--on-surface-muted); font-size: 10px; font-family: inherit; }
+.svgChart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  cursor: crosshair;
+}
+
+.gridLine { stroke: var(--border-subtle); }
+.axisLabel { fill: var(--on-surface-muted); font-size: 11px; font-family: inherit; }
+
+/* Colores del SVG desde los tokens del tema (las clases pisan los atributos) */
+.gradientStop { stop-color: var(--gold); }
+.priceLine { stroke: var(--gold); }
+.minMarker { fill: var(--success); stroke: var(--surface-lowest); }
+.hoverLine { stroke: rgb(var(--gold-rgb) / 50%); }
+.hoverMarker { fill: var(--gold); stroke: var(--surface-lowest); }
 
 .tooltip {
   position: absolute;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -100%);
-  border: 1px solid var(--border-gold);
+  display: grid;
+  justify-items: center;
+  transform: translate(-50%, -110%);
   border-radius: var(--radius-md);
   background: var(--surface-inverse);
-  padding: 0.4rem 0.6rem;
-  box-shadow: 0 10px 25px rgba(42, 31, 17, 0.24);
+  padding: 6px 10px;
+  box-shadow: var(--shadow-md);
   pointer-events: none;
   white-space: nowrap;
 }
 
-.tooltipDate { color: #d7ccbf; font-size: 0.7rem; }
-.tooltipPrice { color: #f2d69c; font-size: 0.85rem; font-weight: 700; }
+.tooltipDate { color: rgb(247 241 232 / 70%); font-size: .75rem; }
+.tooltipPrice { color: #f7f1e8; font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .footerNote {
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--on-surface-muted);
-  font-size: 0.68rem;
+  font-size: .82rem;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--success);
 }
 
 @media (max-width: 480px) {
-  .container { padding: 14px; }
-  .header { align-items: flex-start; flex-direction: column; }
-  .statsGrid { gap: 6px; }
-  .statCard { padding: 0.65rem; }
-  .statValue { font-size: 0.87rem; }
-  .chartHeader span:last-child, .footerNote span:last-child { display: none; }
+  .statsGrid > div { padding-inline: 10px; }
+  .statsGrid dd { font-size: 1.05rem; }
 }
-
-/* Colores del SVG desde los tokens del tema (las clases pisan los atributos) */
-.gradientStop { stop-color: var(--gold); }
-.priceLine { stroke: var(--gold-dark); }
-.minMarker { fill: var(--success); stroke: var(--surface-lowest); }
-.hoverLine { stroke: rgb(var(--gold-rgb) / 0.45); }
-.hoverMarker { fill: var(--gold-dark); stroke: var(--surface-lowest); }

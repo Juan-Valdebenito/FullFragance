@@ -1,11 +1,16 @@
 const { getComparison } = require("./priceService");
 const { normalize, normalizeBrand, identityTokens } = require("./productMatcher");
 const { PERFUME_SEGMENTS, perfumeSegmentForBrand } = require("./perfumeSegments");
+const { parseIntent } = require("./queryIntent");
+const { buildVocabulary, correctTokens } = require("./fuzzy");
 
 const DEFAULT_PAGE_SIZE = 12;
 const MAX_PAGE_SIZE = 48;
 const SORT_MODES = new Set(["recommended", "price", "price-desc", "savings", "stores", "name", "name-desc"]);
-const QUERY_STOP_WORDS = new Set(["perfume", "fragancia", "de", "del", "la", "el", "los", "las"]);
+const SUGGESTED_PRODUCTS = 6;
+// Menos coincidencias exactas que esto activa la corrección de tipeo.
+const FEW_MATCHES = 3;
+const SUGGESTED_BRANDS = 4;
 const GENDERS = new Set(["Masculino", "Femenino", "Unisex"]);
 
 // Se calcula desde el texto para evitar datos de catálogos previos que
@@ -17,18 +22,37 @@ function isSetProduct(product) {
   return new Set(volumes.map((volume) => volume.replace(",", ".").replace(/\s/g, ""))).size >= 2;
 }
 
+// Cerca de la mitad del catálogo llega sin género; se deduce del nombre para que
+// el filtro (y "perfume de hombre" en la búsqueda) no deje fuera esos perfumes.
+const MALE_PATTERN = /\b(?:hombre|hombres|caballero|masculino|men|man|homme|uomo|him|pour homme)\b/;
+const FEMALE_PATTERN = /\b(?:mujer|mujeres|dama|femenino|women|woman|femme|donna|her|pour femme)\b/;
+const UNISEX_PATTERN = /\bunisex\b/;
+
+function inferGender(product, haystack) {
+  if (GENDERS.has(product.gender)) return product.gender;
+  if (UNISEX_PATTERN.test(haystack)) return "Unisex";
+  const male = MALE_PATTERN.test(haystack);
+  const female = FEMALE_PATTERN.test(haystack);
+  if (male === female) return "";
+  return male ? "Masculino" : "Femenino";
+}
+
 // El índice se arma una vez por versión del catálogo: getComparison("") devuelve
 // el mismo arreglo hasta que un scraper invalida el caché, así que su identidad
 // sirve para saber cuándo recalcular. Cada búsqueda sólo recorre datos ya listos.
 let cachedIndex = null;
 let cachedIndexSource = null;
+let cachedVocabulary = null;
 
 async function getSearchIndex() {
   const comparison = await getComparison("");
   if (cachedIndexSource === comparison) return cachedIndex;
-  cachedIndex = comparison.map((item) => ({
+  cachedIndex = comparison.map((item) => {
+    const haystack = normalize([item.product.brand, item.product.name, item.product.category, item.product.unit].filter(Boolean).join(" "));
+    return {
     item,
-    haystack: normalize([item.product.brand, item.product.name, item.product.category, item.product.unit].filter(Boolean).join(" ")),
+    haystack,
+    gender: inferGender(item.product, haystack),
     segment: perfumeSegmentForBrand(item.product.brand),
     isSet: isSetProduct(item.product),
     stores: new Set(item.prices.map((price) => price.storeName)),
@@ -36,8 +60,10 @@ async function getSearchIndex() {
     price: item.minPrice ?? item.product.basePrice,
     savings: item.maxPrice && item.minPrice ? item.maxPrice - item.minPrice : 0,
     sortName: `${item.product.brand} ${item.product.name}`,
-  }));
+    };
+  });
   cachedIndexSource = comparison;
+  cachedVocabulary = buildVocabulary(cachedIndex.map((entry) => entry.haystack));
   return cachedIndex;
 }
 
@@ -89,7 +115,7 @@ function matchesFilters(entry, filters) {
   const { product } = entry.item;
   return (!filters.brand || product.brand === filters.brand)
     && (!filters.category || product.category === filters.category)
-    && (!filters.gender || product.gender === filters.gender)
+    && (!filters.gender || entry.gender === filters.gender)
     && (!filters.minPrice || entry.price >= filters.minPrice)
     && (!filters.maxPrice || entry.price <= filters.maxPrice)
     && (!filters.store || entry.stores.has(filters.store))
@@ -113,11 +139,46 @@ function sortedUnique(values) {
   return [...new Set(values)].filter(Boolean).sort((a, b) => a.localeCompare(b, "es"));
 }
 
+// Texto de la búsqueda → entradas que coinciden. Si casi nada coincide tal cual,
+// se reintenta con las palabras corregidas ("lataffa" → "lattafa").
+function matchText(index, text) {
+  const tokens = text.split(" ").filter(Boolean);
+  if (!tokens.length) return { matched: index, correctedQuery: null };
+  const matched = index.filter((entry) => matchesQuery(entry, tokens));
+  // Con varias coincidencias exactas la búsqueda se respeta tal cual.
+  if (matched.length >= FEW_MATCHES) return { matched, correctedQuery: null };
+  const correction = correctTokens(tokens, cachedVocabulary);
+  if (!correction.corrected) return { matched, correctedQuery: null };
+  const corrected = index.filter((entry) => matchesQuery(entry, correction.tokens));
+  if (corrected.length <= matched.length) return { matched, correctedQuery: null };
+  // Primero lo corregido y después lo poco que coincidía exacto.
+  const seen = new Set(corrected);
+  return {
+    matched: [...corrected, ...matched.filter((entry) => !seen.has(entry))],
+    correctedQuery: correction.tokens.join(" "),
+  };
+}
+
+// La intención escrita ("hombre", "nicho", "bajo 30 mil") sólo completa los
+// filtros que no vienen explícitos en la URL.
+function applyIntent(filters, intent) {
+  const applied = [];
+  for (const chip of intent.chips) {
+    const value = intent.filters[chip.key];
+    const isDefault = chip.key === "sort" ? filters.sort === "recommended" : !filters[chip.key];
+    if (!isDefault) continue;
+    filters[chip.key] = value;
+    applied.push(chip);
+  }
+  return applied;
+}
+
 async function searchCatalog(query) {
   const filters = parseSearchParams(query);
   const index = await getSearchIndex();
-  const tokens = normalize(filters.q).split(" ").filter((token) => token && !QUERY_STOP_WORDS.has(token));
-  const matched = tokens.length ? index.filter((entry) => matchesQuery(entry, tokens)) : index;
+  const intent = parseIntent(filters.q);
+  const appliedIntent = applyIntent(filters, intent);
+  const { matched, correctedQuery } = matchText(index, intent.text);
   // El filtro de comparación se aplica aparte para poder informar cuántos
   // perfumes comparables hay dentro del resto de filtros ("Mostrando X de Y").
   const filtered = matched.filter((entry) => matchesFilters(entry, filters));
@@ -138,6 +199,11 @@ async function searchCatalog(query) {
     totalPages,
     comparableTotal,
     unfilteredTotal: filtered.length,
+    // Lo que se entendió de la búsqueda, para mostrarlo y poder deshacerlo.
+    intent: appliedIntent,
+    // Texto que quedó tras sacar la intención ("perfume árabe yara" → "yara").
+    text: intent.text,
+    correctedQuery,
     // Las opciones de los selectores salen de lo que coincide con la búsqueda
     // de texto, como antes, para que un filtro no esconda las demás opciones.
     facets: {
@@ -221,4 +287,62 @@ async function catalogIds() {
   return index.map(({ item }) => item.product.id);
 }
 
-module.exports = { searchCatalog, comparisonsByIds, catalogIds, similarComparables, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };
+function suggestionProduct(entry) {
+  const { product } = entry.item;
+  return {
+    id: product.id,
+    name: product.name,
+    brand: product.brand,
+    imageUrl: product.imageUrl,
+    imageUrls: product.imageUrls,
+    minPrice: entry.price,
+    storeCount: entry.storeCount,
+  };
+}
+
+// Sugerencias mientras se escribe: perfumes y marcas que coinciden, la
+// intención detectada y la corrección de tipeo si hubo.
+async function suggest(rawQuery) {
+  const query = text(rawQuery, 200);
+  const index = await getSearchIndex();
+  const intent = parseIntent(query);
+  const { matched, correctedQuery } = matchText(index, intent.text);
+  const filters = { ...parseSearchParams({}), ...intent.filters };
+  const results = matched.filter((entry) => matchesFilters(entry, filters));
+  const searchText = correctedQuery ?? intent.text;
+
+  // Primero lo que empieza por la marca o el nombre buscado; después lo más
+  // comparado y lo más barato.
+  const startsWith = (entry) => (searchText && (normalize(entry.item.product.brand).startsWith(searchText)
+    || normalize(entry.item.product.name).startsWith(searchText)) ? 1 : 0);
+  const products = [...results]
+    .sort((a, b) => startsWith(b) - startsWith(a) || b.storeCount - a.storeCount || byPriceAsc(a, b))
+    .slice(0, SUGGESTED_PRODUCTS)
+    .map(suggestionProduct);
+
+  // Marcas cuyo nombre coincide con lo escrito, con cuántos perfumes tienen.
+  const brandCounts = new Map();
+  if (searchText) {
+    for (const entry of results) {
+      const { brand } = entry.item.product;
+      if (normalize(brand).includes(searchText)) brandCounts.set(brand, (brandCounts.get(brand) ?? 0) + 1);
+    }
+  }
+  const brands = [...brandCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, SUGGESTED_BRANDS)
+    .map(([name, count]) => ({ name, count }));
+
+  return {
+    query,
+    text: intent.text,
+    correctedQuery,
+    filters: intent.filters,
+    chips: intent.chips,
+    total: results.length,
+    brands,
+    products,
+  };
+}
+
+module.exports = { suggest, searchCatalog, comparisonsByIds, catalogIds, similarComparables, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };

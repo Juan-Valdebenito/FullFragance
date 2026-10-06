@@ -1,4 +1,4 @@
-type AdminIconName = "overview" | "activity" | "sync" | "catalog" | "external" | "logout" | "search" | "menu" | "close" | "chevronLeft" | "chevronRight";
+export type AdminIconName = "overview" | "activity" | "sync" | "catalog" | "external" | "logout" | "search" | "menu" | "close" | "chevronLeft" | "chevronRight" | "stores" | "tag" | "layers" | "users" | "eye" | "money";
 
 const paths: Record<AdminIconName, React.ReactNode> = {
   overview: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></>,
@@ -12,6 +12,12 @@ const paths: Record<AdminIconName, React.ReactNode> = {
   close: <path d="M6 6l12 12M18 6 6 18" />,
   chevronLeft: <path d="m15 18-6-6 6-6" />,
   chevronRight: <path d="m9 18 6-6-6-6" />,
+  stores: <><path d="M4 9.5 5.5 4h13L20 9.5" /><path d="M4 9.5h16v1a3 3 0 0 1-5.3 1.9 3 3 0 0 1-5.4 0A3 3 0 0 1 4 10.5v-1Z" /><path d="M5.5 13v7h13v-7M10 20v-4h4v4" /></>,
+  tag: <><path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9-8-8Z" /><circle cx="8" cy="8" r="1.4" /></>,
+  layers: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
+  users: <><circle cx="9" cy="8" r="3.2" /><path d="M3 20c.6-3.6 2.8-5.5 6-5.5s5.4 1.9 6 5.5" /><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.6.7 2.6 2.4 3 5.2" /></>,
+  eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></>,
+  money: <><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.6" /><path d="M6.5 9.5v5M17.5 9.5v5" /></>,
 };
 
 export function AdminIcon({ name, size = 18 }: { name: AdminIconName; size?: number }) {

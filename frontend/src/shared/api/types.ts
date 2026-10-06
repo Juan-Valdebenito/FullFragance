@@ -69,6 +69,34 @@ export type CatalogSearchResult = {
   /** Resultados con los filtros activos, ignorando el filtro de comparación. */
   unfilteredTotal: number;
   facets: { brands: string[]; categories: string[]; stores: string[] };
+  /** Filtros que el backend dedujo del texto ("hombre", "bajo 30 mil"). */
+  intent?: IntentChip[];
+  /** Texto que quedó tras sacar la intención. */
+  text?: string;
+  /** Búsqueda corregida si el texto tenía errores de tipeo. */
+  correctedQuery?: string | null;
+};
+
+export type IntentChip = { key: "segment" | "gender" | "minPrice" | "maxPrice" | "presentation" | "sort"; value: string; label: string };
+
+export type SuggestProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  imageUrl?: string | null;
+  imageUrls?: string[];
+  minPrice: number;
+  storeCount: number;
+};
+
+export type SuggestResult = {
+  query: string;
+  text: string;
+  correctedQuery: string | null;
+  chips: IntentChip[];
+  total: number;
+  brands: { name: string; count: number }[];
+  products: SuggestProduct[];
 };
 
 export type Recommendation = { product: ApiProduct; score: number | null; matchedNotes: ApiNote[]; reason: string };

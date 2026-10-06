@@ -66,10 +66,10 @@ export function MonitoringSection() {
       />
 
       <div className={styles.statGrid}>
-        <StatCard label="Usuarios registrados" value={count(metrics?.users.total)} hint={`${count(metrics?.users.newLast7Days)} nuevos en 7 días`} loading={loadingMetrics} />
-        <StatCard label="Cuentas nuevas hoy" value={count(metrics?.users.newToday)} loading={loadingMetrics} />
-        <StatCard label="Vistas hoy" value={count(metrics?.views.today)} hint={`${count(metrics?.views.last7Days)} en 7 días`} loading={loadingMetrics} />
-        <StatCard label="Ingresos por anuncios" value={money.format(metrics?.ads.revenueCLP ?? 0)} hint={metrics?.ads.currentMonth ?? "Mes actual"} loading={loadingMetrics} />
+        <StatCard icon="users" label="Usuarios registrados" value={count(metrics?.users.total)} hint={`${count(metrics?.users.newLast7Days)} nuevos en 7 días`} loading={loadingMetrics} />
+        <StatCard icon="users" label="Cuentas nuevas hoy" value={count(metrics?.users.newToday)} loading={loadingMetrics} />
+        <StatCard icon="eye" label="Vistas hoy" value={count(metrics?.views.today)} hint={`${count(metrics?.views.last7Days)} en 7 días`} loading={loadingMetrics} />
+        <StatCard icon="money" label="Ingresos por anuncios" value={money.format(metrics?.ads.revenueCLP ?? 0)} hint={metrics?.ads.currentMonth ?? "Mes actual"} loading={loadingMetrics} />
       </div>
 
       <div className={styles.split}>

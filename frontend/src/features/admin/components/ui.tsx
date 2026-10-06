@@ -1,3 +1,4 @@
+import { AdminIcon, type AdminIconName } from "./AdminIcon";
 import styles from "./admin.module.css";
 
 export function SectionHeader({ title, description, children }: { title: string; description?: string; children?: React.ReactNode }) {
@@ -12,11 +13,34 @@ export function SectionHeader({ title, description, children }: { title: string;
   );
 }
 
-export function StatCard({ label, value, hint, loading }: { label: string; value: string; hint?: React.ReactNode; loading?: boolean }) {
+export function StatCard({
+  label,
+  value,
+  hint,
+  loading,
+  icon,
+  progress,
+}: {
+  label: string;
+  value: string;
+  hint?: React.ReactNode;
+  loading?: boolean;
+  icon?: AdminIconName;
+  /** 0–100: dibuja una barra bajo la cifra (porcentajes y cuotas). */
+  progress?: number;
+}) {
   return (
     <article className={styles.stat}>
-      <span className={styles.statLabel}>{label}</span>
+      <div className={styles.statTop}>
+        <span className={styles.statLabel}>{label}</span>
+        {icon && <span className={styles.statIcon}><AdminIcon name={icon} size={18} /></span>}
+      </div>
       <strong className={styles.statValue}>{loading ? <span className={styles.skeletonText} /> : value}</strong>
+      {progress !== undefined && !loading && (
+        <span className={styles.statProgress} aria-hidden="true">
+          <span style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
+        </span>
+      )}
       {hint && <span className={styles.statHint}>{hint}</span>}
     </article>
   );

@@ -15,6 +15,8 @@ declare global {
 
 type GoogleAuthButtonProps = { onSuccess?: () => void; onError?: (msg: string) => void };
 
+export const GOOGLE_LOGIN_ENABLED = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+
 export function GoogleAuthButton({ onSuccess, onError }: GoogleAuthButtonProps) {
   const optionalSession = useOptionalSession();
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,8 @@ export function GoogleAuthButton({ onSuccess, onError }: GoogleAuthButtonProps) 
     }
   }, [clientId, onSuccess, onError, optionalSession]);
 
-  if (hasClientId) return <div style={{ display: "flex", justifyContent: "center", width: "100%" }}><div ref={googleBtnRef} /></div>;
-  return <p role="status" style={{ color: "var(--on-surface-muted)", fontSize: ".82rem", textAlign: "center" }}>El acceso con Google estará disponible al configurar <code>NEXT_PUBLIC_GOOGLE_CLIENT_ID</code>.</p>;
+  // Sin client id no se muestra nada: el aviso de configuración era para
+  // desarrolladores y lo veían los usuarios.
+  if (!hasClientId) return null;
+  return <div style={{ display: "flex", justifyContent: "center", width: "100%" }}><div ref={googleBtnRef} /></div>;
 }

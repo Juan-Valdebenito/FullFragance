@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BrandIcon } from "@/shared/components/BrandIcon";
 import { api, ApiError, session } from "@/shared/api/client";
 import styles from "./admin.module.css";
 
@@ -46,9 +48,13 @@ export function AdminLogin() {
     <main className={styles.loginPage}>
       <form className={styles.loginCard} onSubmit={submit}>
         <div>
-          <p className={styles.brand}>FullFragance <span>Admin</span></p>
+          <p className={styles.brand}>
+            <BrandIcon size={30} />
+            <span className={styles.wordmark}><span>Full</span>Fragance</span>
+            <span className={styles.adminBadge}>Admin</span>
+          </p>
           <h1>Iniciar sesión</h1>
-          <p>Acceso exclusivo para administradores.</p>
+          <p>Acceso solo para administradores del sitio.</p>
         </div>
         <label>
           <span>Email</span>
@@ -62,6 +68,7 @@ export function AdminLogin() {
         <button type="submit" className={styles.primaryButton} disabled={loading}>
           {loading ? "Ingresando…" : "Ingresar"}
         </button>
+        <Link href="/" className={styles.loginBack}>Volver al sitio</Link>
       </form>
     </main>
   );
