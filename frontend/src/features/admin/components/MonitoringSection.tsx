@@ -82,9 +82,26 @@ export function MonitoringSection() {
         </Panel>
       </div>
 
-      <Panel title="Vistas por mes" meta={`${count(metrics?.views.allTime)} vistas en total`}>
-        {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" />}
-      </Panel>
+      <div className={styles.split}>
+        <Panel title="Vistas por mes" meta={`${count(metrics?.views.allTime)} vistas en total`}>
+          {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" />}
+        </Panel>
+
+        <Panel title="Detalle por mes" meta="Vistas acumuladas">
+          {metrics?.views.monthly.length ? (
+            <ol className={styles.rankList}>
+              {[...metrics.views.monthly].reverse().map((point) => (
+                <li key={point.month}>
+                  <code>{monthLabel(point.month)}</code>
+                  <span>{point.views.toLocaleString("es-CL")}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className={styles.empty}>Aún no hay vistas registradas.</p>
+          )}
+        </Panel>
+      </div>
 
       <Panel title="Ingreso publicitario del mes" meta="Registro manual">
         <form className={styles.inlineForm} onSubmit={submit}>
