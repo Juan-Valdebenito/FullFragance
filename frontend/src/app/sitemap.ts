@@ -12,7 +12,8 @@ function apiUrl() {
 
 async function fetchProductIds(): Promise<string[]> {
   try {
-    const res = await fetch(`${apiUrl()}/catalog/ids`, { next: { revalidate } });
+    // Sólo perfumes en 2+ tiendas: son los que se indexan (ver perfumes/[id]).
+    const res = await fetch(`${apiUrl()}/catalog/ids?minStores=2`, { next: { revalidate } });
     if (!res.ok) return [];
     const data = (await res.json()) as { ids: string[] };
     return data.ids;

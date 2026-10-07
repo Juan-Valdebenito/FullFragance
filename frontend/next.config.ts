@@ -45,6 +45,16 @@ const nextConfig: NextConfig = {
   },
   // Necesario para que Vercel identifique correctamente el proyecto Next.js
   output: undefined,
+  // www.fullfragance.cl respondía 200 con el mismo contenido: Google lo veía
+  // como duplicado del dominio principal. Se consolida todo en el apex.
+  async redirects() {
+    return [{
+      source: "/:path*",
+      has: [{ type: "host", value: "www.fullfragance.cl" }],
+      destination: "https://fullfragance.cl/:path*",
+      permanent: true,
+    }];
+  },
   async headers() {
     return [{
       source: "/:path*",

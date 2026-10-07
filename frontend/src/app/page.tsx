@@ -11,6 +11,7 @@ import styles from "./home.module.css";
 export const metadata: Metadata = {
   title: "FullFragance | Comparador de precios de perfumes en Chile",
   description: "Compara más de 13.000 perfumes originales en 12 tiendas de Chile y encuentra dónde está más barato antes de comprar.",
+  alternates: { canonical: "/" },
 };
 
 const features = [

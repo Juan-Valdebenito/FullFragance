@@ -244,6 +244,9 @@ const openapi = {
       get: {
         tags: ["Precios"],
         summary: "Ids de todos los perfumes (para el sitemap)",
+        parameters: [
+          { name: "minStores", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 20, default: 1 }, description: "Sólo perfumes presentes en al menos esta cantidad de tiendas." },
+        ],
         responses: {
           200: {
             description: "Lista de ids",

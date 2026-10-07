@@ -42,10 +42,14 @@ export async function generateMetadata({
   const description = `Compara el precio de ${title}${priceText} entre tiendas verificadas de Chile. ${product.description || ""}`.trim().slice(0, 300);
   const image = productImageUrl(product.imageUrl);
   const url = `/perfumes/${id}`;
+  // Con una sola tienda la ficha no compara nada y repite la página de esa
+  // tienda: queda fuera del índice (y del sitemap) pero sigue enlazable.
+  const storeCount = product.matchedStores ?? new Set(data.prices.map(price => price.storeName)).size;
   return {
     title,
     description,
     alternates: { canonical: url },
+    robots: storeCount < 2 ? { index: false, follow: true } : undefined,
     openGraph: {
       type: "website",
       locale: "es_CL",

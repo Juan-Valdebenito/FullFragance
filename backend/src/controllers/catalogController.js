@@ -175,9 +175,10 @@ async function similarProducts(req, res, next) {
 }
 
 // Ids para el sitemap: evita descargar el catálogo completo sólo para listar URLs.
-async function productIds(_req, res, next) {
+async function productIds(req, res, next) {
   try {
-    const ids = await catalogSearch.catalogIds();
+    const minStores = Math.min(Math.max(Number.parseInt(req.query.minStores, 10) || 1, 1), 20);
+    const ids = await catalogSearch.catalogIds({ minStores });
     catalogCacheHeader(res);
     res.json({ ids });
   } catch (err) {

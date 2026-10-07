@@ -3,7 +3,7 @@ import { Header } from "@/shared/components/Header";
 import { FeatureTabs } from "@/shared/components/FeatureTabs";
 import { OlfactoryQuiz } from "@/features/olfactory-test/components/OlfactoryQuiz";
 
-export const metadata: Metadata = { title: "Test olfativo | FullFragance" };
+export const metadata: Metadata = { title: "Test olfativo" };
 
 export default function TestPage() {
   return (

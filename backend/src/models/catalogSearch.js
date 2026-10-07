@@ -282,9 +282,11 @@ async function similarComparables(productId, limit = 4) {
     .map((entry) => entry.item);
 }
 
-async function catalogIds() {
+// minStores > 1 deja fuera las fichas de una sola tienda: no comparan nada y
+// Google las trata como contenido duplicado de la tienda original.
+async function catalogIds({ minStores = 1 } = {}) {
   const index = await getSearchIndex();
-  return index.map(({ item }) => item.product.id);
+  return index.filter((entry) => entry.storeCount >= minStores).map(({ item }) => item.product.id);
 }
 
 function suggestionProduct(entry) {

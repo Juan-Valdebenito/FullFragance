@@ -4,8 +4,9 @@ import { Header } from "@/shared/components/Header";
 import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "Política de datos y privacidad | FullFragance",
-  description: "Información clara sobre el tratamiento de datos personales en FullFragance.",
+  title: "Política de datos y privacidad",
+  description: "Información clara sobre el tratamiento de datos personales y cookies publicitarias en FullFragance.",
+  alternates: { canonical: "/politica-de-datos" },
 };
 
 export default function DataPolicyPage() {
@@ -63,23 +64,34 @@ export default function DataPolicyPage() {
         </article>
 
         <article className={styles.section}>
-          <h2>6. Conservación</h2>
+          <h2>6. Publicidad y cookies de terceros</h2>
+          <p>FullFragance muestra anuncios mediante Google AdSense. Google y otros proveedores externos usan cookies para mostrar anuncios basados en las visitas anteriores que hayas hecho a este u otros sitios web. Las cookies de publicidad permiten a Google y a sus socios mostrarte anuncios según tu navegación en este sitio y en otros sitios de internet.</p>
+          <ul>
+            <li>Puedes desactivar la publicidad personalizada en la <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">configuración de anuncios de Google</a>.</li>
+            <li>También puedes desactivar las cookies de otros proveedores de publicidad personalizada en <a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">www.aboutads.info</a>.</li>
+            <li>Más información sobre cómo Google usa los datos en <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">policies.google.com/technologies/partner-sites</a>.</li>
+          </ul>
+          <p>Además de las cookies publicitarias, el sitio usa el almacenamiento local del navegador para recordar tu sesión y el tema claro u oscuro. Puedes borrar las cookies y los datos del sitio desde la configuración de tu navegador en cualquier momento.</p>
+        </article>
+
+        <article className={styles.section}>
+          <h2>7. Conservación</h2>
           <p>Conservamos los datos mientras tu cuenta esté activa o sean necesarios para las finalidades informadas, seguridad, resolución de controversias y cumplimiento de obligaciones aplicables. Al solicitar la eliminación, borraremos o anonimizaremos los datos que ya no necesitemos, salvo que una norma o la defensa de un derecho exija conservarlos por más tiempo.</p>
         </article>
 
         <article className={styles.section}>
-          <h2>7. Tus derechos y cómo ejercerlos</h2>
+          <h2>8. Tus derechos y cómo ejercerlos</h2>
           <p>Puedes solicitar acceso, rectificación, eliminación, oposición o bloqueo de datos, y los demás derechos que reconozca la normativa aplicable, incluida la portabilidad cuando corresponda. Envía tu solicitud a <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a> indicando tu nombre, correo de la cuenta, petición concreta y un medio para responderte. Podremos pedir información razonable para verificar tu identidad y proteger tu cuenta.</p>
           <p>Esta política se interpreta de acuerdo con la Ley N.º 19.628 y sus modificaciones, además de las demás normas chilenas aplicables en materia de datos personales.</p>
         </article>
 
         <article className={styles.section}>
-          <h2>8. Menores de edad</h2>
+          <h2>9. Menores de edad</h2>
           <p>La plataforma no está diseñada para recopilar deliberadamente datos de niños, niñas o adolescentes sin la intervención que exija la ley. Si crees que un menor entregó datos personales sin la autorización correspondiente, escríbenos para revisarlo y, si procede, eliminarlos.</p>
         </article>
 
         <article className={`${styles.section} ${styles.callout}`}>
-          <h2>9. Cambios y contacto</h2>
+          <h2>10. Cambios y contacto</h2>
           <div className={styles.contact}>
             <p>Podemos actualizar esta política si cambian nuestras funciones o la normativa. Publicaremos la versión y fecha de actualización en esta página.</p>
             <a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a>

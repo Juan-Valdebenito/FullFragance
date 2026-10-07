@@ -7,7 +7,7 @@ import { AccountSettings } from "@/features/profile/components/AccountSettings";
 import { ProfileShortcuts } from "@/features/profile/components/ProfileShortcuts";
 import styles from "./profile.module.css";
 
-export const metadata: Metadata = { title: "Mi cuenta | FullFragance" };
+export const metadata: Metadata = { title: "Mi cuenta" };
 
 export default function ProfilePage() {
   return (

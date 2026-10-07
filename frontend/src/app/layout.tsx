@@ -41,7 +41,6 @@ export const metadata: Metadata = {
     "perfumes originales chile",
     "ofertas perfumes",
   ],
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "es_CL",

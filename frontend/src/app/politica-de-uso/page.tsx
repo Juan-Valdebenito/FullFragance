@@ -5,8 +5,9 @@ import { Header } from "@/shared/components/Header";
 import styles from "../legal.module.css";
 
 export const metadata: Metadata = {
-  title: "Política de uso | FullFragance",
+  title: "Política de uso",
   description: "Condiciones de uso y alcance de la plataforma FullFragance.",
+  alternates: { canonical: "/politica-de-uso" },
 };
 
 export default function UsePolicyPage() {

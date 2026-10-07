@@ -8,7 +8,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./recommendations.module.css";
 
-export const metadata: Metadata = { title: "Fragancias para ti | FullFragance" };
+export const metadata: Metadata = { title: "Fragancias para ti" };
 
 export default function RecommendationsPage() {
   return (
