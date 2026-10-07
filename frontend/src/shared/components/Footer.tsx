@@ -33,7 +33,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
           <ul className={styles.footerContact}>
             <li><a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a></li>
             <li><a href="tel:+56984616551">+56 9 8461 6551</a></li>
-            <li>Santiago, Chile</li>
+            <li>Temuco, Chile</li>
           </ul>
         </section>
 

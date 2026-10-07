@@ -54,6 +54,13 @@ const SLIDES: Slide[] = [
     cta: "Ver perfumes de nicho",
     href: "/dashboard?segment=niche",
   },
+  {
+    id: "cyber-gracias",
+    title: "¡Gracias por un Cyber increíble!",
+    text: "Más de 4.000 personas visitaron la página este Cyber. De parte del equipo de FullFragance, gracias a todos por su participación y colaboración. Recuerda siempre buscar el mejor precio.",
+    cta: "Ver catálogo completo",
+    href: "/dashboard",
+  },
 ];
 
 // Hasta tres fotos por slide. El slide de marca no lleva fotos: muestra el
