@@ -49,8 +49,8 @@ export default async function MethodologyPage() {
 
         <article className={styles.section}>
           <h2>2. Cómo obtenemos los precios</h2>
-          <p>Un proceso automático lee varias veces al día las páginas públicas de perfumería de cada tienda: nombre, marca, tamaño, precio, disponibilidad y enlace del producto. No usamos precios inventados ni estimados: si una tienda no publica precio, el producto no aparece con precio.</p>
-          <p>Entre una lectura y otra la tienda puede cambiar un precio. Por eso el precio final siempre es el que muestra la tienda al momento de comprar.</p>
+          <p>Una vez al día actualizamos el catálogo leyendo las páginas públicas de perfumería de cada tienda: nombre, marca, tamaño, precio, disponibilidad y enlace del producto. No usamos precios inventados ni estimados: si una tienda no publica precio, el producto no aparece con precio.</p>
+          <p>Entre una actualización y la siguiente la tienda puede cambiar un precio. Por eso el precio final siempre es el que muestra la tienda al momento de comprar.</p>
         </article>
 
         <article className={styles.section}>

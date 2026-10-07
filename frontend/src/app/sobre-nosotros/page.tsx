@@ -56,7 +56,7 @@ export default function AboutPage() {
 
         <article className={styles.section}>
           <h2>Cómo funciona</h2>
-          <p>Revisamos varias veces al día los perfumes publicados por tiendas chilenas, agrupamos las publicaciones que corresponden al mismo producto y mostramos sus precios lado a lado. El detalle de qué tiendas revisamos y cómo decidimos que dos publicaciones son el mismo perfume está en <Link href="/como-comparamos">Cómo comparamos los precios</Link>.</p>
+          <p>Una vez al día revisamos los perfumes publicados por tiendas chilenas, agrupamos las publicaciones que corresponden al mismo producto y mostramos sus precios lado a lado. El detalle de qué tiendas revisamos y cómo decidimos que dos publicaciones son el mismo perfume está en <Link href="/como-comparamos">Cómo comparamos los precios</Link>.</p>
           <p>También escribimos <Link href="/guias">guías</Link> con lo que aprendemos al comparar: diferencias entre concentraciones, marcas que se repiten en las tiendas y qué revisar antes de comprar.</p>
         </article>
 

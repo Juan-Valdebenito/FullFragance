@@ -3,7 +3,7 @@ import { GUIDES } from "@/features/guides/guides";
 
 const SITE_URL = "https://fullfragance.cl";
 
-// El catálogo se refresca por cron cada varias horas; no hace falta
+// El catálogo se actualiza una vez al día; no hace falta
 // regenerar el sitemap en cada crawl de Google.
 export const revalidate = 3600;
 
@@ -28,7 +28,7 @@ async function fetchProductIds(): Promise<string[]> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
-    { url: `${SITE_URL}/dashboard`, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${SITE_URL}/dashboard`, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE_URL}/guias`, changeFrequency: "weekly", priority: 0.8 },
     ...GUIDES.map(guide => ({
       url: `${SITE_URL}/guias/${guide.slug}`,
