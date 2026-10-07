@@ -375,6 +375,33 @@
   line-height: 1.65;
 }
 
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 10px;
+  max-width: 760px;
+  margin-top: 14px;
+}
+
+.facts div {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 12px);
+  padding: 10px 14px;
+}
+
+.facts dt {
+  color: var(--on-surface-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.facts dd {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
 .about h3 {
   margin-top: 24px;
   font-size: 1.05rem;

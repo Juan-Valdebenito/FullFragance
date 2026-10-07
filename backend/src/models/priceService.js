@@ -94,6 +94,7 @@ function listProduct(product) {
     category: product.category,
     gender: product.gender,
     notes: product.notes,
+    notesInferred: product.notesInferred,
     source: product.source,
     imageUrl: product.imageUrl,
     imageUrls: product.imageUrls,

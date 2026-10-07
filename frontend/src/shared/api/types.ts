@@ -11,6 +11,8 @@ export type ApiProduct = {
   category: string;
   gender: string;
   notes: string[];
+  /** true si las notas se dedujeron del nombre: sirven para recomendar, no se muestran. */
+  notesInferred?: boolean;
   olfactoryNotes?: ApiNote[];
   description?: string;
   source?: string;

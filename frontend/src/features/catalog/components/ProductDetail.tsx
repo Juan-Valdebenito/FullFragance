@@ -120,9 +120,16 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
   }
 
   const fullName = `${product.brand} ${product.name}`;
-  const description = product.description && product.description.trim().length > 5
-    ? product.description
-    : `${product.name}${product.brand && product.brand !== "Sin marca" ? ` de ${product.brand}` : ""}.`;
+  // Sólo datos reales: la descripción viene del perfil o de la tienda, y las
+  // notas deducidas del nombre (notesInferred) no se presentan como hechos.
+  const description = product.description?.trim() || null;
+  const notes = product.notesInferred ? [] : product.olfactoryNotes ?? [];
+  const facts = [
+    { label: "Marca", value: product.brand !== "Sin marca" ? product.brand : null },
+    { label: "Presentación", value: product.unit || null },
+    { label: "Público", value: product.gender || null },
+    { label: "Tiendas", value: offers.length ? `${offers.length} ${offers.length === 1 ? "tienda" : "tiendas"}` : null },
+  ].filter(fact => fact.value);
 
   return (
     <main className={`container ${styles.main}`}>
@@ -245,17 +252,22 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
         </section>
       )}
 
-      {/* Abajo: detalles del perfume e historial de precios */}
+      {/* Abajo: ficha del perfume */}
       <section className={styles.details}>
         <div className={styles.about}>
           <h2>Acerca de este perfume</h2>
-          <p>{description}</p>
+          {facts.length > 0 && (
+            <dl className={styles.facts}>
+              {facts.map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
+            </dl>
+          )}
+          {description && <p>{description}</p>}
 
-          {product.olfactoryNotes && product.olfactoryNotes.length > 0 && (
+          {notes.length > 0 && (
             <>
               <h3>Notas olfativas</h3>
               <div className={styles.notesGrid}>
-                {product.olfactoryNotes.map(note => (
+                {notes.map(note => (
                   <article key={note.id} className={`${styles.noteBadge} ${styles[`note${noteToneFor(note.family)}`]}`}>
                     <span className={styles.noteIcon} aria-hidden="true"><Icon name={noteIconFor(note.family)} size={20} /></span>
                     <div>

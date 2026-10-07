@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { inferBrandFromName, canonicalBrandNames, samePerfume, isSet, volumeOf, identityTokens, productSignature } = require("../src/models/productMatcher");
+const { inferBrandFromName, canonicalBrandNames, cleanBrand, samePerfume, isSet, volumeOf, identityTokens, productSignature } = require("../src/models/productMatcher");
 const { mergeScrapedProducts } = require("../src/models/catalogRepository");
 
 function perfume(source, overrides = {}) {
@@ -301,6 +301,52 @@ test("agrupa marcas escritas distinto y toma el género de cualquier tienda", as
   assert.equal(rest.length, 0);
   assert.equal(product.brand, "Hugo Boss");
   assert.equal(product.gender, "Masculino");
+});
+
+test("unifica marcas mal escritas o con entidades HTML", () => {
+  const names = canonicalBrandNames(["Dolce & Gabbanna", "Dolce Gabanna", "Lataffa", "Aghata Ruiz de la Prada", "Billie Elish", "Y.S.Laurent", "Victor & Rolf", "Thierry Mugler", "Christian Dior", "Blvgari"]);
+  assert.equal(names.get("Dolce & Gabbanna"), "Dolce & Gabbana");
+  assert.equal(names.get("Dolce Gabanna"), "Dolce & Gabbana");
+  assert.equal(names.get("Lataffa"), "Lattafa");
+  assert.equal(names.get("Aghata Ruiz de la Prada"), "Agatha Ruiz de la Prada");
+  assert.equal(names.get("Billie Elish"), "Billie Eilish");
+  assert.equal(names.get("Y.S.Laurent"), "Yves Saint Laurent");
+  assert.equal(names.get("Victor & Rolf"), "Viktor & Rolf");
+  assert.equal(names.get("Thierry Mugler"), "Mugler");
+  assert.equal(names.get("Christian Dior"), "Dior");
+  assert.equal(names.get("Blvgari"), "Bvlgari");
+  assert.equal(cleanBrand("DOLCE &amp; GABBANNA"), "DOLCE & GABBANNA");
+  assert.equal(cleanBrand("BENJAMIN VICU&Ntilde;A"), "BENJAMIN VICUÑA");
+});
+
+test("descarta textos de tienda que no son marcas", async () => {
+  for (const junk of ["Despacho Gratis RM", "Ultimas Unidades", "Tester", "Sin marca", "Recién Llegados Todos Los Productos", "Gen&#201;rica", "Varios"]) {
+    assert.equal(cleanBrand(junk), null, junk);
+  }
+  const [product] = await mergeScrapedProducts([perfume("silk-cl", { brand: "Ultimas Unidades", name: "Lattafa Asad EDP 100 ml" })]);
+  assert.equal(product.brand, "Lattafa");
+});
+
+test("descarta un precio absurdamente bajo frente al resto de las tiendas", async () => {
+  const odyssey = (source, price) => perfume(source, { brand: "Armaf", name: "Armaf Odyssey Mandarin Sky EDP 200 ml", presentation: "200 ml", price });
+  const [product] = await mergeScrapedProducts([
+    odyssey("lodoro-cl", 3900),
+    odyssey("silk-cl", 39990),
+    odyssey("leparis-cl", 59990),
+  ]);
+  assert.deepEqual(product.offers.map((offer) => offer.source).sort(), ["leparis-cl", "silk-cl"]);
+  assert.equal(product.matchedStores, 2);
+  assert.equal(product.basePrice, 39990);
+
+  // Con una sola tienda de referencia no hay base para decidir: se conserva.
+  const [pair] = await mergeScrapedProducts([odyssey("lodoro-cl", 3900), odyssey("silk-cl", 39990)]);
+  assert.equal(pair.matchedStores, 2);
+});
+
+test("no inventa descripción y marca las notas deducidas del nombre", async () => {
+  const [product] = await mergeScrapedProducts([perfume("silk-cl", { brand: "Lattafa", name: "Lattafa Asad EDP 100 ml" })]);
+  assert.equal(product.description, null);
+  assert.equal(product.notesInferred, true);
 });
 
 test("no pliega submarcas de Armani al mostrar el nombre", () => {

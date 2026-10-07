@@ -74,9 +74,10 @@ const IDENTITY_MODIFIERS = new Set([
 // tabla permite normalizar también los registros históricos antes del matching.
 const BRAND_ALIASES = [
   ["Adolfo Dominguez", ["adolfo dominguez"]],
+  ["Agatha Ruiz de la Prada", ["agatha ruiz de la prada", "aghata ruiz de la prada"]],
   ["Afnan", ["afnan"]],
   ["Al Haramain", ["al haramain"]],
-  ["Antonio Banderas", ["antonio banderas"]],
+  ["Antonio Banderas", ["antonio banderas", "banderas"]],
   ["Ariana Grande", ["ariana grande"]],
   ["Armaf", ["armaf"]],
   ["Armaan Luxe", ["armaan luxe"]],
@@ -87,9 +88,12 @@ const BRAND_ALIASES = [
   ["Anfar", ["anfar"]],
   ["Auraa", ["auraa"]],
   ["Bentley", ["bentley"]],
+  ["Bath & Body Works", ["bath body works", "bath body"]],
+  ["Beverly Hills Polo Club", ["beverly hills polo club", "beverly hills polo"]],
   ["Bharara", ["bharara"]],
+  ["Billie Eilish", ["billie eilish", "billie elish"]],
   ["Boucheron", ["boucheron"]],
-  ["Bvlgari", ["bvlgari", "bulgari"]],
+  ["Bvlgari", ["bvlgari", "bulgari", "blvgari"]],
   ["Burberry", ["burberry"]],
   ["Calvin Klein", ["calvin klein"]],
   ["Carolina Herrera", ["carolina herrera"]],
@@ -98,13 +102,18 @@ const BRAND_ALIASES = [
   ["Clinique", ["clinique"]],
   ["Davidoff", ["davidoff"]],
   ["Diesel", ["diesel"]],
-  ["Dolce & Gabbana", ["dolce gabbana", "dolce and gabbana"]],
-  ["Dumont", ["dumont"]],
+  ["Dior", ["christian dior", "dior"]],
+  ["Dolce & Gabbana", ["dolce gabbana", "dolce and gabbana", "dolce gabbanna", "dolce gabanna"]],
+  ["Donna Karan", ["donna karan new york", "donna karan"]],
+  ["Dumont", ["dumont paris", "dumont"]],
   ["DKNY", ["dkny"]],
   ["Elivi", ["elivi"]],
+  ["Emanuel Ungaro", ["emanuel ungaro", "ungaro"]],
+  ["Faconnable", ["faconnable", "faconable"]],
   ["Emir", ["emir"]],
   ["Flavia", ["flavia"]],
-  ["Fragrance World", ["fragrance world", "fragrance worldoud"]],
+  ["Fragrance World", ["fragrance world", "fragrance worldoud", "fragance world"]],
+  ["Franck Olivier", ["franck olivier", "franck oliver"]],
   ["French Avenue", ["french avenue"]],
   ["Fomo", ["fomo"]],
   ["Giorgio Armani", ["giorgio armani", "armani"]],
@@ -115,34 +124,38 @@ const BRAND_ALIASES = [
   ["Guy Laroche", ["guy laroche"]],
   ["Halloween", ["halloween", "hallowen"]],
   ["Hamidi", ["hamidi"]],
-  ["Hermès", ["hermes"]],
+  ["Hermès", ["hermes", "terre d hermes", "terre de hermes"]],
   ["Hugo Boss", ["hugo boss", "boss"]],
   ["Issey Miyake", ["issey miyake"]],
   ["Jaguar", ["jaguar"]],
   ["Jean Paul Gaultier", ["jean paul gaultier", "jpg"]],
   ["Jenny Glow", ["jenny glow"]],
   ["Jessica Twain", ["jessica twain"]],
+  ["Jean Les Pins", ["jean les pins", "jean le pins", "jeans les pins"]],
   ["Jesus del Pozo", ["jesus del pozo"]],
   ["Jivi Parfums", ["jivi parfums"]],
   ["Jo Milano", ["jo milano"]],
   ["Jimmy Choo", ["jimmy choo"]],
+  ["Jo Malone London", ["jo malone london", "jo malone"]],
+  ["John Varvatos", ["john varvatos", "jhon varvatos"]],
   ["Karl Lagerfeld", ["karl lagerfeld"]],
+  ["Khadlaj", ["khadlaj", "khadkaj", "khajlad"]],
   ["Lacoste", ["lacoste"]],
   ["Lalique", ["lalique"]],
   ["Lancôme", ["lancome"]],
-  ["Lattafa", ["lattafa"]],
+  ["Lattafa", ["lattafa", "lataffa"]],
   ["Loewe", ["loewe"]],
   ["Lorenzo Pazzaglia", ["lorenzo pazzaglia"]],
   ["Moschino", ["moschino"]],
   ["Maison Alhambra", ["maison alhambra"]],
-  ["Maison Asrar", ["maison asrar"]],
+  ["Maison Asrar", ["maison asrar", "maisom asrar"]],
   ["Matin Martin", ["matin martin"]],
   ["Memwa", ["memwa"]],
   ["Mercedes-Benz", ["mercedes benz"]],
   ["Ministry of Gourmand", ["ministry of gourmand"]],
   ["Moncler", ["moncler"]],
   ["Montblanc", ["montblanc"]],
-  ["Mugler", ["mugler"]],
+  ["Mugler", ["mugler", "thierry mugler"]],
   ["Narciso Rodriguez", ["narciso rodriguez"]],
   ["Natura", ["natura"]],
   ["Nautica", ["nautica"]],
@@ -158,7 +171,7 @@ const BRAND_ALIASES = [
   ["Rayhaan", ["rayhaan"]],
   ["Riviera Privé", ["riviera prive"]],
   ["Risala", ["risala"]],
-  ["Salvatore Ferragamo", ["salvatore ferragamo"]],
+  ["Salvatore Ferragamo", ["salvatore ferragamo", "ferragamo"]],
   ["Sabrina Carpenter", ["sabrina carpenter"]],
   ["Shakira", ["shakira"]],
   ["Sospiro", ["sospiro"]],
@@ -167,9 +180,12 @@ const BRAND_ALIASES = [
   ["Tubbees", ["tubbees"]],
   ["Tous", ["tous"]],
   ["Valentino", ["valentino"]],
+  ["Victoria's Secret", ["victorias secret", "victoria s secret", "victoria secret"]],
+  ["Victorinox", ["swiss army victorinox", "victorinox", "swiss army"]],
   ["Versace", ["versace"]],
-  ["Viktor & Rolf", ["viktor rolf", "viktor and rolf"]],
-  ["Yves Saint Laurent", ["yves saint laurent", "ysl"]],
+  ["Viktor & Rolf", ["viktor rolf", "viktor and rolf", "victor rolf", "victor and rolf"]],
+  ["Women'secret", ["women secret", "womensecret", "woman secret"]],
+  ["Yves Saint Laurent", ["yves saint laurent", "ysl", "y s laurent"]],
   ["Xerjoff", ["xerjoff"]],
   ["Zakat Parfums", ["zakat parfums"]],
   ["Zimaya", ["zimaya"]],
@@ -224,6 +240,35 @@ function normalizedProductName(product) {
     .trim();
 }
 
+// Las tiendas a veces dejan entidades HTML en la marca ("DOLCE &amp;
+// GABBANNA", "Gen&#201;rica") o usan el campo para textos comerciales.
+const HTML_ENTITIES = {
+  amp: "&", quot: "\"", apos: "'", nbsp: " ",
+  aacute: "á", eacute: "é", iacute: "í", oacute: "ó", uacute: "ú", ntilde: "ñ", uuml: "ü",
+  Aacute: "Á", Eacute: "É", Iacute: "Í", Oacute: "Ó", Uacute: "Ú", Ntilde: "Ñ", Uuml: "Ü",
+};
+
+function decodeEntities(value) {
+  return String(value || "")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&([a-z]+);/gi, (entity, name) => HTML_ENTITIES[name] ?? entity);
+}
+
+// Textos que algunas tiendas ponen en el campo marca y que no lo son. Se
+// descartan para que la marca se deduzca del nombre del producto.
+const NOT_A_BRAND = new Set([
+  "sin marca", "generica", "generico", "varios", "tester", "ultimas unidades",
+  "despacho gratis rm", "recien llegados todos los productos", "lo mas vendido",
+  "sets y estuches de", "salida", "salida pera", "fondo", "new brand",
+  "maquillaje de lujo", "coleccion exclusiva",
+]);
+
+function cleanBrand(value) {
+  const brand = decodeEntities(value).replace(/\s+/g, " ").trim();
+  return brand && !NOT_A_BRAND.has(normalize(brand)) ? brand : null;
+}
+
 function inferBrandFromName(name) {
   const value = normalize(name);
   if (!value) return null;
@@ -239,10 +284,7 @@ function inferBrandFromName(name) {
 }
 
 function brandOf(product) {
-  const declared = String(product?.brand || "").trim();
-  return declared && normalize(declared) !== "sin marca"
-    ? declared
-    : inferBrandFromName(product?.name);
+  return cleanBrand(product?.brand) || inferBrandFromName(product?.name);
 }
 
 function normalizeBrand(value) {
@@ -578,6 +620,8 @@ function samePerfumeSignatures(left, right) {
 
 module.exports = {
   normalize,
+  decodeEntities,
+  cleanBrand,
   normalizeBrand,
   inferBrandFromName,
   canonicalBrandNames,

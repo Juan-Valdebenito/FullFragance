@@ -147,6 +147,231 @@ export const GUIDES: Guide[] = [
       },
     ],
   },
+  {
+    slug: "como-saber-si-un-perfume-es-original",
+    title: "Cómo saber si un perfume es original antes de comprarlo",
+    description:
+      "Señales para reconocer un perfume original en Chile: dónde comprar, qué revisar en el envase, cuándo desconfiar de un precio y qué son testers y decants.",
+    published: "2026-10-07",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Un precio muy bajo es tentador, pero en perfumería también es la forma más común de terminar con una imitación. No existe una prueba infalible desde la casa, aunque sí varias señales que, juntas, reducen mucho el riesgo. Estas son las que revisamos nosotros.",
+    sections: [
+      {
+        heading: "Empieza por dónde compras",
+        paragraphs: [
+          "La protección más efectiva es comprar en una tienda identificable: una multitienda, una farmacia o una perfumería con sitio propio, razón social y canal de reclamos. Por eso en FullFragance sólo comparamos tiendas que publican sus productos en su propio sitio, y no ventas entre particulares.",
+          "En marketplaces y redes sociales conviven vendedores serios con revendedores de imitaciones, y si algo sale mal es mucho más difícil reclamar.",
+        ],
+      },
+      {
+        heading: "Desconfía de un precio fuera de rango",
+        paragraphs: [
+          "Si el mismo perfume, del mismo tamaño, cuesta en casi todas las tiendas entre $60.000 y $80.000, uno a $15.000 merece una pregunta. Puede ser una liquidación real, un error de la tienda o una imitación.",
+          "Comparar sirve justamente para eso: ver el rango normal antes de comprar. Cuando una tienda publica un precio absurdamente bajo frente a las demás, lo dejamos fuera de la comparación hasta que se corrija, porque casi siempre es un error de publicación.",
+        ],
+      },
+      {
+        heading: "Qué revisar en la caja y el frasco",
+        paragraphs: ["Cuando ya lo tienes en la mano, fíjate en los detalles:"],
+        list: [
+          "El código de lote (batch code): suele venir grabado o impreso en la base de la caja y del frasco, y ambos deberían coincidir.",
+          "La impresión de la caja: letras nítidas, sin faltas de ortografía y con la información del fabricante y el importador.",
+          "El atomizador y la tapa: en los originales calzan firme y el spray sale como una nube fina y pareja.",
+          "El líquido: color y transparencia parejos, sin partículas en suspensión.",
+        ],
+      },
+      {
+        heading: "Testers, sets y decants",
+        paragraphs: [
+          "Un tester es un perfume original que la marca entrega a las tiendas para que el público lo pruebe. Suele venir en caja blanca o sin tapa y cuesta menos; comprar uno en una tienda confiable no tiene nada de malo, pero no es lo mismo que el producto de venta.",
+          "Un decant es una parte de un perfume original trasvasijada a un frasco pequeño. Sirve para probar antes de comprar el frasco completo, pero depende totalmente de la confianza en quien lo prepara.",
+          "En el comparador mantenemos testers, sets y decants separados del frasco normal, para que el precio que ves sea comparable.",
+        ],
+        rail: {
+          title: "Testers que hoy se venden en varias tiendas",
+          params: { q: "tester", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=tester&sort=stores",
+        },
+      },
+    ],
+  },
+  {
+    slug: "perfumes-para-el-verano",
+    title: "Perfumes para el verano: qué familias olfativas funcionan con calor",
+    description:
+      "Qué tipo de perfume conviene con calor, por qué los cítricos y acuáticos son tan populares en verano y cómo comparar precios de los clásicos de la temporada.",
+    published: "2026-10-07",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Con el calor los perfumes se comportan distinto: la piel tibia los proyecta más y los aromas dulces o muy densos pueden volverse pesados. Por eso, cuando se acerca el verano, las búsquedas se mueven hacia fragancias frescas. Aquí explicamos qué buscar y mostramos los clásicos de la temporada que hoy se pueden comparar entre tiendas.",
+    sections: [
+      {
+        heading: "Familias que funcionan con calor",
+        paragraphs: ["Estas son las familias olfativas que más se usan en verano:"],
+        list: [
+          "Cítricas: limón, bergamota, mandarina o pomelo. Son luminosas y limpias, aunque se evaporan rápido.",
+          "Acuáticas o marinas: evocan agua, sal y brisa. Fueron muy populares desde los años noventa y siguen siéndolo.",
+          "Aromáticas: lavanda, menta, romero o albahaca. Frescas y versátiles, muy comunes en perfumería masculina.",
+          "Florales ligeras: flores blancas o verdes en versiones suaves, sin bases muy dulces.",
+        ],
+      },
+      {
+        heading: "Concentración y forma de uso",
+        paragraphs: [
+          "En verano muchas personas prefieren una Eau de Toilette o una colonia: se sienten más ligeras y se pueden volver a aplicar durante el día. Una Eau de Parfum también sirve, pero conviene usar menos atomizaciones.",
+          "Aplica el perfume sobre la piel hidratada y evita dejar el frasco al sol o en el auto: el calor y la luz degradan la fragancia.",
+        ],
+        rail: {
+          title: "Light Blue: precios entre tiendas",
+          params: { q: "light blue", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=light%20blue&sort=stores",
+        },
+      },
+      {
+        heading: "Los clásicos frescos que más se repiten",
+        paragraphs: [
+          "Algunas fragancias frescas llevan décadas vendiéndose y están en casi todas las tiendas, lo que las hace fáciles de comparar: Acqua di Giò de Giorgio Armani, Light Blue de Dolce & Gabbana, Cool Water de Davidoff o CK One de Calvin Klein, entre otras.",
+          "Ojo con las líneas: Acqua di Giò y Acqua di Gioia son perfumes distintos, y cada uno tiene versiones (Profondo, Parfum, Intense) que no huelen igual. Revisa el nombre completo en la ficha antes de comparar.",
+        ],
+        rail: {
+          title: "Acqua di Giò y su familia en el comparador",
+          params: { q: "acqua di gio", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=acqua%20di%20gio&sort=stores",
+        },
+      },
+    ],
+  },
+  {
+    slug: "perfumes-de-nicho-en-chile",
+    title: "Perfumes de nicho en Chile: qué son y cómo comparar sus precios",
+    description:
+      "Qué diferencia a un perfume de nicho de uno de diseñador, qué casas de nicho se venden en Chile y por qué conviene comparar antes de comprar uno.",
+    published: "2026-10-07",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Los perfumes de nicho son los más caros del catálogo y también los que menos tiendas venden. Esa combinación hace que una diferencia de precio entre tiendas pueda significar decenas de miles de pesos. Esta guía explica qué son y cómo encontrarlos en el comparador.",
+    sections: [
+      {
+        heading: "Nicho, diseñador y árabe",
+        paragraphs: [
+          "Un perfume de diseñador es el que lanza una casa de moda o una gran marca (Dior, Carolina Herrera, Versace) y se vende en multitiendas de todo el mundo. Un perfume de nicho viene de una casa dedicada principalmente a la perfumería, con producción y distribución más acotadas: Creed, Xerjoff, Parfums de Marly, Mancera, Montale, Initio o Nishane, entre otras.",
+          "En el comparador separamos el catálogo en tres segmentos (diseñador, nicho y árabe) según la marca, para que puedas explorar cada uno por separado.",
+        ],
+      },
+      {
+        heading: "Por qué cuestan más",
+        paragraphs: [
+          "El precio de un nicho no se explica sólo por los ingredientes: influyen las tiradas más pequeñas, la importación, la distribución exclusiva y el posicionamiento de la marca. Por lo mismo, en Chile hay menos tiendas que los venden y los precios entre ellas pueden variar bastante.",
+          "Que sea más caro no significa que sea mejor para ti. Probar antes de comprar (en tienda o con un decant de confianza) es especialmente recomendable en este segmento.",
+        ],
+        rail: {
+          title: "Perfumes de nicho que hoy se comparan en varias tiendas",
+          params: { segment: "niche", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?segment=niche&sort=stores",
+        },
+      },
+      {
+        heading: "Cómo comparar un nicho",
+        paragraphs: ["Antes de comprar, revisa:"],
+        list: [
+          "El volumen exacto: muchas casas de nicho venden 50, 75, 100 o 125 ml, y la diferencia de precio por mililitro es grande.",
+          "Que la tienda tenga stock real: en nicho es común que un perfume aparezca publicado pero agotado.",
+          "Si es tester o frasco de venta: los testers de nicho son frecuentes y cuestan menos, pero vienen sin caja o con caja simple.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "perfumes-arabes-inspirados-en-disenador",
+    title: "Perfumes árabes inspirados en perfumes de diseñador y nicho",
+    description:
+      "Qué son los perfumes árabes 'inspirados en' otros más caros, ejemplos que la comunidad compara con frecuencia y qué esperar de ellos antes de comprar.",
+    published: "2026-10-07",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Una de las razones del crecimiento de la perfumería árabe es que varias de sus fragancias recuerdan a perfumes de diseñador o de nicho mucho más caros. En foros y redes se les llama \"dupes\" o \"inspirados en\". Esta guía resume qué significa eso y qué conviene tener en cuenta.",
+    sections: [
+      {
+        heading: "Qué significa \"inspirado en\"",
+        paragraphs: [
+          "Un perfume inspirado en otro busca un aroma parecido, no idéntico. Puede compartir las notas principales y aun así diferir en la salida, la duración o cómo evoluciona en la piel. Tampoco son productos de la misma marca: son creaciones independientes que se venden con su propio nombre.",
+          "No hay que confundirlos con las falsificaciones, que copian el nombre, la caja y la marca de otro perfume. Un inspirado legítimo lleva siempre el nombre de su propia casa.",
+        ],
+      },
+      {
+        heading: "Comparaciones que más se repiten",
+        paragraphs: [
+          "Estas son algunas comparaciones frecuentes en la comunidad de perfumería. Son opiniones extendidas, no equivalencias oficiales de las marcas:",
+        ],
+        list: [
+          "Armaf Club de Nuit Intense Man, que suele compararse con Aventus de Creed.",
+          "Lattafa Khamrah, comparado a menudo con Angels' Share de Kilian.",
+          "Afnan 9PM, que muchos asocian con Ultra Male de Jean Paul Gaultier.",
+        ],
+        rail: {
+          title: "Club de Nuit: precios entre tiendas",
+          params: { q: "club de nuit", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=club%20de%20nuit&sort=stores",
+        },
+      },
+      {
+        heading: "Qué esperar antes de comprar uno",
+        paragraphs: [
+          "La principal ventaja es el precio: muchas de estas fragancias cuestan una fracción del perfume que recuerdan. A cambio, es común que algunas notas se perciban distintas o que la versión varíe un poco entre lotes.",
+          "Si te interesa uno en particular, busca su nombre exacto en el comparador: de las líneas más populares suele haber varias versiones (Intense, Elixir, ediciones limitadas) que no son lo mismo.",
+        ],
+        rail: {
+          title: "Khamrah y sus versiones",
+          params: { q: "khamrah", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=khamrah&sort=stores",
+        },
+      },
+    ],
+  },
+  {
+    slug: "tiendas-de-perfumes-en-chile",
+    title: "Tiendas de perfumes en Chile: multitiendas, farmacias y perfumerías especializadas",
+    description:
+      "Diferencias entre comprar perfume en una multitienda, una farmacia o una perfumería especializada en Chile, y qué revisar en cada caso además del precio.",
+    published: "2026-10-07",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "El mismo perfume se vende en lugares muy distintos: grandes multitiendas, cadenas de farmacias y perfumerías que se dedican sólo a fragancias. Cada tipo de tienda tiene ventajas y cosas a revisar. Esto es lo que vemos al comparar sus catálogos todos los días.",
+    sections: [
+      {
+        heading: "Multitiendas",
+        paragraphs: [
+          "Falabella, Paris y Ripley venden sobre todo perfumes de diseñador y algunas marcas árabes. Suelen tener precios de lista más altos, pero con eventos de descuento frecuentes (Cyber, CyberDay, liquidaciones) y promociones con sus tarjetas, que no siempre aparecen en el precio publicado.",
+          "Su ventaja es la logística: despacho a todo Chile, retiro en tienda y procesos de devolución conocidos.",
+        ],
+      },
+      {
+        heading: "Farmacias y cadenas de belleza",
+        paragraphs: [
+          "Cadenas como Preunic tienen una selección más acotada, con foco en marcas masivas y colonias. Pueden ser una buena opción para perfumes de uso diario y para comprar en una tienda física cercana.",
+        ],
+      },
+      {
+        heading: "Perfumerías especializadas",
+        paragraphs: [
+          "Tiendas como Silk Perfumes, Elite Perfumes, Alisha Perfumes, Cosmetic, L'Odoro, Le Paris Parfums o Dreams Parfums concentran la mayor variedad, especialmente en perfumería árabe y de nicho. Cuando revisamos el catálogo el 7 de octubre de 2026, de los 940 perfumes con stock en al menos dos tiendas, en 747 (cerca de 8 de cada 10) el precio más bajo era de una perfumería especializada. Silk Perfumes, Cosmetic y Elite Perfumes fueron las que más veces quedaron primeras.",
+          "Antes de comprar revisa el costo y plazo de despacho, si el producto es tester o de venta, y la política de cambios de cada una.",
+        ],
+        rail: {
+          title: "Perfumes que hoy están en más tiendas",
+          params: { comparison: "multiple", sort: "stores" },
+          href: "/dashboard?sort=stores",
+        },
+      },
+      {
+        heading: "El precio no es todo",
+        paragraphs: [
+          "Al comparar, suma el despacho y considera el stock: el precio más bajo de una tienda sin stock no sirve, por eso en las fichas esas tiendas quedan al final. Y si un precio está muy por debajo del resto, revisa con calma: puede ser un error de publicación.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function guideBySlug(slug: string) {

@@ -1,6 +1,6 @@
 const { query } = require("../data/pgDatabase");
 const { listProducts: listScrapedProducts } = require("../data/catalogDatabase");
-const { normalizeBrand, inferBrandFromName, canonicalBrandNames, samePerfumeSignatures, productSignature, tokenScore, isSet } = require("./productMatcher");
+const { normalizeBrand, inferBrandFromName, cleanBrand, decodeEntities, canonicalBrandNames, samePerfumeSignatures, productSignature, tokenScore, isSet } = require("./productMatcher");
 const { DEFAULT_DATA } = require("../data/database");
 
 let cachedProducts = null;
@@ -67,10 +67,7 @@ function inferGroupGender(products) {
 }
 
 function resolvedBrand(product) {
-  const declared = String(product?.brand || "").trim();
-  return declared && normalizeBrand(declared) !== "sin marca"
-    ? declared
-    : inferBrandFromName(product?.name);
+  return cleanBrand(product?.brand) || inferBrandFromName(product?.name);
 }
 
 const NOTE_PATTERNS = [
@@ -180,17 +177,11 @@ function inferOlfactoryNotes(product, gender) {
   return merged.slice(0, 4);
 }
 
-function inferDescription(product, gender, noteObjects) {
-  if (product.description && product.description.trim().length > 10) return product.description;
-  const noteNames = (noteObjects || []).map((n) => n.name).filter(Boolean).join(", ");
-  const brand = product.brand && product.brand !== "Sin marca" ? `de ${product.brand}` : "";
-  const notesText = noteNames ? ` que destaca por sus notas de ${noteNames}` : "";
-  if (gender === "Masculino") {
-    return `${product.name} ${brand} ofrece una experiencia olfativa masculina y sofisticada. Una combinación equilibrada${notesText}, aportando carácter, distinción y una estela memorable.`;
-  } else if (gender === "Femenino") {
-    return `${product.name} ${brand} es una fragancia envolvente y elegante. Su armonía de acordes${notesText}, creando una estela seductora, femenina y llena de luminosidad.`;
-  }
-  return `${product.name} ${brand} es una creación versátil y cautivadora. Combina acordes refinados${notesText} para lograr una estela moderna, fresca y atemporal ideal para cualquier ocasión.`;
+// Sólo descripciones reales (perfil curado o texto de la tienda). Antes se
+// generaba una plantilla por género que se repetía en miles de fichas.
+function realDescription(product) {
+  const text = typeof product?.description === "string" ? product.description.trim() : "";
+  return text.length > 10 ? text : null;
 }
 
 function scentProfileFor(product, profiles) {
@@ -205,9 +196,12 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   const enrichedProduct = inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
   const profile = scentProfileFor(enrichedProduct, profiles);
   const gender = inferGender(enrichedProduct.name, enrichedProduct.source);
-  const rawNotes = profile?.notes && profile.notes.length ? profile.notes : inferOlfactoryNotes(enrichedProduct, gender);
+  const profileNotes = profile?.notes && profile.notes.length ? profile.notes : null;
+  // Las notas deducidas del nombre sirven para recomendar, pero no se muestran
+  // como dato de la fragancia (notesInferred).
+  const rawNotes = profileNotes || inferOlfactoryNotes(enrichedProduct, gender);
   const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
-  const description = profile?.description || inferDescription(enrichedProduct, gender, olfactoryNotes);
+  const description = realDescription(profile) || realDescription(enrichedProduct);
 
   return {
     id: `${enrichedProduct.source.replace(/-cl$/, "")}-${enrichedProduct.sku.toLowerCase()}`,
@@ -218,6 +212,7 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
     category: "Perfumes",
     gender,
     notes: rawNotes,
+    notesInferred: !profileNotes,
     olfactoryNotes,
     description,
     source: enrichedProduct.source,
@@ -254,6 +249,28 @@ function biggestBucketOf(groupsByKey) {
   return biggest;
 }
 
+// Una tienda puede publicar un precio con un error evidente (un frasco de
+// 200 ml a $3.900 cuando el resto lo vende sobre $39.990). Se descarta la
+// oferta que cuesta menos del 35 % de la mediana de las otras tiendas; hacen
+// falta al menos dos tiendas de referencia para que la mediana signifique algo.
+const OUTLIER_RATIO = 0.35;
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function withoutPriceOutliers(offers) {
+  const priced = offers.filter((offer) => offer.price > 0);
+  if (priced.length < 3) return offers;
+  return offers.filter((offer) => {
+    if (!(offer.price > 0)) return true;
+    const others = priced.filter((other) => other !== offer).map((other) => other.price);
+    return offer.price >= median(others) * OUTLIER_RATIO;
+  });
+}
+
 async function mergeScrapedProducts(products) {
   const dbData = getDbData();
   const profiles = dbData.products;
@@ -261,7 +278,8 @@ async function mergeScrapedProducts(products) {
 
   const resolvedProducts = products.map((product) => {
     const inferredBrand = resolvedBrand(product);
-    return inferredBrand === product.brand ? product : { ...product, brand: inferredBrand };
+    const name = decodeEntities(product.name);
+    return inferredBrand === product.brand && name === product.name ? product : { ...product, brand: inferredBrand, name };
   });
   // Las tiendas escriben la misma marca de formas distintas (HUGO BOSS, Hugo
   // Boss, HUGOBOSS). Se unifica antes de agrupar para que el matching y el
@@ -352,12 +370,13 @@ async function mergeScrapedProducts(products) {
         || (offer.available === current.available && offer.price > 0 && (!current.price || offer.price < current.price));
       if (shouldReplace) offersBySource.set(offer.source, offer);
     }
-    const offers = [...offersBySource.values()];
+    const offers = withoutPriceOutliers([...offersBySource.values()]);
     const positivePrices = offers.filter((offer) => offer.price > 0).map((offer) => offer.price);
     const gender = inferGroupGender(converted);
-    const notes = representative.notes && representative.notes.length ? representative.notes : inferOlfactoryNotes(representative, gender);
+    const curated = converted.find((product) => !product.notesInferred && product.notes?.length);
+    const notes = curated?.notes || inferOlfactoryNotes(representative, gender);
     const olfactoryNotes = resolveOlfactoryNotes(notes, allNotes);
-    const description = representative.description || inferDescription(representative, gender, olfactoryNotes);
+    const description = converted.map((product) => product.description).find(Boolean) || null;
 
     return {
       ...representative,
@@ -365,6 +384,7 @@ async function mergeScrapedProducts(products) {
       imageUrls,
       gender,
       notes,
+      notesInferred: !curated,
       olfactoryNotes,
       description,
       source: offers.length > 1 ? "multi-store" : representative.source,
@@ -404,15 +424,16 @@ async function buildProducts() {
 
   const dbProducts = dbData.products.map((p) => {
     const gender = p.gender || inferGender(p.name);
-    const notes = p.notes && p.notes.length ? p.notes : inferOlfactoryNotes(p, gender);
+    const curatedNotes = p.notes && p.notes.length ? p.notes : null;
+    const notes = curatedNotes || inferOlfactoryNotes(p, gender);
     const olfactoryNotes = resolveOlfactoryNotes(notes, allNotes);
-    const description = inferDescription(p, gender, olfactoryNotes);
     return {
       ...p,
       gender,
       notes,
+      notesInferred: !curatedNotes,
       olfactoryNotes,
-      description,
+      description: realDescription(p),
       // Los productos base no pasan por toCatalogProduct(), por lo que deben
       // incluir esta propiedad para que el filtro de presentación sea fiable.
       isSet: isSet({ name: p.name, presentation: p.unit }),
