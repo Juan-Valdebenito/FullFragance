@@ -29,7 +29,7 @@ export function Footer({ compact = false }: { compact?: boolean }) {
       <div className={`container ${styles.footerInner}`}>
         <section className={styles.footerProfile}>
           <Brand />
-          <p>Comparamos perfumes originales en 12 tiendas de Chile para que sepas dónde está más barato antes de comprar.</p>
+          <p>Comparamos perfumes originales en las principales tiendas de Chile para que sepas dónde está más barato antes de comprar.</p>
           <ul className={styles.footerContact}>
             <li><a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a></li>
             <li><a href="tel:+56984616551">+56 9 8461 6551</a></li>
@@ -47,6 +47,9 @@ export function Footer({ compact = false }: { compact?: boolean }) {
           <h2>Ayuda</h2>
           <a href="mailto:fullfragance67@gmail.com">Soporte</a>
           <a href="mailto:fullfragance67@gmail.com?subject=Corrección de datos">Reportar un precio</a>
+          <Link href="/sobre-nosotros">Sobre nosotros</Link>
+          <Link href="/como-comparamos">Cómo comparamos</Link>
+          <Link href="/guias">Guías</Link>
           <Link href="/politica-de-datos">Política de datos</Link>
           <Link href="/politica-de-uso">Política de uso</Link>
         </nav>

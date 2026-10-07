@@ -256,6 +256,19 @@ const openapi = {
         },
       },
     },
+    "/catalog/stats": {
+      get: {
+        tags: ["Precios"],
+        summary: "Conteo de perfumes, comparables y tiendas del catálogo vigente",
+        responses: {
+          200: {
+            description: "Cifras del catálogo",
+            content: { "application/json": { schema: { type: "object", properties: { products: { type: "integer" }, comparable: { type: "integer" }, stores: { type: "array", items: { type: "string" } } } } } },
+          },
+          ...errorResponses,
+        },
+      },
+    },
     "/prices": {
       get: {
         tags: ["Precios"],

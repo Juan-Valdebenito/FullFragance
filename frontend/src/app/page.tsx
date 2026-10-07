@@ -6,19 +6,28 @@ import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
 import { HeroBanner } from "@/features/catalog/components/HeroBanner";
+import { api } from "@/shared/api/client";
 import styles from "./home.module.css";
 
 export const metadata: Metadata = {
   title: "FullFragance | Comparador de precios de perfumes en Chile",
-  description: "Compara más de 13.000 perfumes originales en 12 tiendas de Chile y encuentra dónde está más barato antes de comprar.",
+  description: "Compara precios de perfumes originales entre las principales tiendas de Chile y encuentra dónde está más barato antes de comprar.",
   alternates: { canonical: "/" },
 };
 
-const features = [
-  { icon: "history" as const, title: "Precios actualizados", text: "Más de 13.000 perfumes" },
-  { icon: "swap" as const, title: "Compara 12 tiendas", text: "Elige la más barata para ti" },
-  { icon: "trend" as const, title: "Historial de precios", text: "Compra en el mejor momento" },
-];
+const thousands = new Intl.NumberFormat("es-CL");
+
+// Cifras leídas del catálogo vigente; si el backend no responde (cold start),
+// la home sale con textos sin números en vez de cifras inventadas.
+async function homeFeatures() {
+  const stats = await api.catalogStats().catch(() => null);
+  const products = stats ? Math.floor(stats.products / 100) * 100 : 0;
+  return [
+    { icon: "history" as const, title: "Precios actualizados", text: products ? `Más de ${thousands.format(products)} perfumes` : "Miles de perfumes originales" },
+    { icon: "swap" as const, title: stats?.stores.length ? `Compara ${stats.stores.length} tiendas` : "Compara tiendas", text: "Elige la más barata para ti" },
+    { icon: "chart" as const, title: "Sin intermediarios", text: "Compras directo en la tienda" },
+  ];
+}
 
 const categories = [
   { label: "Diseñador", text: "Dior, Chanel, Versace", href: "/dashboard?segment=designer", icon: "compass" as const },
@@ -29,7 +38,8 @@ const categories = [
   { label: "Unisex", text: "Ámbar y aromáticos", href: "/dashboard?gender=Unisex", icon: "heart" as const },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const features = await homeFeatures();
   return (
     <>
       <Header />

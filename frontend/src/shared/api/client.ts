@@ -1,4 +1,4 @@
-import type { ApiNote, Comparison, Recommendation, SyncJob, User } from "./types";
+import type { ApiNote, CatalogStats, Comparison, Recommendation, SyncJob, User } from "./types";
 
 // Cuando se abre la web desde otro equipo, localhost es ese equipo y no el
 // computador que ejecuta el backend. Sin variable de entorno, conservamos el
@@ -54,9 +54,11 @@ export const api = {
   comparisonsByIds: (ids: string[]) => request<{ comparison: Comparison[] }>(`/prices?ids=${ids.map(encodeURIComponent).join(",")}`).then(data => data.comparison),
   similarProducts: (productId: string) => request<{ items: Comparison[] }>(`/catalog/similar/${encodeURIComponent(productId)}`).then(data => data.items),
   suggest: (query: string, signal?: AbortSignal) => request<import("./types").SuggestResult>(`/catalog/suggest?q=${encodeURIComponent(query)}`, { signal, authenticated: false }),
-  searchCatalog: (params: URLSearchParams) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`),
+  searchCatalog: (params: URLSearchParams, init?: RequestOptions) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`, init),
   productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
+  // Las páginas de servidor que muestran cifras del catálogo se regeneran cada hora.
+  catalogStats: () => request<CatalogStats>("/catalog/stats", { authenticated: false, next: { revalidate: 3600 } }),
   trackPageView: (page: string) => request<void>("/analytics/page-view", { method: "POST", body: JSON.stringify({ page }), authenticated: false }),
   adminMetrics: () => request<{ metrics: import("./types").AdminMetrics }>("/analytics/metrics").then(data => data.metrics),
   setAdRevenue: (revenue: number) => request<{ metrics: import("./types").AdminMetrics }>("/analytics/ad-revenue", { method: "PUT", body: JSON.stringify({ revenue }) }).then(data => data.metrics),

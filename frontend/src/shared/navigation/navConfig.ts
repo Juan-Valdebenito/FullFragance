@@ -17,6 +17,7 @@ export const HEADER_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard?segment=designer", label: "Diseñador" },
   { href: "/dashboard?segment=niche", label: "Nicho" },
   { href: "/dashboard?segment=arabic", label: "Árabes" },
+  { href: "/guias", label: "Guías" },
   { href: "/dashboard", label: "Catálogo Completo", activeKey: "catalog" },
 ];
 

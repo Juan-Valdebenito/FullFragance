@@ -1,5 +1,6 @@
 export type User = { id: string; name: string; email: string; role?: "admin" | "customer"; hasPassword?: boolean; favorites: string[]; scentPreferences: { scores: Record<string, number> } | null };
 export type ApiOffer = { source: string; sku: string; price: number; available: boolean; productUrl: string; priceIsMock?: boolean };
+export type CatalogStats = { products: number; comparable: number; stores: string[] };
 export type ApiNote = { id: string; name: string; family: string; description: string };
 export type ApiProduct = {
   id: string;
@@ -32,22 +33,11 @@ export type DealOfDay = {
 };
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
 
-export type PriceHistoryPoint = { date: string; price: number };
-export type OpportunityTag = {
-  code: string;
-  label: string;
-  type: "great_deal" | "stable" | "trending_up" | "lowest_30" | "lowest_90";
-};
-
 export type ProductDetailResult = {
   product: ApiProduct;
   prices: ApiPrice[];
   minPrice: number;
   maxPrice: number;
-  priceHistory?: PriceHistoryPoint[];
-  priceHistory30d?: PriceHistoryPoint[];
-  opportunity?: OpportunityTag;
-  stats?: { min30d: number; min90d: number; avg30d: number };
 };
 
 export type Comparison = {
@@ -55,7 +45,6 @@ export type Comparison = {
   prices: ApiPrice[];
   minPrice: number | null;
   maxPrice: number | null;
-  opportunity?: OpportunityTag;
 };
 
 export type CatalogSearchResult = {

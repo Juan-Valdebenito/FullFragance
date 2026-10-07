@@ -23,7 +23,7 @@ const catalog = [
 // catálogo actual a través de esta variable.
 let currentCatalog = catalog;
 priceService.getComparison = async () => currentCatalog;
-const { searchCatalog, suggest, comparisonsByIds, catalogIds, parseSearchParams, similarComparables: searchSimilar } = require("../src/models/catalogSearch");
+const { searchCatalog, suggest, comparisonsByIds, catalogIds, catalogStats, parseSearchParams, similarComparables: searchSimilar } = require("../src/models/catalogSearch");
 
 test("pagina resultados y respeta el tamaño máximo de página", async () => {
   const first = await searchCatalog({ pageSize: "2" });
@@ -62,6 +62,10 @@ test("ordena por más tiendas primero en el orden recomendado", async () => {
 test("lista ids del sitemap, opcionalmente sólo los que están en varias tiendas", async () => {
   assert.deepEqual(await catalogIds(), ["sauvage", "asad", "aventus", "set-good-girl"]);
   assert.deepEqual(await catalogIds({ minStores: 2 }), ["sauvage"]);
+});
+
+test("resume el catálogo con conteos reales de perfumes y tiendas", async () => {
+  assert.deepEqual(await catalogStats(), { products: 4, comparable: 1, stores: ["Falabella", "Paris", "Silk Perfumes"] });
 });
 
 test("devuelve favoritos por id o por alias de tienda", async () => {

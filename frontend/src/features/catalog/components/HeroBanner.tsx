@@ -28,7 +28,7 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     id: "brand",
-    title: "Compara perfumes originales en 12 tiendas de Chile",
+    title: "Compara perfumes originales en las tiendas de Chile",
     text: "El mismo perfume, ordenado de más barato a más caro.",
     cta: "Abrir comparador",
     href: "/dashboard",

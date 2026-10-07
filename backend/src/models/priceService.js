@@ -1,5 +1,4 @@
 const { getProducts, getProductById } = require("./catalogRepository");
-const { seededRandom, hashSeed } = require("../utils/random");
 const { normalize } = require("./productMatcher");
 
 const SOURCE_STORES = {
@@ -141,73 +140,6 @@ async function getComparison(productFilter) {
   return comparison;
 }
 
-const HISTORY_DAYS = 90;
-
-// Serie de precios sin fechas: el listado sólo necesita los números para
-// deducir la etiqueta de oportunidad. Construir los 90 Date + toISOString por
-// producto costaba más que todo el resto del endpoint junto y se descartaba.
-function priceSeries(productId, currentMinPrice) {
-  const price = currentMinPrice || 50000;
-  const seed = hashSeed(`history|${productId}`);
-  const prices = [];
-
-  for (let i = HISTORY_DAYS - 1; i >= 0; i--) {
-    if (i === 0) {
-      prices.push(price);
-      continue;
-    }
-    const rng = seededRandom(seed + i * 17);
-    const wave = Math.sin(i / 6) * 0.08;
-    const noise = (rng() - 0.5) * 0.06;
-    const flashSale = (i % 23 === 0) ? -0.15 : 0;
-    const factor = 1 + wave + noise + flashSale;
-    prices.push(Math.max(1000, Math.round((price * factor) / 100) * 100));
-  }
-
-  return prices;
-}
-
-function priceStats(prices) {
-  const prices30 = prices.slice(60);
-  return {
-    min30d: Math.min(...prices30),
-    min90d: Math.min(...prices),
-    avg30d: Math.round(prices30.reduce((total, value) => total + value, 0) / prices30.length),
-  };
-}
-
-function opportunityFor(price, { min30d, min90d, avg30d }) {
-  if (price <= min30d) return { code: "lowest_30", label: "🔥 Precio más bajo en 30 días", type: "lowest_30" };
-  if (price <= min90d) return { code: "lowest_90", label: "🔥 Precio más bajo en 90 días", type: "lowest_90" };
-  if (price < avg30d * 0.95) {
-    const pct = Math.round(((avg30d - price) / avg30d) * 100);
-    return { code: "great_deal", label: `📉 ${pct}% más barato que el promedio`, type: "great_deal" };
-  }
-  if (price > avg30d * 1.05) return { code: "trending_up", label: "📈 Precio en alza", type: "trending_up" };
-  return { code: "stable", label: "📊 Precio estable", type: "stable" };
-}
-
-function generatePriceHistory(productId, currentMinPrice) {
-  const prices = priceSeries(productId, currentMinPrice);
-  const today = new Date();
-  const history = prices.map((price, index) => {
-    const day = new Date(today);
-    day.setDate(day.getDate() - (HISTORY_DAYS - 1 - index));
-    return { date: day.toISOString().split("T")[0], price };
-  });
-
-  const points30 = history.slice(60);
-  const stats = priceStats(prices);
-
-  return {
-    history,
-    history30d: points30,
-    history90d: history,
-    ...stats,
-    opportunity: opportunityFor(currentMinPrice || 50000, stats),
-  };
-}
-
 async function getComparisonForProduct(productId) {
   const product = await getProductById(productId);
   if (!product) return null;
@@ -215,22 +147,15 @@ async function getComparisonForProduct(productId) {
   const range = priceRange(prices);
 
   const currentMinPrice = range.min || product.basePrice || 0;
-  const historyData = generatePriceHistory(product.id, currentMinPrice);
 
+  // Sin historial: todavía no se guardan precios por día, y una serie simulada
+  // se mostraría como si fuera real.
   return {
     product,
     prices,
     minPrice: currentMinPrice,
     maxPrice: range.max || currentMinPrice,
-    priceHistory: historyData.history90d,
-    priceHistory30d: historyData.history30d,
-    opportunity: historyData.opportunity,
-    stats: {
-      min30d: historyData.min30d,
-      min90d: historyData.min90d,
-      avg30d: historyData.avg30d,
-    },
   };
 }
 
-module.exports = { getComparison, getComparisonForProduct, generatePriceHistory, pricesForProduct, priceRange };
+module.exports = { getComparison, getComparisonForProduct, pricesForProduct, priceRange };

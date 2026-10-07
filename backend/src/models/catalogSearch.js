@@ -289,6 +289,18 @@ async function catalogIds({ minStores = 1 } = {}) {
   return index.filter((entry) => entry.storeCount >= minStores).map(({ item }) => item.product.id);
 }
 
+// Cifras públicas (home, "Cómo comparamos"): salen del catálogo vigente para
+// no prometer más perfumes o tiendas de los que realmente hay.
+async function catalogStats() {
+  const index = await getSearchIndex();
+  const stores = new Set(index.flatMap((entry) => [...entry.stores]));
+  return {
+    products: index.length,
+    comparable: index.filter((entry) => entry.storeCount >= 2).length,
+    stores: sortedUnique([...stores]),
+  };
+}
+
 function suggestionProduct(entry) {
   const { product } = entry.item;
   return {
@@ -347,4 +359,4 @@ async function suggest(rawQuery) {
   };
 }
 
-module.exports = { suggest, searchCatalog, comparisonsByIds, catalogIds, similarComparables, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };
+module.exports = { suggest, searchCatalog, comparisonsByIds, catalogIds, catalogStats, similarComparables, parseSearchParams, isSetProduct, MAX_PAGE_SIZE };

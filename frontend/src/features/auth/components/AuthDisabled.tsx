@@ -19,7 +19,7 @@ export function AuthDisabled() {
         <span className={styles.emblem}><BrandIcon size={64} /></span>
         <h1>Las cuentas están en pausa por ahora</h1>
         <p className={styles.lead}>
-          Mientras tanto puedes usar todo el comparador sin registrarte: buscar perfumes, ver precios en las 12 tiendas y las ofertas del día.
+          Mientras tanto puedes usar todo el comparador sin registrarte: buscar perfumes, ver precios en todas las tiendas y las ofertas del día.
         </p>
         <div className={styles.actions}>
           <Link className={styles.primary} href="/dashboard">Ir al comparador</Link>

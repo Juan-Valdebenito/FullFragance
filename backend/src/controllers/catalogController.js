@@ -186,4 +186,14 @@ async function productIds(req, res, next) {
   }
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, suggest, productIds, similarProducts, catalogCacheHeader };
+async function stats(_req, res, next) {
+  try {
+    const result = await catalogSearch.catalogStats();
+    catalogCacheHeader(res);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, suggest, productIds, stats, similarProducts, catalogCacheHeader };

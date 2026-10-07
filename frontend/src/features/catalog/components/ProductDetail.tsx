@@ -8,7 +8,6 @@ import { BrandIcon } from "@/shared/components/BrandIcon";
 import { Icon } from "@/shared/components/Icon";
 import { useImageFallback } from "@/shared/hooks/useImageFallback";
 import { FavoriteButton } from "./FavoriteButton";
-import { PriceHistoryChart } from "./PriceHistoryChart";
 import styles from "./ProductDetail.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
@@ -270,13 +269,6 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
             </>
           )}
         </div>
-
-        <PriceHistoryChart
-          history30d={result?.priceHistory30d}
-          history90d={result?.priceHistory}
-          opportunity={result?.opportunity}
-          currentPrice={best?.price || product.basePrice}
-        />
       </section>
     </main>
   );

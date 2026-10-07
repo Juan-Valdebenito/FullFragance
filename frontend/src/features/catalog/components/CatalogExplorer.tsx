@@ -242,7 +242,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
           <h1>{urlQuery ? <>Resultados para «{correctedQuery ?? urlQuery}»</> : activeSegment.title}</h1>
           <p>
             {loading
-              ? "Buscando precios en 12 tiendas…"
+              ? "Buscando precios en las tiendas…"
               : total
               ? <>Mostrando {firstShown}–{lastShown} de <strong>{total.toLocaleString("es-CL")}</strong> perfumes</>
               : "Sin resultados"}
@@ -292,7 +292,7 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
 
       {isAdmin && (
         <p className={styles.adminNote}>
-          Eres admin: la sincronización de las 12 tiendas está en <Link href="/admin/sincronizacion">Panel → Sincronización</Link>.
+          Eres admin: la sincronización de las tiendas está en <Link href="/admin/sincronizacion">Panel → Sincronización</Link>.
         </p>
       )}
 

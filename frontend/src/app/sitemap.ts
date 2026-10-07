@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { GUIDES } from "@/features/guides/guides";
 
 const SITE_URL = "https://fullfragance.cl";
 
@@ -28,6 +29,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/dashboard`, changeFrequency: "hourly", priority: 0.9 },
+    { url: `${SITE_URL}/guias`, changeFrequency: "weekly", priority: 0.8 },
+    ...GUIDES.map(guide => ({
+      url: `${SITE_URL}/guias/${guide.slug}`,
+      lastModified: guide.updated ?? guide.published,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+    { url: `${SITE_URL}/como-comparamos`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/sobre-nosotros`, changeFrequency: "yearly", priority: 0.4 },
+    { url: `${SITE_URL}/politica-de-datos`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${SITE_URL}/politica-de-uso`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const productIds = await fetchProductIds();
