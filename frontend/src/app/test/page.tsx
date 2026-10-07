@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/shared/components/Header";
 import { FeatureTabs } from "@/shared/components/FeatureTabs";
+import { Footer } from "@/shared/components/Footer";
 import { OlfactoryQuiz } from "@/features/olfactory-test/components/OlfactoryQuiz";
 
 export const metadata: Metadata = { title: "Test olfativo" };
@@ -13,6 +14,7 @@ export default function TestPage() {
         <FeatureTabs active="test" />
       </div>
       <OlfactoryQuiz />
+      <Footer />
     </>
   );
 }

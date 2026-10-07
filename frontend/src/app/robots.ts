@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/login", "/registro", "/perfil", "/favoritos", "/test", "/recomendaciones"],
+      disallow: ["/admin", "/api-proxy", "/login", "/registro", "/perfil", "/favoritos", "/test", "/recomendaciones"],
     },
     sitemap: "https://fullfragance.cl/sitemap.xml",
   };

@@ -17,7 +17,7 @@ export default function ProfilePage() {
         <PageHeader
           eyebrow="Tu cuenta"
           title="Mi perfil"
-          description="Administra tus datos, preferencias y configuración regional."
+          description="Administra tus datos, tu contraseña y tus preferencias."
         />
         <div className={`container ${styles.main}`}>
           <ProfileSummary />

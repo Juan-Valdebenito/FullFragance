@@ -10,24 +10,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/sobre-nosotros" },
 };
 
-const organizationLd = JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "FullFragance",
-  url: "https://fullfragance.cl",
-  logo: "https://fullfragance.cl/logo.jpeg",
-  email: "fullfragance67@gmail.com",
-  foundingDate: "2026-07-16",
-  founders: [
-    { "@type": "Person", name: "Benjamín Cantero" },
-    { "@type": "Person", name: "Juan Pablo Valdebenito" },
-  ],
-  address: { "@type": "PostalAddress", addressLocality: "Temuco", addressCountry: "CL" },
-});
-
 export default function AboutPage() {
   return <>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: organizationLd }} />
     <Header />
     <main className={`container ${styles.page}`}>
       <section className={styles.hero}>

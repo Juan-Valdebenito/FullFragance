@@ -283,7 +283,7 @@
   padding-left: clamp(18px, 2.4vw, 34px);
 }
 
-.megaGrid h2 {
+.megaGrid .megaHeading {
   margin-bottom: 5px;
   color: var(--gold-dark);
   font-size: .7rem;

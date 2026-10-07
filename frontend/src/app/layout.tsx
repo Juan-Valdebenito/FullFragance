@@ -57,6 +57,37 @@ export const metadata: Metadata = {
   },
 };
 
+// Datos de la organización y del sitio para todos los resultados de Google;
+// SearchAction habilita el cuadro de búsqueda del sitio en los resultados.
+const siteStructuredData = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "FullFragance",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.jpeg`,
+    email: "fullfragance67@gmail.com",
+    foundingDate: "2026-07-16",
+    founders: [
+      { "@type": "Person", name: "Benjamín Cantero" },
+      { "@type": "Person", name: "Juan Pablo Valdebenito" },
+    ],
+    address: { "@type": "PostalAddress", addressLocality: "Temuco", addressCountry: "CL" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "FullFragance",
+    url: SITE_URL,
+    inLanguage: "es-CL",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/dashboard?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  },
+]);
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -71,6 +102,7 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem("fullfragrance_theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t!=="light"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`,
           }}
         />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteStructuredData }} />
         {/* Script de Google AdSense — solo activo con NEXT_PUBLIC_ADSENSE_ID */}
         <GoogleAdsense />
       </head>

@@ -1,4 +1,6 @@
 "use client";
+
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, ApiError, productImageCandidates, productImageUrl, session } from "@/shared/api/client";
 import type { Recommendation } from "@/shared/api/types";
@@ -66,7 +68,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
               brand: p.brand,
               name: p.name,
               size: p.unit,
-              notes: p.notes,
+              notes: [],
               image: productImageUrl(p.imageUrl),
               imageCandidates: productImageCandidates(p),
               badge: "Destacado",
@@ -84,7 +86,7 @@ export function RecommendationsGrid({ className }: { className?: string }) {
           brand: p.brand,
           name: p.name,
           size: p.unit,
-          notes: p.notes,
+          notes: [],
           image: productImageUrl(p.imageUrl),
           imageCandidates: productImageCandidates(p),
           badge: "Destacado",
@@ -97,5 +99,12 @@ export function RecommendationsGrid({ className }: { className?: string }) {
 
   if (loading) return <p className={styles.empty}>Preparando tu selección…</p>;
   if (error) return <p className={styles.error} role="alert">{error}</p>;
+  if (!items.length) {
+    return (
+      <p className={styles.empty}>
+        Todavía no tenemos perfumes para recomendarte. Califica tus notas favoritas en el <Link href="/test">test olfativo</Link> o explora el <Link href="/dashboard">comparador</Link>.
+      </p>
+    );
+  }
   return <div className={className}>{items.map(product => <ProductCard key={product.id} product={product} recommendation />)}</div>;
 }

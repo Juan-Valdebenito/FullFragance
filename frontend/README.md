@@ -1,46 +1,45 @@
-# FullFragance Frontend
+# FullFragance — Frontend
 
-Aplicación web modular construida con Next.js, React y TypeScript.
+Next.js 16 (App Router), React 19 y TypeScript.
 
 ## Desarrollo
 
 ```bash
-npm run dev
+npm install
+npm run dev     # http://localhost:3001
 ```
 
-La aplicación estará disponible en `http://localhost:3001`. El backend debe estar iniciado en `http://localhost:3000`.
+Por defecto usa la API en `http://localhost:3000/api`. Para trabajar con datos de producción sin backend local, define en `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=/api-proxy
+DEV_API_PROXY_TARGET=https://<backend-en-render>   # sin /api
+```
 
 ## Rutas
 
-- `/`: redirección al inicio de sesión.
-- `/login`: inicio de sesión.
-- `/registro`: creación de una cuenta nueva.
-- `/dashboard`: comparación de precios y búsqueda.
-- `/test`: test olfativo interactivo.
-- `/recomendaciones`: resultados personalizados.
-- `/favoritos`: perfumes guardados por el usuario.
-- `/perfil`: cuenta y selección de ciudad.
-- `/perfumes/[id]`: ficha y comparación de precios de un perfume.
+El listado completo, con lo que se indexa y lo que no, está en [../docs/MAPA-DEL-SITIO.md](../docs/MAPA-DEL-SITIO.md).
 
 ## Arquitectura
 
-El proyecto usa una organización **feature-first**:
+Organización **feature-first**:
 
-- `src/app`: composición de páginas, rutas y metadata de Next.js.
-- `src/features`: módulos de negocio independientes (`auth`, `catalog`, `olfactory-test`).
-- `src/shared`: componentes visuales compartidos por varias funcionalidades.
+- `src/app`: rutas, metadata, `sitemap.ts`, `robots.ts` e imagen para redes (`opengraph-image.tsx`).
+- `src/features`: módulos de negocio (`admin`, `auth`, `catalog`, `guides`, `olfactory-test`, `profile`).
+- `src/shared`: API, componentes compartidos, navegación, búsqueda, tema y analítica.
 
-Dentro de cada funcionalidad se separan:
+Los Server Components son el valor por defecto. Las páginas públicas que muestran catálogo (home, guías, fichas, "Cómo comparamos") piden los datos en el servidor y se regeneran cada hora, para que el contenido llegue en el HTML.
 
-- `domain`: tipos y reglas del dominio.
-- `data`: fuentes de datos reemplazables por una API o repositorio.
-- `components`: presentación e interacción.
+## SEO
 
-Los Server Components son el valor por defecto. Solo los componentes con estado o eventos (`AuthPanel`, `CatalogExplorer` y `OlfactoryQuiz`) usan `"use client"`.
+- La canónica se define página por página (`alternates.canonical`); el layout no define una global.
+- Los títulos llevan el sufijo `| FullFragance` desde la plantilla del layout: no repetirlo en cada página.
+- El sitemap incluye páginas estáticas, guías y sólo los perfumes en 2 o más tiendas.
+- Datos estructurados: `Organization` y `WebSite` en el layout, `Product` en las fichas y `Article` en las guías.
 
-## Conexión con el backend
+## Anuncios
 
-Copia `.env.example` como `.env.local` si necesitas cambiar la URL de la API. Por defecto se usa `http://localhost:3000/api`. La sesión JWT se conserva en el navegador y se envía como `Bearer token` a las rutas protegidas.
+`GoogleAdsense` carga el script con `NEXT_PUBLIC_ADSENSE_ID`. `AdSlot` sólo crea su `<ins>` cuando el bloque es visible, porque `adsbygoogle.push({})` llena el siguiente bloque vacío de la página. Sin AdSense configurado, `AdBanner` muestra anuncios propios de demostración.
 
 ## Comandos
 

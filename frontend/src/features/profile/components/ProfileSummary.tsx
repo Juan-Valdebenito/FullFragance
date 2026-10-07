@@ -13,8 +13,8 @@ export function ProfileSummary() {
         <div className={styles.avatar}>?</div>
         <div>
           <p className="eyebrow">Tu cuenta</p>
-          <h1>Inicia sesión en FullFragance</h1>
-          <p>Accede a tu perfil olfativo, perfumes favoritos y preferencias regionales.</p>
+          <h2>Inicia sesión en FullFragance</h2>
+          <p>Accede a tu perfil olfativo y a tus perfumes favoritos.</p>
         </div>
         <Link href="/login">Iniciar sesión</Link>
       </div>
@@ -26,7 +26,7 @@ export function ProfileSummary() {
       <div className={styles.avatar}>{user.name.slice(0, 1).toUpperCase()}</div>
       <div>
         <p className="eyebrow">Tu cuenta</p>
-        <h1>{user.name}</h1>
+        <h2>{user.name}</h2>
         <p>{user.email}</p>
       </div>
       <div className={styles.stats}>

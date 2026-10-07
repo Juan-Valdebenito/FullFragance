@@ -1,10 +1,10 @@
-# Guía de Deploy — FullFragance
+# Guía de despliegue — FullFragance
 
-**Stack de producción (100% gratuito):**
-- 🎨 **Frontend** → [Vercel](https://vercel.com) (Next.js)
-- ⚙️ **Backend** → [Railway](https://railway.app) (Node.js + Express)
-- 🗄️ **Base de datos** → [Supabase](https://supabase.com) (PostgreSQL)
-- 💰 **Monetización** → Google AdSense (se activa con Publisher ID)
+**Stack de producción:**
+- **Frontend** → [Vercel](https://vercel.com) (Next.js), dominio `fullfragance.cl`
+- **Backend** → [Render](https://render.com) (Node.js + Express), plan gratuito
+- **Base de datos** → [Supabase](https://supabase.com) (PostgreSQL)
+- **Monetización** → Google AdSense
 
 ---
 
@@ -60,56 +60,46 @@ Deberías ver algo así:
 
 ---
 
-## Paso 2 — Backend en Railway
+## Paso 2 — Backend en Render
 
-### 2.1 Crear la cuenta y conectar el repo
+### 2.1 Crear el servicio
 
-1. Ve a [railway.app](https://railway.app) → **Login with GitHub**
-2. Haz clic en **New Project** → **Deploy from GitHub repo**
-3. Selecciona el repositorio `FullFragance`
-4. Railway detecta la carpeta raíz. Como el backend está en `/backend`, haz clic en **Configure** → establece:
+1. En [render.com](https://render.com) → **New** → **Web Service** → conecta el repositorio `FullFragance`.
+2. Configura:
    - **Root Directory**: `backend`
+   - **Runtime**: Node
+   - **Build Command**: `npm install`
    - **Start Command**: `npm start`
+   - **Health Check Path**: `/`
+3. Render asigna una URL del tipo `https://<servicio>.onrender.com`. Pruébala: debe responder `{"name":"FullFragance API",...}`.
 
-### 2.2 Configurar variables de entorno
+### 2.2 Variables de entorno
 
-En Railway → tu servicio → pestaña **Variables** → agrega una por una:
+En el servicio → **Environment**:
 
 | Variable | Valor |
 |----------|-------|
 | `NODE_ENV` | `production` |
-| `PORT` | `3000` |
-| `DATABASE_URL` | URL de Supabase del Paso 1.2 |
-| `JWT_SECRET` | Genera uno: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `DATABASE_URL` | URL del Session pooler de Supabase (Paso 1.2) |
+| `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
 | `JWT_EXPIRES_IN` | `1d` |
-| `GOOGLE_CLIENT_ID` | Tu Client ID de Google Cloud Console |
-| `ADMIN_EMAILS` | `fullfragance@gmail.com` |
-| `FRONTEND_ORIGINS` | `https://full-fragance.vercel.app` *(actualiza después de deployar el frontend)* |
+| `GOOGLE_CLIENT_ID` | Client ID de Google Cloud Console |
+| `ADMIN_EMAILS` | Correos de administradores, separados por coma |
+| `FRONTEND_ORIGINS` | `https://fullfragance.cl,https://www.fullfragance.cl` |
 | `TRUST_PROXY` | `true` |
 | `SCRAPER_MOCK_PRICES` | `false` |
-| `SCRAPER_CRON_ENABLED` | `true` *(activa el scraping automático — ver Paso 2.4)* |
-| `SCRAPER_CRON_SCHEDULE` | `0 */6 * * *` *(cada 6 horas, formato cron estándar)* |
-| `SCRAPER_CRON_STAGGER_MS` | `60000` |
-| `SCRAPER_CRON_TIMEZONE` | `America/Santiago` |
 
-> **Puedes agregar todas de una vez** copiando el contenido de `backend/.env.production.example` y usando la función **Raw Editor** de Railway.
+`backend/.env.production.example` tiene la lista completa.
 
-### 2.3 Deploy y obtener URL
+### 2.3 Sincronización de precios
 
-1. Railway hará el primer deploy automáticamente
-2. Ve a **Settings** → **Networking** → **Generate Domain** para obtener tu URL pública
-3. Guarda la URL: `https://tu-app.up.railway.app`
-4. Prueba que funciona: `https://tu-app.up.railway.app/`
-   - Debe responder: `{"name":"FullFragance API","frontend":"..."}`
+En el plan gratuito, Render duerme el servicio tras unos minutos sin tráfico, así que un cron interno no es confiable. Hoy la sincronización se ejecuta **una vez al día** a mano desde `https://fullfragance.cl/admin/sincronizacion`.
 
-### 2.4 Scraping automático (cron)
+Si el servicio pasa a un plan sin suspensión, se puede activar el scheduler interno con `SCRAPER_CRON_ENABLED=true` y `SCRAPER_CRON_SCHEDULE` (cron estándar, zona `America/Santiago`). Si cambia la frecuencia, actualiza también los textos de `/sobre-nosotros` y `/como-comparamos`, que dicen "una vez al día".
 
-El backend incluye un scheduler interno (`node-cron`) que corre mientras el proceso esté vivo — como Railway no duerme el servicio (a diferencia de un plan serverless), esto basta para tener scraping periódico sin infraestructura adicional.
+### 2.4 Orden de despliegue
 
-- Con `SCRAPER_CRON_ENABLED=true`, al iniciar el servidor se programa una sincronización de las 10 tiendas según `SCRAPER_CRON_SCHEDULE` (cron estándar: min hora día mes díaSemana).
-- Cada tienda se dispara con un desfase de `SCRAPER_CRON_STAGGER_MS` (60s por defecto) entre sí, para no saturar recursos ni golpear varios sitios a la vez.
-- Deja `SCRAPER_CRON_ENABLED` sin definir o en `false` en desarrollo local para no scrapear sitios reales sin querer.
-- Revisa los logs de Railway (`[scraper-cron] ...`) para confirmar que se está ejecutando.
+Cuando un cambio toca backend y frontend, despliega primero el backend: el frontend depende de endpoints como `/catalog/stats` y `/catalog/ids?minStores=2`.
 
 ---
 
@@ -117,143 +107,84 @@ El backend incluye un scheduler interno (`node-cron`) que corre mientras el proc
 
 ### 3.1 Conectar el repositorio
 
-1. Ve a [vercel.com](https://vercel.com) → **Add New Project**
-2. Importa el repositorio `FullFragance`
-3. En la configuración del proyecto:
-   - **Framework Preset**: Next.js *(se detecta automáticamente)*
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build` *(default)*
-   - **Output Directory**: `.next` *(default)*
+1. En [vercel.com](https://vercel.com) → **Add New Project** → importa `FullFragance`.
+2. **Root Directory**: `frontend`. El resto lo detecta Vercel (Next.js).
 
-### 3.2 Variables de entorno en Vercel
-
-Antes de hacer deploy, agrega estas variables en **Environment Variables** (selecciona **Production**):
+### 3.2 Variables de entorno
 
 | Variable | Valor |
 |----------|-------|
-| `NEXT_PUBLIC_API_URL` | `https://tu-app.up.railway.app/api` |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Tu Client ID de Google (mismo que backend) |
-| `NEXT_PUBLIC_ADSENSE_ID` | *(dejar vacío por ahora, se agrega después)* |
+| `NEXT_PUBLIC_API_URL` | `https://<servicio>.onrender.com/api` |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | El mismo Client ID del backend |
+| `NEXT_PUBLIC_ADSENSE_ID` | `ca-pub-7282812991745486` |
+| `NEXT_PUBLIC_AD_SLOT_HOME_STRIP` | Slot del banner horizontal del footer |
+| `NEXT_PUBLIC_AD_SLOT_PRODUCT_STRIP` | Slot del banner de la ficha de perfume |
+| `NEXT_PUBLIC_AD_SLOT_SIDEBAR_LEFT` / `_RIGHT` | Slots verticales de las barras laterales |
 
-### 3.3 Deploy
+No definas `DEV_API_PROXY_TARGET` en Vercel: es sólo para desarrollo local.
 
-1. Haz clic en **Deploy**
-2. Espera el build (~2-3 minutos)
-3. Obtendrás una URL como: `https://full-fragance.vercel.app`
+### 3.3 Dominio
 
-### 3.4 Actualizar CORS del backend
-
-Ahora que tienes la URL del frontend, actualiza en Railway:
-- `FRONTEND_ORIGINS` = `https://full-fragance.vercel.app`
-
-Railway redesplegará automáticamente.
+1. **Settings → Domains**: agrega `fullfragance.cl` y `www.fullfragance.cl`.
+2. En NIC Chile, apunta los DNS según indique Vercel.
+3. El código ya redirige `www` al dominio principal (`next.config.ts`); también puedes marcarlo en Vercel como redirección.
 
 ---
 
-## Paso 4 — Google OAuth (Actualizar dominios)
+## Paso 4 — Google OAuth
 
-1. Ve a [Google Cloud Console](https://console.cloud.google.com) → **APIs & Services** → **Credentials**
-2. Haz clic en tu cliente OAuth 2.0
-3. En **Authorized JavaScript origins** agrega:
-   ```
-   https://full-fragance.vercel.app
-   ```
-4. En **Authorized redirect URIs** (si usas Google Sign-In popup, no es necesario)
-5. Guarda los cambios
-
-> ⏱️ Los cambios de Google Cloud Console pueden tardar hasta 5 minutos en propagarse.
+En [Google Cloud Console](https://console.cloud.google.com) → **APIs & Services** → **Credentials** → tu cliente OAuth 2.0 → **Authorized JavaScript origins**, agrega `https://fullfragance.cl` y `https://www.fullfragance.cl`. Los cambios tardan hasta 5 minutos.
 
 ---
 
-## Paso 5 — Google AdSense
+## Paso 5 — Search Console y AdSense
 
-### 5.1 Solicitar la cuenta AdSense
-
-1. Ve a [adsense.google.com](https://adsense.google.com)
-2. Crea tu cuenta y agrega tu sitio: `https://full-fragance.vercel.app`
-3. Google te pedirá que agregues un snippet de verificación al `<head>` de tu sitio
-   - El componente `GoogleAdsense` ya está integrado en el `layout.tsx`
-   - Solo necesitas configurar `NEXT_PUBLIC_ADSENSE_ID` con tu Publisher ID
-
-### 5.2 Activar los anuncios (después de aprobación, 1-3 días)
-
-Una vez aprobado, en Vercel → **Settings** → **Environment Variables**:
-
-1. `NEXT_PUBLIC_ADSENSE_ID` = `ca-pub-XXXXXXXXXXXXXXXX`
-2. En AdSense → **Anuncios** → **Por bloque de anuncios** → crea 3 bloques:
-   - **Sidebar izquierdo** (Vertical) → copia el Slot ID
-   - **Sidebar derecho** (Vertical) → copia el Slot ID
-   - **Banner Home** (Horizontal) → copia el Slot ID
-3. Agrega los Slot IDs en Vercel:
-   - `NEXT_PUBLIC_AD_SLOT_SIDEBAR_LEFT` = `XXXXXXXXXX`
-   - `NEXT_PUBLIC_AD_SLOT_SIDEBAR_RIGHT` = `XXXXXXXXXX`
-   - `NEXT_PUBLIC_AD_SLOT_HOME_STRIP` = `XXXXXXXXXX`
-4. Redeploy: Vercel → **Deployments** → **Redeploy**
-
-Los anuncios de AdSense reemplazarán automáticamente los anuncios demo del catálogo.
+- **Search Console**: la propiedad se verifica con los archivos `frontend/public/google*.html`. Envía `https://fullfragance.cl/sitemap.xml` y vuelve a enviarlo cuando cambien las páginas públicas.
+- **AdSense**: `frontend/public/ads.txt` declara el Publisher ID. El script se carga sólo si existe `NEXT_PUBLIC_ADSENSE_ID`. Mientras el sitio no esté aprobado, los bloques quedan vacíos y se ocultan solos.
+- Antes de pedir una revisión de AdSense, revisa [docs/MAPA-DEL-SITIO.md](docs/MAPA-DEL-SITIO.md): las páginas indexables deben tener contenido propio y canónica correcta.
 
 ---
 
-## Verificación final
-
-Prueba estas URLs para confirmar que todo funciona:
+## Verificación después de desplegar
 
 ```bash
-# Backend responde
-curl https://tu-app.up.railway.app/
+# Backend
+curl https://<servicio>.onrender.com/
+curl https://<servicio>.onrender.com/api/catalog/stats
 
-# API de catálogo disponible
-curl https://tu-app.up.railway.app/api/catalog/notes
-
-# Frontend carga
-# Abre en el navegador: https://full-fragance.vercel.app
-
-# Flujo completo
-# 1. Registrar cuenta nueva
-# 2. Iniciar sesión
-# 3. Seleccionar ciudad
-# 4. Ver catálogo de perfumes
-# 5. Hacer el test olfativo
-# 6. Ver recomendaciones
-# 7. Agregar favoritos
-# 8. Ver mapa de tiendas
+# Frontend
+curl -sI https://www.fullfragance.cl | grep -i location     # debe redirigir al dominio principal
+curl -s https://fullfragance.cl/robots.txt
+curl -s https://fullfragance.cl/sitemap.xml | grep -c "<loc>"
 ```
+
+En el navegador: busca un perfume, abre su ficha, revisa que los enlaces a tiendas funcionen y lee una guía.
 
 ---
 
-## Troubleshooting
+## Problemas frecuentes
 
-### ❌ "CORS policy" en el frontend
-- Verifica que `FRONTEND_ORIGINS` en Railway sea la URL exacta de Vercel (sin `/` al final)
-- Verifica que `NEXT_PUBLIC_API_URL` en Vercel termine en `/api`
+### "No se pudo conectar con el servidor"
+- El backend de Render puede estar despertando (la primera petición tarda hasta un minuto).
+- Revisa que `NEXT_PUBLIC_API_URL` termine en `/api`.
 
-### ❌ "No se pudo conectar con el servidor"
-- Revisa que el backend de Railway esté corriendo (no en sleep)
-- Railway plan gratuito: 500h/mes — puede estar pausado
+### Error de CORS
+- `FRONTEND_ORIGINS` debe contener el origen exacto, sin `/` al final.
+- En desarrollo local usa el proxy (`NEXT_PUBLIC_API_URL=/api-proxy` y `DEV_API_PROXY_TARGET`) en vez de llamar a Render directo.
 
-### ❌ Google OAuth no funciona
-- Verifica que la URL de Vercel esté en **Authorized JavaScript origins** de Google Cloud
-- Espera 5 minutos después de guardar los cambios
+### Google OAuth no funciona
+- El dominio debe estar en **Authorized JavaScript origins**.
 
-### ❌ AdSense no muestra anuncios reales
-- Verifica que `NEXT_PUBLIC_ADSENSE_ID` tenga el formato `ca-pub-XXXXXXXXXXXXXXXX`
-- El sitio debe estar aprobado por Google (1-3 días hábiles)
-- Durante la revisión, los anuncios demo del sitio seguirán apareciendo normalmente
-
-### ❌ Error de JWT en producción
-- Verifica que `JWT_SECRET` tenga al menos 32 caracteres
-- El backend lanza error si `JWT_SECRET` es débil en `NODE_ENV=production`
+### Error de JWT en producción
+- `JWT_SECRET` debe tener al menos 32 caracteres; el backend no parte si es débil.
 
 ---
 
 ## Costos y límites gratuitos
 
-| Servicio | Plan | Límite |
-|----------|------|--------|
-| **Vercel** | Hobby (gratis) | 100GB ancho de banda/mes, builds ilimitados |
-| **Railway** | Trial (gratis) | $5 de crédito/mes (~500h de servidor) |
-| **Supabase** | Free | 500MB storage, 2 proyectos, 50MB transferencia/mes |
-| **Google Cloud** | Gratis | OAuth gratis para uso normal |
-| **Google AdSense** | Gratis | Tú recibes pagos por impresiones |
-
-> 💡 **Tip**: Si el tráfico crece y Railway queda corto, considera **Render** (gratis con sleep de 15min) o el plan de $5/mes de Railway que incluye $5 de crédito y sin límite de horas.
+| Servicio | Plan | Límite relevante |
+|----------|------|------------------|
+| Vercel | Hobby | 100 GB de ancho de banda al mes |
+| Render | Free | El servicio se duerme sin tráfico; arranque en frío de hasta un minuto |
+| Supabase | Free | 500 MB de base de datos |
+| NIC Chile | Pago anual | Renovación del dominio `fullfragance.cl` |

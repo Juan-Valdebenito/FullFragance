@@ -14,9 +14,6 @@ const connectSources = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   apiOrigin,
-  "https://overpass-api.de",
-  "https://overpass.kumi.systems",
-  "https://nominatim.openstreetmap.org",
 ].filter(Boolean).join(" ");
 
 const contentSecurityPolicy = [
