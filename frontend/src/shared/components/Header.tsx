@@ -10,7 +10,10 @@ export function Header({ active, search = true }: { active?: "catalog" | "test";
     <header className={styles.topbar}>
       {/* Una sola grilla: en escritorio marca · buscador · cuenta y abajo las
           categorías; en móvil el buscador baja a su propia fila. */}
-      <div className={`container ${styles.headerGrid}`}>
+      {/* data-nosnippet: Google armaba el fragmento del resultado con los
+          enlaces del mega menú ("Perfumes de mujerPerfumes de hombre...") en
+          vez de la meta description. Google solo lo respeta en div/span/section. */}
+      <div className={`container ${styles.headerGrid}`} data-nosnippet>
         <Brand />
         {/* Una sola barra para todo el sitio. Suspense: lee la URL (useSearchParams)
             y sin él las páginas estáticas no podrían prerenderizarse. */}

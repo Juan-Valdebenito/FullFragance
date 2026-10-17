@@ -11,7 +11,8 @@ import styles from "./home.module.css";
 
 export const metadata: Metadata = {
   title: "FullFragance | Comparador de precios de perfumes en Chile",
-  description: "Compara precios de perfumes originales entre las principales tiendas de Chile y encuentra dónde está más barato antes de comprar.",
+  description:
+    "FullFragance compara precios de perfumes originales en Falabella, Ripley, Paris, Preunic y más tiendas de Chile. Encuentra el más barato, actualizado a diario.",
   alternates: { canonical: "/" },
 };
 
