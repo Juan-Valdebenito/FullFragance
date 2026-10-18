@@ -1,4 +1,5 @@
 const { getProducts, getProductById } = require("./catalogRepository");
+const { listPriceHistory } = require("../data/catalogDatabase");
 const { normalize } = require("./productMatcher");
 
 const SOURCE_STORES = {
@@ -80,6 +81,41 @@ function pricesForProduct(product) {
   }];
 }
 
+function aggregatePriceHistory(records) {
+  const byDate = new Map();
+  for (const record of records) {
+    if (!(record.price > 0) || !record.date) continue;
+    const list = byDate.get(record.date) || [];
+    list.push(record);
+    byDate.set(record.date, list);
+  }
+
+  return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, entries]) => {
+    const available = entries.filter((entry) => entry.available);
+    const pool = available.length ? available : entries;
+    const sorted = [...pool].sort((a, b) => a.price - b.price);
+    const cheapest = sorted[0];
+    return {
+      date,
+      minPrice: cheapest.price,
+      maxPrice: sorted[sorted.length - 1].price,
+      storeName: SOURCE_STORES[cheapest.source]?.storeName || cheapest.source,
+      available: available.length > 0,
+    };
+  });
+}
+
+async function historyForProduct(product) {
+  const offers = Array.isArray(product.offers)
+    ? product.offers.filter((offer) => offer.source && offer.sku && !offer.priceIsMock)
+    : [];
+  if (!offers.length) return [];
+  const observations = await Promise.all(
+    offers.map((offer) => listPriceHistory(offer.source, offer.sku))
+  );
+  return aggregatePriceHistory(observations.flat());
+}
+
 // El listado sólo alimenta las tarjetas del catálogo. La descripción generada,
 // las notas olfativas resueltas y las ofertas crudas (ya representadas en
 // `prices`) sumaban la mayor parte de los bytes enviados y sólo las usa el
@@ -148,15 +184,15 @@ async function getComparisonForProduct(productId) {
   const range = priceRange(prices);
 
   const currentMinPrice = range.min || product.basePrice || 0;
+  const history = await historyForProduct(product);
 
-  // Sin historial: todavía no se guardan precios por día, y una serie simulada
-  // se mostraría como si fuera real.
   return {
     product,
     prices,
     minPrice: currentMinPrice,
     maxPrice: range.max || currentMinPrice,
+    history,
   };
 }
 
-module.exports = { getComparison, getComparisonForProduct, pricesForProduct, priceRange };
+module.exports = { getComparison, getComparisonForProduct, pricesForProduct, priceRange, aggregatePriceHistory };

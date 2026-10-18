@@ -408,6 +408,105 @@
   font-weight: 600;
 }
 
+.historyPanel {
+  min-width: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-lowest);
+  padding: 20px;
+}
+
+.historyPanel h2 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.historyHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.historyHeading > div > p,
+.historyEmpty,
+.historyHint {
+  margin-top: 4px;
+  color: var(--on-surface-muted);
+  font-size: .85rem;
+}
+
+.historyStats {
+  display: flex;
+  gap: 18px;
+}
+
+.historyStats div {
+  display: grid;
+}
+
+.historyStats dt {
+  color: var(--on-surface-muted);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.historyStats dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chartScroller {
+  overflow-x: auto;
+  margin-top: 18px;
+}
+
+.historyChart {
+  display: block;
+  width: 100%;
+  min-width: 480px;
+  height: auto;
+  overflow: visible;
+}
+
+.chartGrid {
+  stroke: var(--border-subtle);
+  stroke-dasharray: 4 5;
+}
+
+.chartLine {
+  fill: none;
+  stroke: var(--gold-dark);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.chartPoint {
+  fill: var(--surface-lowest);
+  stroke: var(--gold-dark);
+  stroke-width: 3;
+}
+
+.chartPriceLabel,
+.chartDateLabel {
+  fill: var(--on-surface-muted);
+  font-size: 11px;
+}
+
+.chartPriceLabel {
+  text-anchor: end;
+}
+
+.historyHint {
+  text-align: center;
+}
+
 .notesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

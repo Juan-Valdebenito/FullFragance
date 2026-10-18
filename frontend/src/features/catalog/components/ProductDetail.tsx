@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageCandidates } from "@/shared/api/client";
-import type { ApiPrice, Comparison, ProductDetailResult } from "@/shared/api/types";
+import type { ApiPrice, Comparison, PriceHistoryPoint, ProductDetailResult } from "@/shared/api/types";
 import { BrandIcon } from "@/shared/components/BrandIcon";
 import { Icon } from "@/shared/components/Icon";
 import { useImageFallback } from "@/shared/hooks/useImageFallback";
@@ -11,6 +11,7 @@ import { FavoriteButton } from "./FavoriteButton";
 import styles from "./ProductDetail.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const shortDate = new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short" });
 const stores: Record<string, string> = {
   Sephora: "https://www.sephora.cl",
   Falabella: "https://www.falabella.com/falabella-cl",
@@ -61,6 +62,71 @@ function storeUrl(price: ApiPrice, productName: string) {
   return price.productUrl
     ?? stores[price.storeName]
     ?? `https://www.google.com/search?q=${encodeURIComponent(`${productName} ${price.storeName}`)}`;
+}
+
+function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
+  if (!history.length) {
+    return (
+      <section className={styles.historyPanel} aria-labelledby="history-title">
+        <h2 id="history-title">Historial de precios</h2>
+        <p className={styles.historyEmpty}>El historial comenzará con la próxima sincronización de esta fragancia.</p>
+      </section>
+    );
+  }
+
+  const width = 640;
+  const height = 230;
+  const padding = { top: 18, right: 18, bottom: 36, left: 72 };
+  const prices = history.map(point => point.minPrice);
+  const rawMin = Math.min(...prices);
+  const rawMax = Math.max(...prices);
+  const spread = rawMax - rawMin || Math.max(rawMin * .1, 1000);
+  const min = Math.max(0, rawMin - spread * .12);
+  const max = rawMax + spread * .12;
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const x = (index: number) => padding.left + (history.length === 1 ? chartWidth / 2 : index * chartWidth / (history.length - 1));
+  const y = (price: number) => padding.top + (max - price) * chartHeight / (max - min);
+  const line = history.map((point, index) => `${x(index)},${y(point.minPrice)}`).join(" ");
+  const latest = history[history.length - 1];
+  const lowest = history.reduce((best, point) => point.minPrice < best.minPrice ? point : best);
+  const dateLabel = (date: string) => shortDate.format(new Date(`${date}T12:00:00`));
+
+  return (
+    <section className={styles.historyPanel} aria-labelledby="history-title">
+      <div className={styles.historyHeading}>
+        <div>
+          <h2 id="history-title">Historial de precios</h2>
+          <p>Mejor precio diario de los últimos 180 días</p>
+        </div>
+        <dl className={styles.historyStats}>
+          <div><dt>Mínimo</dt><dd>{money.format(lowest.minPrice)}</dd></div>
+          <div><dt>Último</dt><dd>{money.format(latest.minPrice)}</dd></div>
+        </dl>
+      </div>
+      <div className={styles.chartScroller}>
+        <svg className={styles.historyChart} viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="history-chart-title history-chart-desc">
+          <title id="history-chart-title">Evolución del mejor precio</title>
+          <desc id="history-chart-desc">Desde {money.format(history[0].minPrice)} el {dateLabel(history[0].date)} hasta {money.format(latest.minPrice)} el {dateLabel(latest.date)}.</desc>
+          {[...new Set([rawMax, rawMin])].map(price => (
+            <g key={price}>
+              <line className={styles.chartGrid} x1={padding.left} x2={width - padding.right} y1={y(price)} y2={y(price)} />
+              <text className={styles.chartPriceLabel} x={padding.left - 10} y={y(price) + 4}>{money.format(price)}</text>
+            </g>
+          ))}
+          {history.length > 1 && <polyline className={styles.chartLine} points={line} />}
+          {history.map((point, index) => (
+            <circle key={point.date} className={styles.chartPoint} cx={x(index)} cy={y(point.minPrice)} r="4">
+              <title>{dateLabel(point.date)}: {money.format(point.minPrice)} en {point.storeName}</title>
+            </circle>
+          ))}
+          <text className={styles.chartDateLabel} x={padding.left} y={height - 8}>{dateLabel(history[0].date)}</text>
+          <text className={styles.chartDateLabel} x={width - padding.right} y={height - 8} textAnchor="end">{dateLabel(latest.date)}</text>
+        </svg>
+      </div>
+      {history.length === 1 && <p className={styles.historyHint}>Hay una observación registrada. La tendencia aparecerá tras nuevas sincronizaciones.</p>}
+    </section>
+  );
 }
 
 interface ProductDetailProps {
@@ -281,6 +347,7 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
             </>
           )}
         </div>
+        <PriceHistory history={result?.history ?? []} />
       </section>
     </main>
   );

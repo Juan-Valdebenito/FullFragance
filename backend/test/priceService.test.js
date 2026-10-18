@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { pricesForProduct, priceRange } = require("../src/models/priceService");
+const { pricesForProduct, priceRange, aggregatePriceHistory } = require("../src/models/priceService");
 
 const product = {
   id: "silk-jpg54",
@@ -30,4 +30,18 @@ test("si ninguna tienda tiene stock, el rango usa todos los precios", () => {
   const soldOut = { ...product, offers: product.offers.map((offer) => ({ ...offer, available: false })) };
   assert.deepEqual(priceRange(pricesForProduct(soldOut)), { min: 58990, max: 149990 });
   assert.deepEqual(priceRange([]), { min: null, max: null });
+});
+
+test("el historial agrupa por día y prioriza precios con stock", () => {
+  const history = aggregatePriceHistory([
+    { source: "silk-cl", date: "2026-10-17", price: 49990, available: false },
+    { source: "paris-cl", date: "2026-10-17", price: 59990, available: true },
+    { source: "silk-cl", date: "2026-10-18", price: 47990, available: true },
+    { source: "paris-cl", date: "2026-10-18", price: 62990, available: true },
+  ]);
+
+  assert.deepEqual(history, [
+    { date: "2026-10-17", minPrice: 59990, maxPrice: 59990, storeName: "Paris", available: true },
+    { date: "2026-10-18", minPrice: 47990, maxPrice: 62990, storeName: "Silk Perfumes", available: true },
+  ]);
 });

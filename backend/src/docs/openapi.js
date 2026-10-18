@@ -325,7 +325,7 @@ const openapi = {
         ],
         responses: {
           200: {
-            description: "Detalle del perfume con precios",
+            description: "Detalle del perfume con precios actuales e historial diario",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ProductPriceDetail" },
@@ -780,6 +780,12 @@ const openapi = {
             type: "array",
             items: { $ref: "#/components/schemas/Price" },
           },
+          minPrice: { type: "number" },
+          maxPrice: { type: "number" },
+          history: {
+            type: "array",
+            items: { $ref: "#/components/schemas/PriceHistoryPoint" },
+          },
         },
       },
       ComparisonItem: {
@@ -801,6 +807,16 @@ const openapi = {
           storeName: { type: "string" },
           price: { type: "number" },
           productUrl: { type: "string", format: "uri" },
+          available: { type: "boolean" },
+        },
+      },
+      PriceHistoryPoint: {
+        type: "object",
+        properties: {
+          date: { type: "string", format: "date" },
+          minPrice: { type: "number" },
+          maxPrice: { type: "number" },
+          storeName: { type: "string" },
           available: { type: "boolean" },
         },
       },

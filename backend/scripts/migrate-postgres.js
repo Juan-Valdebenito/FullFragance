@@ -9,7 +9,8 @@ async function migrate() {
       (SELECT COUNT(*) FROM olfactory_notes) AS olfactory_notes,
       (SELECT COUNT(*) FROM base_products) AS base_products,
       (SELECT COUNT(*) FROM chains) AS chains,
-      (SELECT COUNT(*) FROM scraped_products) AS scraped_products
+      (SELECT COUNT(*) FROM scraped_products) AS scraped_products,
+      (SELECT COUNT(*) FROM price_history) AS price_history
   `);
   console.table(rows);
   await pool.end();

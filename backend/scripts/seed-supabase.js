@@ -35,12 +35,13 @@ async function main() {
     const pool = getPool();
 
     // Conteos finales para verificar
-    const [notes, products, chains, users, scraped] = await Promise.all([
+    const [notes, products, chains, users, scraped, priceHistory] = await Promise.all([
       pool.query("SELECT COUNT(*) FROM olfactory_notes"),
       pool.query("SELECT COUNT(*) FROM base_products"),
       pool.query("SELECT COUNT(*) FROM chains"),
       pool.query("SELECT COUNT(*) FROM users"),
       pool.query("SELECT COUNT(*) FROM scraped_products"),
+      pool.query("SELECT COUNT(*) FROM price_history"),
     ]);
 
     console.log("✅ Seed completado en Supabase:\n");
@@ -49,6 +50,7 @@ async function main() {
     console.log(`   🏪 Cadenas:            ${chains.rows[0].count}`);
     console.log(`   👤 Usuarios:           ${users.rows[0].count}`);
     console.log(`   💰 Productos scraping: ${scraped.rows[0].count}`);
+    console.log(`   📈 Registros de precio: ${priceHistory.rows[0].count}`);
     console.log("\n🎉 Tu base de datos en Supabase está lista para producción.");
 
     await pool.end();

@@ -34,12 +34,14 @@ export type DealOfDay = {
   savingsPct: number;
 };
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
+export type PriceHistoryPoint = { date: string; minPrice: number; maxPrice: number; storeName: string; available: boolean };
 
 export type ProductDetailResult = {
   product: ApiProduct;
   prices: ApiPrice[];
   minPrice: number;
   maxPrice: number;
+  history: PriceHistoryPoint[];
 };
 
 export type Comparison = {

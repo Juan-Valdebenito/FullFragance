@@ -95,7 +95,7 @@ Fuera de producción, el backend expone Swagger en `http://localhost:3000/api/do
 - `GET /api/catalog/search`: búsqueda paginada con filtros.
 - `GET /api/catalog/stats`: perfumes, comparables y tiendas del catálogo vigente.
 - `GET /api/catalog/ids?minStores=2`: ids para el sitemap.
-- `GET /api/prices/:productId`: precios de un perfume.
+- `GET /api/prices/:productId`: precios actuales e historial diario de un perfume.
 
 ## Despliegue
 

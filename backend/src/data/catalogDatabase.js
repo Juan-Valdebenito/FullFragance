@@ -36,6 +36,38 @@ async function upsertProduct(product, run = query) {
       now,
     ]
   );
+
+  // Una observación por día mantiene el historial acotado. Si una fuente se
+  // sincroniza de nuevo el mismo día, prevalece el dato más reciente.
+  if (product.price > 0 && !product.raw?.mockPrice) {
+    await run(
+      `INSERT INTO price_history (source, sku, observed_on, price, currency, available, observed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (source, sku, observed_on) DO UPDATE SET
+         price = EXCLUDED.price,
+         currency = EXCLUDED.currency,
+         available = EXCLUDED.available,
+         observed_at = EXCLUDED.observed_at`,
+      [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now]
+    );
+  }
+}
+
+async function listPriceHistory(source, sku, days = 180) {
+  const result = await query(
+    `SELECT source, sku, observed_on::text AS date, price, currency, available,
+      observed_at AS "observedAt"
+     FROM price_history WHERE source = $1 AND sku = $2
+       AND observed_on >= CURRENT_DATE - $3::integer
+     ORDER BY observed_on ASC`,
+    [source, sku, days]
+  );
+  return result.rows.map((row) => ({
+    ...row,
+    date: row.date || row.observed_on,
+    price: Number(row.price),
+    available: Boolean(row.available),
+  }));
 }
 
 async function listProducts(source, limit = 10000) {
@@ -72,4 +104,4 @@ async function replaceProducts(source, products) {
   });
 }
 
-module.exports = { upsertProduct, listProducts, replaceProducts };
+module.exports = { upsertProduct, listProducts, replaceProducts, listPriceHistory };

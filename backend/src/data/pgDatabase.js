@@ -15,6 +15,7 @@ const memoryStore = {
   baseProducts: [],
   chains: [],
   scrapedProducts: new Map(), // key: `${source}:${sku}`
+  priceHistory: new Map(), // key: `${source}:${sku}:${observed_on}`
   appMetadata: new Map(),
   analyticsEvents: [],
 };
@@ -29,6 +30,7 @@ function loadPersistentFallback() {
     memoryStore.baseProducts = saved.baseProducts || [];
     memoryStore.chains = saved.chains || [];
     memoryStore.scrapedProducts = new Map(saved.scrapedProducts || []);
+    memoryStore.priceHistory = new Map(saved.priceHistory || []);
     memoryStore.appMetadata = new Map(saved.appMetadata || []);
     memoryStore.analyticsEvents = saved.analyticsEvents || [];
     return true;
@@ -45,6 +47,7 @@ function savePersistentFallback() {
     baseProducts: memoryStore.baseProducts,
     chains: memoryStore.chains,
     scrapedProducts: [...memoryStore.scrapedProducts.entries()],
+    priceHistory: [...memoryStore.priceHistory.entries()],
     appMetadata: [...memoryStore.appMetadata.entries()],
     analyticsEvents: memoryStore.analyticsEvents,
   };
@@ -180,6 +183,20 @@ async function initDatabase() {
 
         CREATE INDEX IF NOT EXISTS idx_scraped_products_source_seen
           ON scraped_products(source, last_seen_at DESC);
+
+        CREATE TABLE IF NOT EXISTS price_history (
+          source VARCHAR(100) NOT NULL,
+          sku VARCHAR(255) NOT NULL,
+          observed_on DATE NOT NULL,
+          price INTEGER NOT NULL CHECK (price > 0),
+          currency VARCHAR(10) NOT NULL DEFAULT 'CLP',
+          available BOOLEAN NOT NULL DEFAULT FALSE,
+          observed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (source, sku, observed_on)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_price_history_product_date
+          ON price_history(source, sku, observed_on DESC);
 
         CREATE TABLE IF NOT EXISTS app_metadata (
           key VARCHAR(100) PRIMARY KEY,
@@ -492,6 +509,30 @@ function memoryQuery(text, params = []) {
       .filter((p) => p.source === source)
       .slice(0, limit);
     return { rows: list };
+  }
+  if (sql.includes("FROM price_history WHERE source = $1 AND sku = $2")) {
+    const [source, sku, days] = params;
+    const cutoff = new Date();
+    cutoff.setUTCDate(cutoff.getUTCDate() - Number(days || 180));
+    return {
+      rows: Array.from(memoryStore.priceHistory.values())
+        .filter((entry) => entry.source === source && entry.sku === sku && new Date(entry.observed_on) >= cutoff)
+        .sort((a, b) => a.observed_on.localeCompare(b.observed_on)),
+    };
+  }
+  if (sql.includes("INSERT INTO price_history")) {
+    const entry = {
+      source: params[0],
+      sku: params[1],
+      observed_on: params[2],
+      price: params[3],
+      currency: params[4],
+      available: params[5],
+      observed_at: params[6],
+    };
+    memoryStore.priceHistory.set(`${entry.source}:${entry.sku}:${entry.observed_on}`, entry);
+    savePersistentFallback();
+    return { rows: [entry] };
   }
   if (sql.includes("INSERT INTO scraped_products")) {
     const key = `${params[0]}:${params[1]}`;
