@@ -6,6 +6,7 @@ import { Footer } from "@/shared/components/Footer";
 import { AdBanner } from "@/shared/components/AdBanner";
 import { AdSidebarLayout } from "@/shared/components/AdSidebarLayout";
 import { ProductDetail } from "@/features/catalog/components/ProductDetail";
+import { MIN_INDEXED_STORES } from "@/features/catalog/domain/indexing";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { ProductDetailResult } from "@/shared/api/types";
 
@@ -13,6 +14,10 @@ const SITE_URL = "https://fullfragance.cl";
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 type ProductLoad = { data: ProductDetailResult | null; status: number };
+
+function productStoreCount(data: ProductDetailResult) {
+  return data.product.matchedStores ?? new Set(data.prices.map(price => price.storeName)).size;
+}
 
 // generateMetadata y la página comparten esta llamada: cache() la hace una
 // sola vez por request.
@@ -42,14 +47,12 @@ export async function generateMetadata({
   const description = `Compara el precio de ${title}${priceText} entre tiendas verificadas de Chile. ${product.description || ""}`.trim().slice(0, 300);
   const image = productImageUrl(product.imageUrl);
   const url = `/perfumes/${id}`;
-  // Con una sola tienda la ficha no compara nada y repite la página de esa
-  // tienda: queda fuera del índice (y del sitemap) pero sigue enlazable.
-  const storeCount = product.matchedStores ?? new Set(data.prices.map(price => price.storeName)).size;
+  const storeCount = productStoreCount(data);
   return {
     title,
     description,
     alternates: { canonical: url },
-    robots: storeCount < 2 ? { index: false, follow: true } : undefined,
+    robots: storeCount < MIN_INDEXED_STORES ? { index: false, follow: true } : undefined,
     openGraph: {
       type: "website",
       locale: "es_CL",
@@ -119,6 +122,7 @@ export default async function PerfumePage({
   const { id } = await params;
   const { back } = await searchParams;
   const { data, status } = await loadProduct(id);
+  const monetizable = Boolean(data && productStoreCount(data) >= MIN_INDEXED_STORES);
 
   if (status === 404) notFound();
 
@@ -140,18 +144,20 @@ export default async function PerfumePage({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData(id, data) }} />
       )}
       <Header active="catalog" />
-      <section className="container" style={{ paddingTop: "18px" }} aria-label="Publicidad">
-        <AdBanner
-          format="strip"
-          slotId={process.env.NEXT_PUBLIC_AD_SLOT_PRODUCT_STRIP}
-        />
-      </section>
-      <AdSidebarLayout left={false} right>
+      {monetizable && (
+        <section className="container" style={{ paddingTop: "18px" }} aria-label="Publicidad">
+          <AdBanner
+            format="strip"
+            slotId={process.env.NEXT_PUBLIC_AD_SLOT_PRODUCT_STRIP}
+          />
+        </section>
+      )}
+      <AdSidebarLayout left={false} right={monetizable}>
         {/* Con datos del servidor la ficha llega completa en el HTML (SEO);
             si el backend no respondió, el componente reintenta en el navegador. */}
         <ProductDetail key={id} productId={id} backHref={backHref} initialResult={data} />
       </AdSidebarLayout>
-      <Footer />
+      <Footer compact={!monetizable} />
     </>
   );
 }

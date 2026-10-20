@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { GUIDES } from "@/features/guides/guides";
+import { MIN_INDEXED_STORES } from "@/features/catalog/domain/indexing";
 
 const SITE_URL = "https://fullfragance.cl";
 
@@ -13,8 +14,7 @@ function apiUrl() {
 
 async function fetchProductIds(): Promise<string[]> {
   try {
-    // Sólo perfumes en 2+ tiendas: son los que se indexan (ver perfumes/[id]).
-    const res = await fetch(`${apiUrl()}/catalog/ids?minStores=2`, { next: { revalidate } });
+    const res = await fetch(`${apiUrl()}/catalog/ids?minStores=${MIN_INDEXED_STORES}`, { next: { revalidate } });
     if (!res.ok) return [];
     const data = (await res.json()) as { ids: string[] };
     return data.ids;

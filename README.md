@@ -8,7 +8,7 @@ Comparador de precios de perfumes originales en Chile. Reúne el mismo perfume p
 ## Qué hace
 
 - **Catálogo y comparador** (`/dashboard`): búsqueda con corrección de tipeo, filtros por marca, género, segmento (diseñador, nicho, árabe), tienda, precio y presentación.
-- **Ficha de perfume** (`/perfumes/[id]`): precios por tienda (con stock primero), datos del perfume y enlace directo a cada tienda. Las fichas de una sola tienda llevan `noindex`.
+- **Ficha de perfume** (`/perfumes/[id]`): precios por tienda (con stock primero), datos del perfume y enlace directo a cada tienda. Sólo las comparaciones en cuatro o más tiendas se indexan y muestran anuncios.
 - **Guías** (`/guias`): artículos propios con filas de perfumes cargadas en vivo desde el catálogo. Se agregan en `frontend/src/features/guides/guides.ts`.
 - **Páginas institucionales**: `/sobre-nosotros`, `/como-comparamos`, `/politica-de-datos`, `/politica-de-uso`.
 - **Cuentas** (opcionales): registro, login con Google, favoritos, test olfativo y recomendaciones.
@@ -94,7 +94,7 @@ Fuera de producción, el backend expone Swagger en `http://localhost:3000/api/do
 
 - `GET /api/catalog/search`: búsqueda paginada con filtros.
 - `GET /api/catalog/stats`: perfumes, comparables y tiendas del catálogo vigente.
-- `GET /api/catalog/ids?minStores=2`: ids para el sitemap.
+- `GET /api/catalog/ids?minStores=4`: ids de las comparaciones sustanciales usadas por el sitemap.
 - `GET /api/prices/:productId`: precios actuales e historial diario de un perfume.
 
 ## Despliegue

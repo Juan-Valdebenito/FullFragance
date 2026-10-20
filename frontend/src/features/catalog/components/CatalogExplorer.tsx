@@ -61,7 +61,13 @@ export function toProduct(item: Comparison): Product {
   };
 }
 
-export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }) {
+export function CatalogExplorer({
+  initialQuery = "",
+  initialResult = null,
+}: {
+  initialQuery?: string;
+  initialResult?: CatalogSearchResult | null;
+}) {
   const optionalSession = useOptionalSession();
   const user = optionalSession?.user ?? null;
   const isAdmin = user?.role === "admin";
@@ -90,8 +96,8 @@ export function CatalogExplorer({ initialQuery = "" }: { initialQuery?: string }
   const sort        = (searchParams.get("sort")  ?? "recommended") as SortMode;
 
   // ── Datos del catálogo ──────────────────────────────────────────────────
-  const [result, setResult] = useState<CatalogSearchResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<CatalogSearchResult | null>(initialResult);
+  const [loading, setLoading] = useState(!initialResult);
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 

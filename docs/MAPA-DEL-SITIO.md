@@ -8,7 +8,7 @@ Rutas de https://fullfragance.cl, para qué sirven y cómo las trata Google. Si 
 |------|-----------|---------|---------------------|
 | `/` | Home: buscador, ofertas del día, categorías y cifras del catálogo en vivo | Sí | `Organization`, `WebSite` (todas las páginas) |
 | `/dashboard` | Catálogo y comparador con filtros. Las variantes con `?q=`, `?brand=`, etc. apuntan su canónica a `/dashboard` | Sí | — |
-| `/perfumes/[id]` | Ficha de un perfume con precios por tienda | Sólo si está en 2+ tiendas | `Product`, `BreadcrumbList` |
+| `/perfumes/[id]` | Ficha de un perfume con precios por tienda | Sólo si está en 4+ tiendas | `Product`, `BreadcrumbList` |
 | `/guias` | Índice de guías | Sí | — |
 | `/guias/[slug]` | Guía editorial con perfumes en vivo | Sí | `Article`, `BreadcrumbList` |
 | `/como-comparamos` | Metodología: tiendas, agrupación, orden | Sí | — |
@@ -16,7 +16,7 @@ Rutas de https://fullfragance.cl, para qué sirven y cómo las trata Google. Si 
 | `/politica-de-datos` | Privacidad y cookies publicitarias (AdSense) | Sí | — |
 | `/politica-de-uso` | Condiciones de uso | Sí | — |
 
-Las fichas de perfume que hoy están en una sola tienda responden con `noindex, follow`: siguen enlazadas pero no se indexan, porque no comparan nada. Un id que ya no existe responde 404.
+Las fichas con menos de cuatro tiendas responden con `noindex, follow`: siguen enlazadas y funcionan normalmente, pero el índice público se concentra en comparaciones sustanciales. Esas páginas tampoco muestran anuncios. Un id que ya no existe responde 404.
 
 ## Páginas de cuenta (no se indexan)
 
