@@ -372,6 +372,293 @@ export const GUIDES: Guide[] = [
       },
     ],
   },
+  {
+    slug: "notas-olfativas-salida-corazon-fondo",
+    title: "Notas olfativas: cómo entender la salida, el corazón y el fondo de un perfume",
+    description:
+      "Cómo leer la pirámide olfativa de un perfume, por qué el aroma cambia con las horas y qué información aportan realmente sus notas y familias.",
+    published: "2026-10-22",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "La ficha de un perfume puede enumerar bergamota, jazmín, vainilla y madera, pero esa lista no significa que todos esos aromas se perciban al mismo tiempo. Las notas son una forma de describir cómo evoluciona una fragancia; sirven para orientarse, aunque no reemplazan probarla sobre la piel. Entender esa estructura ayuda a comparar perfumes con más criterio y a evitar compras basadas sólo en un ingrediente atractivo.",
+    sections: [
+      {
+        heading: "La pirámide olfativa no es una receta",
+        paragraphs: [
+          "Las marcas suelen ordenar las notas en tres niveles: salida, corazón y fondo. Es una representación sencilla de la evaporación y de la impresión que deja el perfume en distintos momentos. No indica la cantidad exacta de cada materia prima ni permite reconstruir la fórmula.",
+          "Además, una nota declarada no siempre corresponde a un ingrediente natural. El perfumista puede construir la idea de manzana, cuero, brisa marina o algodón limpio combinando varias moléculas. Conviene leer la pirámide como un mapa descriptivo y no como una lista literal de ingredientes.",
+        ],
+      },
+      {
+        heading: "Salida: la primera impresión",
+        paragraphs: [
+          "La salida aparece apenas se atomiza el perfume. Suele incluir materiales volátiles como cítricos, hierbas aromáticas o acordes frescos. Es la etapa más brillante, pero también la más breve; por eso decidir en los primeros segundos puede llevar a una impresión incompleta.",
+          "Al probar en tienda, espera a que se evapore el alcohol y deja pasar al menos varios minutos antes de evaluar. Una tira de papel ayuda a comparar varias opciones, pero la piel permite observar cómo se desarrolla la fragancia en condiciones de uso real.",
+        ],
+        rail: {
+          title: "Fragancias cítricas para explorar",
+          params: { q: "citrus", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=citrus&sort=stores",
+        },
+      },
+      {
+        heading: "Corazón: el carácter principal",
+        paragraphs: [
+          "Cuando baja la salida aparece el corazón, que suele definir el tema reconocible del perfume. Aquí son comunes flores, especias, frutas y acordes aromáticos. Esta etapa puede sentirse durante varias horas y conecta la apertura con los materiales más persistentes del fondo.",
+          "Dos perfumes con una salida cítrica parecida pueden tomar caminos completamente distintos: uno puede volverse floral y limpio, mientras otro se hace especiado o dulce. Por eso buscar sólo por la primera nota rara vez basta para encontrar una alternativa similar.",
+        ],
+      },
+      {
+        heading: "Fondo: lo que queda en la piel y la ropa",
+        paragraphs: [
+          "El fondo reúne los acordes menos volátiles. Maderas, resinas, almizcles, vainilla, ámbar y cuero aparecen con frecuencia en esta etapa. No necesariamente son intensos, pero suelen permanecer cuando la salida y buena parte del corazón ya se disiparon.",
+          "La impresión final se conoce a veces como secado o drydown. Probarlo es importante, porque un perfume que encanta al comienzo puede terminar demasiado dulce o seco para tu gusto, y uno de salida discreta puede desarrollar un fondo mucho más interesante.",
+        ],
+        rail: {
+          title: "Perfumes con vainilla en el catálogo",
+          params: { q: "vanilla", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=vanilla&sort=stores",
+        },
+      },
+      {
+        heading: "Cómo usar las notas para elegir",
+        paragraphs: [
+          "Empieza por recordar perfumes que ya te gustan y busca patrones amplios: familias frescas, florales, amaderadas, ambaradas o gourmand. Después usa las notas para acotar, no para asumir que dos fragancias olerán igual. La posición de una nota, los materiales que la acompañan y la intensidad cambian por completo el resultado.",
+          "Si compras sin probar, revisa más de una descripción y confirma la versión exacta. Una línea puede tener EDT, EDP, Parfum y ediciones Intense con pirámides diferentes. Comparar nombre completo, concentración y volumen sigue siendo tan importante como leer sus notas.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "cuanto-dura-un-perfume-y-como-aplicarlo",
+    title: "Cuánto dura un perfume y cómo aplicarlo sin desperdiciarlo",
+    description:
+      "Qué factores cambian la duración y la proyección de una fragancia, cómo aplicarla y por qué más atomizaciones no siempre producen un mejor resultado.",
+    published: "2026-10-22",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "La duración de un perfume no se puede resumir en una cifra universal. La misma fragancia cambia según la piel, el clima, la cantidad aplicada e incluso la atención de quien la usa. Antes de concluir que un perfume dura poco —o de aplicar el doble— conviene separar duración, proyección y percepción.",
+    sections: [
+      {
+        heading: "Duración, proyección y estela son cosas distintas",
+        paragraphs: [
+          "La duración es el tiempo durante el cual todavía puedes percibir la fragancia. La proyección describe qué tan lejos se siente alrededor del cuerpo, mientras que la estela es el rastro que deja al moverte. Un perfume puede durar muchas horas muy cerca de la piel y proyectar con fuerza sólo durante la primera parte.",
+          "También existe la fatiga olfativa: después de exponerse de manera continua a un olor, el cerebro puede dejar de registrarlo aunque otras personas todavía lo perciban. Antes de reaplicar, aléjate un momento del ambiente o pregunta a alguien de confianza; acercar la nariz repetidamente al punto de aplicación no siempre ayuda.",
+        ],
+      },
+      {
+        heading: "Qué hace que dure más o menos",
+        paragraphs: [
+          "La concentración influye, pero no actúa sola. Los cítricos y algunos acordes frescos suelen evaporarse antes que maderas, resinas o notas ambaradas. La fórmula concreta importa más que la sigla del frasco: una EDT bien construida puede sentirse durante más tiempo que una EDP ligera.",
+          "El calor aumenta la evaporación y puede hacer que el perfume proyecte más al comienzo, pero se consuma antes. En una piel seca también tiende a desaparecer con mayor rapidez. Aplicarlo sobre piel limpia e hidratada, sin frotar, ofrece una base más uniforme.",
+        ],
+        rail: {
+          title: "Eau de Parfum para comparar",
+          params: { q: "edp", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=edp&sort=stores",
+        },
+      },
+      {
+        heading: "Dónde y cómo aplicarlo",
+        paragraphs: [
+          "Cuello, pecho y antebrazos son zonas habituales porque quedan relativamente expuestas y permiten que el aroma se mueva. No es necesario cubrir todos los puntos de pulso. Empieza con pocas atomizaciones, observa el resultado durante un día completo y ajusta en el siguiente uso.",
+          "Evita frotar las muñecas: no destruye mágicamente el perfume, pero mezcla el líquido con más rapidez, genera calor y altera la forma en que percibes la salida. Déjalo secar por sí solo. Tampoco rocíes cerca de los ojos ni sobre piel irritada.",
+        ],
+        list: [
+          "Para oficina o espacios cerrados, usa una aplicación moderada y considera la cercanía de otras personas.",
+          "Para reaplicar, lleva un atomizador pequeño bien cerrado en vez del frasco completo.",
+          "En ropa puede durar más, pero prueba primero en una zona oculta: algunos líquidos manchan telas claras o delicadas.",
+        ],
+      },
+      {
+        heading: "Cómo evaluar el rendimiento de forma justa",
+        paragraphs: [
+          "Prueba el perfume varios días, con la misma cantidad, y anota cuándo deja de proyectar y cuándo desaparece por completo. No compares una prueba al aire libre con otra en una habitación climatizada: la temperatura, el viento y la actividad física cambian mucho la percepción.",
+          "Una muestra o un decant confiable permite hacer esa evaluación antes de pagar un frasco grande. Si una fragancia te obliga a usar mucha cantidad para disfrutarla, incorpora ese consumo a la comparación; el frasco más barato no siempre resulta el más conveniente por uso.",
+        ],
+      },
+      {
+        heading: "Cuándo conviene reaplicar",
+        paragraphs: [
+          "Reaplicar tiene sentido cuando la fragancia quedó muy cerca de la piel y aún quieres que se perciba, no apenas dejas de notarla tú. Una aplicación ligera a mitad del día suele ser más controlable que una dosis excesiva por la mañana.",
+          "No hay un número correcto de atomizaciones para todos los perfumes. El atomizador, la concentración, la fórmula y el contexto cambian. La regla útil es empezar con menos, observar cómo se comporta y respetar el espacio compartido.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "como-elegir-un-perfume-para-regalo",
+    title: "Cómo elegir un perfume para regalo sin adivinar a ciegas",
+    description:
+      "Una guía práctica para regalar perfume: qué averiguar, cómo reducir el riesgo, cuándo elegir un set o un tamaño pequeño y qué revisar antes de pagar.",
+    published: "2026-10-22",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Regalar un perfume puede sentirse muy personal, pero justamente por eso es fácil equivocarse. La edad o el género dicen bastante menos que los aromas que la persona ya usa, su rutina y la intensidad que tolera. Con unas pocas pistas se puede pasar de una apuesta al azar a una elección razonada.",
+    sections: [
+      {
+        heading: "La mejor pista está en su propio estante",
+        paragraphs: [
+          "Si puedes, averigua el nombre completo de uno o dos perfumes que la persona use de verdad. Una foto del frasco es mejor que recordar sólo la marca: líneas famosas suelen tener varias concentraciones, tamaños y ediciones con nombres casi idénticos.",
+          "Observa también cuándo los usa. Un perfume liviano de todos los días cumple una función distinta de uno intenso reservado para salir de noche. Regalar algo para el mismo uso es más seguro; elegir un contraste puede ser interesante, pero implica más riesgo.",
+        ],
+      },
+      {
+        heading: "Busca patrones, no una copia exacta",
+        paragraphs: [
+          "Con los nombres de referencia, revisa sus familias y notas dominantes. Si ambos son frescos y cítricos, una fragancia muy dulce y resinosa probablemente quede lejos de sus hábitos. Si repite vainilla, flores blancas o maderas, ese patrón ofrece un punto de partida.",
+          "No hace falta buscar un clon. Una opción de la misma familia, con intensidad y ocasión parecidas, puede sentirse familiar sin repetir lo que ya tiene. Cuando no hay ninguna pista, una tarjeta de regalo o una salida para probar juntos es más honesta que elegir por popularidad.",
+        ],
+      },
+      {
+        heading: "Tamaño, concentración y presentación",
+        paragraphs: [
+          "Un frasco de 30 o 50 ml reduce el compromiso y permite variar; uno de 100 ml tiene sentido cuando ya sabes que la persona disfruta esa fragancia. No asumas que el envase grande siempre es el mejor regalo: también ocupa más espacio y tarda años en terminarse si forma parte de una colección.",
+          "Confirma si la publicación corresponde a EDT, EDP o Parfum. Los sets pueden verse más completos y a veces incluyen crema o miniatura, pero revisa su contenido exacto. Un tester puede ser original y conveniente para uso personal, aunque su caja simple o la ausencia de tapa puede hacerlo menos apropiado como regalo formal.",
+        ],
+        rail: {
+          title: "Sets de perfumes disponibles en varias tiendas",
+          params: { q: "set", comparison: "multiple", sort: "stores" },
+          href: "/dashboard?q=set&sort=stores",
+        },
+      },
+      {
+        heading: "Define el presupuesto completo",
+        paragraphs: [
+          "Compara el mismo producto y no sólo la marca. Al precio publicado suma despacho, envoltorio si lo necesitas y cualquier condición de la oferta. Las promociones asociadas a una tarjeta pueden cambiar el total, pero no son un descuento accesible para todas las personas.",
+          "Antes de pagar revisa la fecha de entrega, especialmente si es para una ocasión concreta, y la política de cambios de la tienda. Por razones de higiene, un perfume abierto puede tener restricciones; conocerlas evita prometer un cambio que después no será posible.",
+        ],
+        rail: {
+          title: "Perfumes presentes en más tiendas",
+          params: { comparison: "multiple", sort: "stores" },
+          href: "/dashboard?sort=stores",
+        },
+      },
+      {
+        heading: "Una lista breve antes de comprar",
+        paragraphs: [
+          "Antes de decidir, confirma estos datos. Si faltan varios, conviene mantener el regalo flexible en vez de aumentar el presupuesto para compensar la incertidumbre.",
+        ],
+        list: [
+          "Nombre y versión exactos de al menos una fragancia que ya utiliza.",
+          "Familias o notas que se repiten entre sus favoritos.",
+          "Uso principal: diario, trabajo, ocasiones especiales o clima cálido.",
+          "Concentración, volumen y tipo de presentación del producto publicado.",
+          "Costo final, plazo de despacho y condiciones de cambio de la tienda.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "como-guardar-perfumes",
+    title: "Cómo guardar perfumes para conservar mejor su aroma",
+    description:
+      "Dónde guardar los frascos, qué efecto tienen la luz y el calor, por qué el baño no es el lugar ideal y cuáles son las señales de un perfume alterado.",
+    published: "2026-10-22",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Un perfume no mejora por estar exhibido al sol. La luz, el calor y los cambios repetidos de temperatura aceleran transformaciones en su fórmula. No hace falta convertir la casa en una cava: un lugar oscuro, estable y seco suele ser suficiente para conservar bien una colección durante años.",
+    sections: [
+      {
+        heading: "Los tres factores que conviene controlar",
+        paragraphs: [
+          "La luz directa es el problema más fácil de evitar. Puede alterar el color del líquido y favorecer la degradación de algunos componentes, especialmente en frascos transparentes. La caja original ofrece una protección sencilla, pero un cajón o armario cerrado también cumple esa función.",
+          "El calor acelera reacciones químicas y los cambios bruscos de temperatura someten el contenido a ciclos innecesarios. La humedad afecta sobre todo la caja y las etiquetas, aunque también vuelve poco conveniente almacenar una colección en el baño.",
+        ],
+        list: [
+          "Guárdalos lejos de ventanas, estufas y aparatos que emitan calor.",
+          "Prefiere una repisa interior, un cajón o un armario con temperatura estable.",
+          "Mantén cada frasco de pie para reducir el contacto continuo del líquido con el atomizador y sus sellos.",
+        ],
+      },
+      {
+        heading: "Baño, auto y refrigerador",
+        paragraphs: [
+          "El baño combina vapor, humedad y cambios de temperatura, de modo que no es el mejor lugar aunque el frasco quede cómodo junto al espejo. El auto es todavía más agresivo: al sol puede alcanzar temperaturas muy altas y además mueve el líquido constantemente.",
+          "El refrigerador doméstico no es necesario para la mayoría de las colecciones. Introduce frío, humedad y cambios cada vez que el frasco sale para usarse. Una habitación templada y estable es una solución más simple. Si vives en una zona muy calurosa, prioriza el rincón más fresco del interior, sin luz directa.",
+        ],
+      },
+      {
+        heading: "¿Conviene conservar la caja?",
+        paragraphs: [
+          "La caja protege de la luz y ayuda a identificar lote, concentración y volumen. Es especialmente útil si el mueble recibe claridad durante el día o si planeas transportar el perfume. No es indispensable cuando el frasco vive dentro de un armario oscuro.",
+          "Evita sacar y poner la tapa con fuerza o manipular el atomizador. Si el frasco tiene tapón, ciérralo bien después de cada uso. No trasvasijes toda la botella sin necesidad: cada transferencia aumenta la exposición al aire y el riesgo de contaminación o derrame.",
+        ],
+      },
+      {
+        heading: "Qué cambios son normales y cuáles observar",
+        paragraphs: [
+          "Algunos perfumes se oscurecen gradualmente, en especial los que contienen materiales asociados a vainilla. Un cambio de color por sí solo no demuestra que estén arruinados. Lo importante es compararlo con el olor y el funcionamiento del atomizador.",
+          "Una salida claramente avinagrada, metálica o muy distinta de la habitual, pérdida marcada del aroma o partículas que antes no estaban pueden indicar alteración. Antes de desecharlo, prueba una pequeña cantidad en papel: a veces sólo queda residuo seco en la boquilla y el líquido interior sigue bien.",
+        ],
+      },
+      {
+        heading: "Cómo transportar una fragancia",
+        paragraphs: [
+          "Para el uso diario resulta más seguro llenar un atomizador de viaje que llevar el frasco grande. En un viaje, protege los envases dentro de una bolsa sellada y acolchada, y revisa las restricciones de equipaje para líquidos de la empresa de transporte.",
+          "Al recibir una compra, deja que el frasco vuelva a temperatura ambiente si llegó muy frío o caliente antes de probarlo. El transporte breve no suele ser un problema; la exposición prolongada y repetida es la que conviene evitar.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "comparar-precio-por-ml-perfume",
+    title: "Precio por ml en perfumes: cómo comparar tamaños y ofertas",
+    description:
+      "Cómo calcular el precio por mililitro, cuándo un frasco grande conviene de verdad y qué revisar para no comparar tamaños, concentraciones o presentaciones distintas.",
+    published: "2026-10-22",
+    authors: GUIDE_AUTHORS,
+    intro:
+      "Una oferta de $59.990 no dice mucho si no sabemos cuántos mililitros incluye. El precio por ml permite poner tamaños distintos en una misma escala, pero tampoco decide la compra por sí solo: un frasco económico que no alcanzarás a usar puede ser peor elección que uno pequeño con un costo unitario mayor.",
+    sections: [
+      {
+        heading: "La fórmula y un ejemplo simple",
+        paragraphs: [
+          "Divide el precio final por el volumen del frasco. Si 50 ml cuestan $45.000, el precio unitario es $900 por ml. Si la versión de 100 ml cuesta $75.000, queda en $750 por ml. El segundo tamaño ofrece un costo unitario menor, aunque exige gastar $30.000 adicionales en ese momento.",
+          "Usa el total que realmente pagarás. Si una tienda cobra despacho y otra permite retiro gratuito, agrega ese costo antes de dividir. Las cuotas cambian la forma de pago, pero no reducen el precio salvo que exista un descuento explícito.",
+        ],
+      },
+      {
+        heading: "Compara sólo versiones equivalentes",
+        paragraphs: [
+          "El cálculo sirve cuando los productos contienen la misma fragancia en la misma concentración. Una EDT de 100 ml no es automáticamente mejor oferta que una EDP de 50 ml porque son fórmulas diferentes. Tampoco mezcles recargas, testers, sets o splash corporales con el frasco regular.",
+          "Lee el título completo y, si algo no cuadra, abre la página de la tienda. A veces la fotografía corresponde a toda una línea y el selector interno define el tamaño; otras veces el precio visible pertenece a la variante más pequeña.",
+        ],
+        list: [
+          "Mismo nombre y edición: evita mezclar Intense, Elixir, Sport o flankers.",
+          "Misma concentración: EDT con EDT, EDP con EDP y Parfum con Parfum.",
+          "Misma presentación: frasco regular con frasco regular; tester y set por separado.",
+          "Stock disponible y precio final aplicable a tu medio de pago.",
+        ],
+      },
+      {
+        heading: "Cuándo conviene el frasco grande",
+        paragraphs: [
+          "El tamaño grande tiene sentido para una fragancia que ya conoces, usas con frecuencia y puedes guardar correctamente. Su precio por ml suele ser menor y exige menos reposiciones. También puede convenir en un perfume compartido por más de una persona.",
+          "No es ahorro si compras a ciegas, te cansas pronto del aroma o mantienes tantos frascos abiertos que tardarás años en terminarlo. El dinero inmovilizado y el espacio también cuentan. Para explorar, 30 o 50 ml suelen ofrecer una relación más equilibrada entre variedad y gasto total.",
+        ],
+        rail: {
+          title: "Perfumes para comparar entre varias tiendas",
+          params: { comparison: "multiple", sort: "stores" },
+          href: "/dashboard?sort=stores",
+        },
+      },
+      {
+        heading: "Sets, recargas y formatos pequeños",
+        paragraphs: [
+          "En un set, suma sólo los mililitros de perfume si quieres compararlo con un frasco. Una crema corporal no equivale al mismo volumen de fragancia, aunque agregue valor si la usarás. En una recarga, verifica que ya tengas el frasco compatible: el envase más simple puede explicar parte de la diferencia.",
+          "Las miniaturas y los decants casi siempre cuestan más por ml porque incluyen manipulación y envases adicionales. Su valor está en permitir una prueba prolongada sin asumir el costo de una botella completa, no en ganar la comparación unitaria.",
+        ],
+      },
+      {
+        heading: "Una decisión en dos pasos",
+        paragraphs: [
+          "Primero compara el precio total del mismo tamaño entre tiendas; esa es la forma más directa de detectar una oferta. Después, si estás eligiendo entre tamaños, calcula el precio por ml y pregúntate cuánto usarás realmente.",
+          "La opción conveniente equilibra costo unitario, desembolso total y uso esperado. El número más bajo por ml es una señal útil, no una orden de comprar el frasco más grande.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function guideBySlug(slug: string) {

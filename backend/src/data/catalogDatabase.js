@@ -1,14 +1,24 @@
 const { query, transaction } = require("./pgDatabase");
 
 async function upsertProduct(product, run = query) {
+  return upsertProducts([product], run);
+}
+
+const BATCH_SIZE = 250;
+function placeholders(count, width) {
+  return Array.from({ length: count }, (_, row) =>
+    `(${Array.from({ length: width }, (_, col) => `$${row * width + col + 1}`).join(', ')})`
+  ).join(', ');
+}
+
+async function upsertProducts(products, run) {
   const now = new Date().toISOString();
-  const rawJson = JSON.stringify(product.raw || {});
   
   await run(
     `INSERT INTO scraped_products (
       source, sku, brand, name, price, currency, presentation, image_url,
       available, product_url, raw_json, first_seen_at, last_seen_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    ) VALUES ${placeholders(products.length, 13)}
     ON CONFLICT (source, sku) DO UPDATE SET
       brand = EXCLUDED.brand,
       name = EXCLUDED.name,
@@ -20,7 +30,7 @@ async function upsertProduct(product, run = query) {
       product_url = EXCLUDED.product_url,
       raw_json = EXCLUDED.raw_json,
       last_seen_at = EXCLUDED.last_seen_at`,
-    [
+    products.flatMap(product => [
       product.source,
       product.sku,
       product.brand || null,
@@ -31,24 +41,25 @@ async function upsertProduct(product, run = query) {
       product.imageUrl || null,
       Boolean(product.available),
       product.url,
-      rawJson,
+      JSON.stringify(product.raw || {}),
       now,
       now,
-    ]
+    ])
   );
 
   // Una observación por día mantiene el historial acotado. Si una fuente se
   // sincroniza de nuevo el mismo día, prevalece el dato más reciente.
-  if (product.price > 0 && !product.raw?.mockPrice) {
+  const priced = products.filter(product => product.price > 0 && !product.raw?.mockPrice);
+  if (priced.length) {
     await run(
       `INSERT INTO price_history (source, sku, observed_on, price, currency, available, observed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ${placeholders(priced.length, 7)}
        ON CONFLICT (source, sku, observed_on) DO UPDATE SET
          price = EXCLUDED.price,
          currency = EXCLUDED.currency,
          available = EXCLUDED.available,
          observed_at = EXCLUDED.observed_at`,
-      [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now]
+      priced.flatMap(product => [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now])
     );
   }
 }
@@ -98,8 +109,8 @@ async function replaceProducts(source, products) {
   // de camino se conserva el catálogo anterior en vez de quedar a medias.
   await transaction(async (run) => {
     await run("DELETE FROM scraped_products WHERE source = $1", [source]);
-    for (const product of products) {
-      await upsertProduct(product, run);
+    for (let offset = 0; offset < products.length; offset += BATCH_SIZE) {
+      await upsertProducts(products.slice(offset, offset + BATCH_SIZE), run);
     }
   });
 }

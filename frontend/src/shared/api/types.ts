@@ -93,7 +93,7 @@ export type SuggestResult = {
 };
 
 export type Recommendation = { product: ApiProduct; score: number | null; matchedNotes: ApiNote[]; reason: string };
-export type SyncJob = { id: string; source: string; status: "running" | "completed" | "failed"; currentPage: number; totalPages: number; scanned: number; imported: number; targetProducts: number | null; error: string | null };
+export type SyncJob = { id: string; source: string; status: "running" | "completed" | "failed"; currentPage: number; totalPages: number; scanned: number; imported: number; targetProducts: number | null; error: string | null; phase?: "queued" | "scraping" | "saving" | "completed" | "failed"; scrapeDurationMs?: number | null; saveDurationMs?: number | null };
 export type AdminMetrics = {
   users: { total: number; newToday: number; newLast7Days: number };
   views: { today: number; last7Days: number; allTime: number; series: { date: string; views: number }[]; monthly: { month: string; views: number }[]; topPages: { page: string; views: number }[] };

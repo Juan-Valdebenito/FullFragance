@@ -87,7 +87,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setSyncState((current) => ({ ...current, [source]: { ...(current[source] ?? IDLE), ...patch } }));
   }, []);
 
-  const syncStore = useCallback(async (store: AdminStore) => {
+  const syncStore = useCallback(async (store: AdminStore, refreshCatalog = true) => {
     patchStore(store.source, { running: true, failed: false, job: null, message: "Iniciando…" });
     log(`Sincronización de ${store.name} iniciada`, "info");
     try {
@@ -95,14 +95,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       while (job.status === "running") {
         const pct = job.targetProducts ? ` (${Math.round((job.imported / job.targetProducts) * 100)}%)` : "";
         const page = job.currentPage > 0 ? `Página ${job.currentPage} · ` : "";
-        patchStore(store.source, { job, message: `${page}${job.imported} productos${pct}` });
-        await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        const message = job.phase === "queued" ? "Esperando turno…"
+          : job.phase === "saving" ? `Guardando ${job.imported} productos…`
+          : `${page}${job.imported} productos${pct}`;
+        patchStore(store.source, { job, message });
+        // Tres consultas cada cinco segundos dejan margen al límite de la API.
+        await new Promise((resolve) => window.setTimeout(resolve, 5000));
         job = await api.syncJob(job.id);
       }
       if (job.status === "failed") throw new ApiError(job.error || `Falló la sincronización de ${store.name}.`, 500);
       patchStore(store.source, { job, message: `${job.imported} productos importados` });
       log(`${store.name}: ${job.imported} productos importados`, "sync");
-      await loadCatalog();
+      if (refreshCatalog) await loadCatalog();
     } catch (error) {
       const message = error instanceof ApiError ? error.message : `Error al sincronizar ${store.name}.`;
       patchStore(store.source, { failed: true, message });
@@ -116,11 +120,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setSyncingAll(true);
     log("Sincronización de todas las tiendas iniciada", "info");
     try {
-      for (const store of ADMIN_STORES) await syncStore(store);
+      const stores = [...ADMIN_STORES];
+      await Promise.all(Array.from({ length: 3 }, async () => {
+        let store;
+        while ((store = stores.shift())) await syncStore(store, false);
+      }));
     } finally {
+      await loadCatalog();
       setSyncingAll(false);
     }
-  }, [log, syncStore]);
+  }, [loadCatalog, log, syncStore]);
 
   const anySyncRunning = syncingAll || Object.values(syncState).some((state) => state.running);
 

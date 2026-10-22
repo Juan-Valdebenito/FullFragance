@@ -16,6 +16,20 @@ const { scrapeDirectCatalogPage: scrapeLodoroPage } = require("./lodoroScraper")
 
 const jobs = new Map();
 const activeBySource = new Map();
+const pending = [];
+const MAX_CONCURRENT = 3;
+let runningCount = 0;
+
+function drainQueue() {
+  while (runningCount < MAX_CONCURRENT && pending.length) {
+    const job = pending.shift();
+    runningCount += 1;
+    void run(job).finally(() => {
+      runningCount -= 1;
+      drainQueue();
+    });
+  }
+}
 const scrapers = {
   "falabella-cl": scrapeFalabellaPage,
   "ripley-cl": scrapeRipleyPage,
@@ -44,11 +58,17 @@ function publicJob(job) {
     startedAt: job.startedAt,
     finishedAt: job.finishedAt || null,
     error: job.error || null,
+    phase: job.phase,
+    scrapeDurationMs: job.scrapeDurationMs ?? null,
+    saveDurationMs: job.saveDurationMs ?? null,
   };
 }
 
 async function run(job) {
   const products = new Map();
+  const scrapeStarted = Date.now();
+  let saveStarted;
+  job.phase = "scraping";
   try {
     for (let page = 1; page <= job.totalPages; page += 1) {
       const result = await scrapers[job.source](page);
@@ -59,14 +79,22 @@ async function run(job) {
       result.products.forEach((product) => products.set(product.sku, product));
       job.imported = products.size;
     }
+    job.scrapeDurationMs = Date.now() - scrapeStarted;
+    job.phase = "saving";
+    saveStarted = Date.now();
     await replaceProducts(job.source, [...products.values()]);
+    job.saveDurationMs = Date.now() - saveStarted;
     invalidateCatalogCache();
     job.status = "completed";
   } catch (error) {
     job.status = "failed";
     job.error = error.message;
   } finally {
+    if (saveStarted === undefined) job.scrapeDurationMs = Date.now() - scrapeStarted;
+    else job.saveDurationMs = Date.now() - saveStarted;
+    job.phase = job.status;
     job.finishedAt = new Date().toISOString();
+    console.info("[catalog-sync]", JSON.stringify(publicJob(job)));
     activeBySource.delete(job.source);
   }
 }
@@ -79,6 +107,7 @@ function startCatalogSync(source) {
     id: randomUUID(),
     source,
     status: "running",
+    phase: "queued",
     currentPage: 0,
     totalPages: 1,
     scanned: 0,
@@ -88,7 +117,8 @@ function startCatalogSync(source) {
   };
   jobs.set(job.id, job);
   activeBySource.set(source, job.id);
-  setImmediate(() => run(job));
+  pending.push(job);
+  setImmediate(drainQueue);
   return publicJob(job);
 }
 

@@ -521,39 +521,49 @@ function memoryQuery(text, params = []) {
     };
   }
   if (sql.includes("INSERT INTO price_history")) {
-    const entry = {
-      source: params[0],
-      sku: params[1],
-      observed_on: params[2],
-      price: params[3],
-      currency: params[4],
-      available: params[5],
-      observed_at: params[6],
-    };
-    memoryStore.priceHistory.set(`${entry.source}:${entry.sku}:${entry.observed_on}`, entry);
+    const rows = [];
+    for (let offset = 0; offset < params.length; offset += 7) {
+      const values = params.slice(offset, offset + 7);
+      const entry = {
+        source: values[0],
+        sku: values[1],
+        observed_on: values[2],
+        price: values[3],
+        currency: values[4],
+        available: values[5],
+        observed_at: values[6],
+      };
+      memoryStore.priceHistory.set(`${entry.source}:${entry.sku}:${entry.observed_on}`, entry);
+      rows.push(entry);
+    }
     savePersistentFallback();
-    return { rows: [entry] };
+    return { rows };
   }
   if (sql.includes("INSERT INTO scraped_products")) {
-    const key = `${params[0]}:${params[1]}`;
-    const prod = {
-      source: params[0],
-      sku: params[1],
-      brand: params[2],
-      name: params[3],
-      price: params[4],
-      currency: params[5],
-      presentation: params[6],
-      image_url: params[7],
-      available: params[8],
-      product_url: params[9],
-      raw_json: params[10] ? JSON.parse(params[10]) : {},
-      first_seen_at: params[11],
-      last_seen_at: params[12],
-    };
-    memoryStore.scrapedProducts.set(key, prod);
+    const rows = [];
+    for (let offset = 0; offset < params.length; offset += 13) {
+      const values = params.slice(offset, offset + 13);
+      const key = `${values[0]}:${values[1]}`;
+      const prod = {
+        source: values[0],
+        sku: values[1],
+        brand: values[2],
+        name: values[3],
+        price: values[4],
+        currency: values[5],
+        presentation: values[6],
+        image_url: values[7],
+        available: values[8],
+        product_url: values[9],
+        raw_json: values[10] ? JSON.parse(values[10]) : {},
+        first_seen_at: values[11],
+        last_seen_at: values[12],
+      };
+      memoryStore.scrapedProducts.set(key, prod);
+      rows.push(prod);
+    }
     savePersistentFallback();
-    return { rows: [prod] };
+    return { rows };
   }
   if (sql.includes("DELETE FROM scraped_products WHERE source = $1")) {
     const source = params[0];
