@@ -1,10 +1,12 @@
 "use client";
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api, session } from "@/shared/api/client";
 import type { User } from "@/shared/api/types";
+import { getGuestFavorites, toggleGuestFavorite } from "@/shared/favorites/guestFavorites";
 
 type SessionValue = {
   user: User | null;
+  favorites: string[];
   isFavorite: (id: string, aliases?: string[]) => boolean;
   toggleFavorite: (id: string) => Promise<void>;
   updateProfile: (profile: { name: string }) => Promise<void>;
@@ -18,6 +20,15 @@ const SessionContext = createContext<SessionValue | null>(null);
 
 export function SessionProvider({ initialUser, children }: { initialUser: User | null; children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(initialUser);
+  const [guestFavorites, setGuestFavorites] = useState<string[]>([]);
+
+  // Se lee después de montar (no en el render del servidor) para no romper
+  // la hidratación: localStorage no existe en el servidor.
+  useEffect(() => {
+    if (!user) setGuestFavorites(getGuestFavorites());
+  }, [user]);
+
+  const favorites = user?.favorites ?? guestFavorites;
 
   const refreshUser = useCallback(async () => {
     if (!session.hasToken()) {
@@ -42,9 +53,15 @@ export function SessionProvider({ initialUser, children }: { initialUser: User |
 
   const value = useMemo<SessionValue>(() => ({
     user,
-    isFavorite: (id, aliases = []) => Boolean(user && [id, ...aliases].some(candidate => user.favorites.includes(candidate))),
+    favorites,
+    isFavorite: (id, aliases = []) => [id, ...aliases].some(candidate => favorites.includes(candidate)),
     toggleFavorite: async id => {
-      if (!user) throw new Error("Debes iniciar sesión para guardar favoritos.");
+      // Sin cuenta: el favorito queda en este navegador (localStorage), no en
+      // el servidor. Con cuenta, se sincroniza como antes.
+      if (!user) {
+        setGuestFavorites(toggleGuestFavorite(id));
+        return;
+      }
       const result = await api.toggleFavorite(id);
       setUser(current => current ? ({ ...current, favorites: result.favorites }) : current);
     },
@@ -65,7 +82,7 @@ export function SessionProvider({ initialUser, children }: { initialUser: User |
     },
     refreshUser,
     logout,
-  }), [user, refreshUser, logout]);
+  }), [user, favorites, refreshUser, logout]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
