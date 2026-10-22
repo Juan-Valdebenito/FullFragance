@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageCandidates } from "@/shared/api/client";
@@ -65,6 +65,8 @@ function storeUrl(price: ApiPrice, productName: string) {
 }
 
 function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
+  const gradientId = useId();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   if (!history.length) {
     return (
       <section className={styles.historyPanel} aria-labelledby="history-title">
@@ -74,56 +76,94 @@ function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
     );
   }
 
-  const width = 640;
-  const height = 230;
-  const padding = { top: 18, right: 18, bottom: 36, left: 72 };
+  const width = 520;
+  const height = 240;
+  const padding = { top: 22, right: 18, bottom: 34, left: 76 };
   const prices = history.map(point => point.minPrice);
   const rawMin = Math.min(...prices);
   const rawMax = Math.max(...prices);
-  const spread = rawMax - rawMin || Math.max(rawMin * .1, 1000);
+  // Un margen mínimo evita exagerar visualmente variaciones pequeñas.
+  const spread = Math.max(rawMax - rawMin, rawMin * .05, 1000);
   const min = Math.max(0, rawMin - spread * .12);
   const max = rawMax + spread * .12;
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-  const x = (index: number) => padding.left + (history.length === 1 ? chartWidth / 2 : index * chartWidth / (history.length - 1));
+  const times = history.map(point => Date.parse(`${point.date}T00:00:00Z`));
+  const timeSpan = times[times.length - 1] - times[0];
+  const x = (index: number) => padding.left + (timeSpan === 0 ? chartWidth / 2 : (times[index] - times[0]) * chartWidth / timeSpan);
   const y = (price: number) => padding.top + (max - price) * chartHeight / (max - min);
   const line = history.map((point, index) => `${x(index)},${y(point.minPrice)}`).join(" ");
   const latest = history[history.length - 1];
   const lowest = history.reduce((best, point) => point.minPrice < best.minPrice ? point : best);
   const dateLabel = (date: string) => shortDate.format(new Date(`${date}T12:00:00`));
+  const selectedIndex = history.findIndex(point => point.date === selectedDate);
+  const activeIndex = selectedIndex < 0 ? history.length - 1 : selectedIndex;
+  const active = history[activeIndex];
+  const difference = latest.minPrice - history[0].minPrice;
+  const change = history[0].minPrice > 0 ? difference / history[0].minPrice * 100 : 0;
+  const ticks = Array.from({ length: 4 }, (_, index) => min + (max - min) * index / 3);
+  const baseline = height - padding.bottom;
 
   return (
     <section className={styles.historyPanel} aria-labelledby="history-title">
       <div className={styles.historyHeading}>
         <div>
-          <h2 id="history-title">Historial de precios</h2>
-          <p>Mejor precio diario de los últimos 180 días</p>
+          <span className={styles.historyEyebrow}>EVOLUCIÓN DEL PRECIO</span>
+          <h2 id="history-title">¿Es un buen momento?</h2>
+          <p>Historial del mejor precio diario · hasta 180 días</p>
         </div>
-        <dl className={styles.historyStats}>
-          <div><dt>Mínimo</dt><dd>{money.format(lowest.minPrice)}</dd></div>
-          <div><dt>Último</dt><dd>{money.format(latest.minPrice)}</dd></div>
-        </dl>
       </div>
-      <div className={styles.chartScroller}>
+      <div className={styles.historySummary}>
+        <div><span className={styles.historyCaption}>Último precio registrado</span><strong className={styles.historyLatest}>{money.format(latest.minPrice)}</strong></div>
+        {history.length > 1 && <span className={styles.historyChange} data-direction={difference < 0 ? "down" : difference > 0 ? "up" : "flat"}>
+          {difference === 0 ? "Sin cambios" : `${difference < 0 ? "↓" : "↑"} ${Math.abs(change).toLocaleString("es-CL", { maximumFractionDigits: 2 })}%`}
+          <small>desde el {dateLabel(history[0].date)}</small>
+        </span>}
+      </div>
+      <dl className={styles.historyStats}>
+        <div><dt>Mínimo registrado</dt><dd>{money.format(lowest.minPrice)}</dd></div>
+        <div><dt>Máximo registrado</dt><dd>{money.format(rawMax)}</dd></div>
+      </dl>
+      <div className={styles.chartScroller} onPointerMove={event => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const position = (event.clientX - bounds.left) / bounds.width * width;
+        const closest = history.reduce((best, _, index) => Math.abs(x(index) - position) < Math.abs(x(best) - position) ? index : best, 0);
+        setSelectedDate(history[closest].date);
+      }}>
         <svg className={styles.historyChart} viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="history-chart-title history-chart-desc">
           <title id="history-chart-title">Evolución del mejor precio</title>
           <desc id="history-chart-desc">Desde {money.format(history[0].minPrice)} el {dateLabel(history[0].date)} hasta {money.format(latest.minPrice)} el {dateLabel(latest.date)}.</desc>
-          {[...new Set([rawMax, rawMin])].map(price => (
+          <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity=".26" /><stop offset="100%" stopColor="var(--gold)" stopOpacity=".015" /></linearGradient></defs>
+          {ticks.map(price => (
             <g key={price}>
               <line className={styles.chartGrid} x1={padding.left} x2={width - padding.right} y1={y(price)} y2={y(price)} />
               <text className={styles.chartPriceLabel} x={padding.left - 10} y={y(price) + 4}>{money.format(price)}</text>
             </g>
           ))}
-          {history.length > 1 && <polyline className={styles.chartLine} points={line} />}
+          {history.length > 1 && <>
+            <polygon points={`${x(0)},${baseline} ${line} ${x(history.length - 1)},${baseline}`} fill={`url(#${gradientId})`} />
+            <polyline className={styles.chartLine} points={line} />
+          </>}
+          <line className={styles.chartCursor} x1={x(activeIndex)} x2={x(activeIndex)} y1={padding.top} y2={baseline} />
           {history.map((point, index) => (
-            <circle key={point.date} className={styles.chartPoint} cx={x(index)} cy={y(point.minPrice)} r="4">
+            <circle key={point.date} className={styles.chartPoint} cx={x(index)} cy={y(point.minPrice)} r={history.length > 30 ? 0 : 3}>
               <title>{dateLabel(point.date)}: {money.format(point.minPrice)} en {point.storeName}</title>
             </circle>
           ))}
+          <circle cx={x(activeIndex)} cy={y(active.minPrice)} r="10" fill="var(--gold)" opacity=".17" />
+          <circle className={styles.chartPoint} cx={x(activeIndex)} cy={y(active.minPrice)} r="5" />
           <text className={styles.chartDateLabel} x={padding.left} y={height - 8}>{dateLabel(history[0].date)}</text>
-          <text className={styles.chartDateLabel} x={width - padding.right} y={height - 8} textAnchor="end">{dateLabel(latest.date)}</text>
+          {history.length > 1 && <text className={styles.chartDateLabel} x={width - padding.right} y={height - 8} textAnchor="end">{dateLabel(latest.date)}</text>}
         </svg>
       </div>
+      <div className={styles.historyReadout}>
+        <div><span>{dateLabel(active.date)}</span><strong>{active.storeName}</strong></div>
+        <strong>{money.format(active.minPrice)}</strong>
+      </div>
+      {history.length > 1 && <label className={styles.historyControl}>
+        <span>Explora los precios por fecha <small>{history.length} registros</small></span>
+        <input type="range" min="0" max={history.length - 1} value={activeIndex} onChange={event => setSelectedDate(history[Number(event.target.value)].date)} aria-valuetext={`${dateLabel(active.date)}: ${money.format(active.minPrice)} en ${active.storeName}`} />
+      </label>}
       {history.length === 1 && <p className={styles.historyHint}>Hay una observación registrada. La tendencia aparecerá tras nuevas sincronizaciones.</p>}
     </section>
   );
