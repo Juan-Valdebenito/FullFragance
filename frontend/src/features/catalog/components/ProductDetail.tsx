@@ -12,6 +12,7 @@ import styles from "./ProductDetail.module.css";
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const shortDate = new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short" });
+const detailDate = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric" });
 const stores: Record<string, string> = {
   Sephora: "https://www.sephora.cl",
   Falabella: "https://www.falabella.com/falabella-cl",
@@ -62,6 +63,14 @@ function storeUrl(price: ApiPrice, productName: string) {
   return price.productUrl
     ?? stores[price.storeName]
     ?? `https://www.google.com/search?q=${encodeURIComponent(`${productName} ${price.storeName}`)}`;
+}
+
+function volumeInMl(unit: string, isSet = false) {
+  if (isSet) return null;
+  const match = unit.match(/(\d+(?:[.,]\d+)?)\s*ml\b/i);
+  if (!match) return null;
+  const volume = Number(match[1].replace(",", "."));
+  return Number.isFinite(volume) && volume > 0 ? volume : null;
 }
 
 function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
@@ -236,6 +245,21 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
     { label: "Público", value: product.gender || null },
     { label: "Tiendas", value: offers.length ? `${offers.length} ${offers.length === 1 ? "tienda" : "tiendas"}` : null },
   ].filter(fact => fact.value);
+  const volume = volumeInMl(product.unit, product.isSet);
+  const latestHistory = result?.history.at(-1);
+  const purchaseFacts = [
+    { label: "Precio por ml", value: best && volume ? `${money.format(best.price / volume)} / ml` : null },
+    { label: "Disponibilidad", value: offers.length ? `${buyable.length} de ${offers.length} tiendas` : "Sin ofertas" },
+    { label: "Ahorro posible", value: savings > 0 ? money.format(savings) : hasComparison ? "Mismo precio" : null },
+    { label: "Última revisión", value: latestHistory ? detailDate.format(new Date(`${latestHistory.date}T12:00:00`)) : null },
+  ].filter(fact => fact.value);
+  const purchaseMessage = !best
+    ? "No hay stock disponible por ahora. Puedes guardar el perfume y volver a revisar más adelante."
+    : savings > 0
+      ? `La oferta de ${best.storeName} permite ahorrar ${money.format(savings)} frente a la alternativa disponible más cara.`
+      : hasComparison
+        ? "Las tiendas disponibles tienen el mismo precio. Conviene elegir según despacho, retiro y condiciones de cada tienda."
+        : "Solo encontramos una tienda con esta presentación. Revisa el historial antes de comprar para tener una referencia del precio.";
 
   return (
     <main className={`container ${styles.main}`}>
@@ -368,6 +392,15 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
             </dl>
           )}
           {description && <p>{description}</p>}
+
+          <section className={styles.purchaseSummary} aria-labelledby="purchase-summary-title">
+            <span>DATOS DE LA COMPARACIÓN</span>
+            <h3 id="purchase-summary-title">Resumen de compra</h3>
+            <dl>
+              {purchaseFacts.map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
+            </dl>
+            <p>{purchaseMessage}</p>
+          </section>
 
           {notes.length > 0 && (
             <>

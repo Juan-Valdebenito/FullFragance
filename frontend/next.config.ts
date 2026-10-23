@@ -11,8 +11,7 @@ const apiOrigin = apiUrl.startsWith("http") ? apiUrl.replace(/\/api\/?$/, "").re
 // En producción también permitimos pagead2 y otros dominios de AdSense en connect-src
 const connectSources = [
   "'self'",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
+  ...(isDev ? ["http://localhost:3000", "http://127.0.0.1:3000"] : []),
   apiOrigin,
 ].filter(Boolean).join(" ");
 
@@ -32,6 +31,7 @@ const contentSecurityPolicy = [
 ].filter(Boolean).join("; ");
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // Evita que Turbopack tome un package-lock ajeno como raíz del proyecto.
   turbopack: {
     root: process.cwd(),

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/shared/api/client";
 import { useOptionalSession } from "@/shared/auth/SessionContext";
+import { safeReturnPath } from "@/shared/navigation/safeReturnPath";
 import { GOOGLE_LOGIN_ENABLED, GoogleAuthButton } from "./GoogleAuthButton";
 import styles from "./AuthPanel.module.css";
 
@@ -17,7 +18,7 @@ export function AuthPanel({ mode }: { mode: "register" | "login" }) {
     const user = await optionalSession?.refreshUser();
     const next = new URLSearchParams(window.location.search).get("next");
     const home = user?.role === "admin" ? "/admin" : "/dashboard";
-    router.push(next || (mode === "register" ? "/test" : home));
+    router.push(safeReturnPath(next, mode === "register" ? "/test" : home));
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {

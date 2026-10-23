@@ -3,6 +3,18 @@ const { promisify } = require("util");
 const { ripleyUserAgent, ripleyRequestTimeoutMs } = require("../config/env");
 
 const execFileAsync = promisify(execFile);
+const IMAGE_HOSTS = new Set(["rimage.ripley.cl", "home.ripley.cl"]);
+let activeDownloads = 0;
+
+function safeImageUrl(value) {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || !IMAGE_HOSTS.has(url.hostname) || url.port || url.username || url.password) return null;
+    if (!url.pathname.startsWith("/home.ripley/Attachment/") && !url.pathname.startsWith("/store/Attachment/")) return null;
+    return url.href;
+  } catch { return null; }
+}
 
 async function ripleyImage(req, res, next) {
   try {
@@ -11,15 +23,8 @@ async function ripleyImage(req, res, next) {
     const targetUrls = [];
 
     if (rawUrl) {
-      const decoded = String(rawUrl);
-      try {
-        const parsed = new URL(decoded);
-        if (/(^|\.)ripley\.(cl|com)$/i.test(parsed.hostname)) {
-          targetUrls.push(parsed.toString());
-        }
-      } catch {
-        // Si no es URL válida, ignorar query param
-      }
+      const safeUrl = safeImageUrl(rawUrl);
+      if (safeUrl) targetUrls.push(safeUrl);
     }
 
     if (sku && /^[a-zA-Z0-9_-]{4,30}$/.test(sku)) {
@@ -35,15 +40,23 @@ async function ripleyImage(req, res, next) {
     if (!targetUrls.length) {
       return res.status(400).json({ error: "Se requiere un SKU o una URL de imagen de Ripley válida." });
     }
+    if (activeDownloads >= 4) {
+      res.set("Retry-After", "5");
+      return res.status(503).json({ error: "Servicio de imágenes ocupado. Reintenta en unos segundos." });
+    }
 
     let stdoutBuffer = null;
     let contentType = "image/jpeg";
 
     for (const targetUrl of targetUrls) {
+      activeDownloads += 1;
       try {
         const { stdout } = await execFileAsync("curl", [
+          "--disable",
           "--fail",
-          "--location",
+          "--proto", "=https",
+          "--max-filesize", "5242880",
+          "--connect-timeout", "5",
           "--compressed",
           "--silent",
           "--show-error",
@@ -54,19 +67,20 @@ async function ripleyImage(req, res, next) {
           "--header",
           "Referer: https://simple.ripley.cl/",
           targetUrl,
-        ], { encoding: "buffer", maxBuffer: 12 * 1024 * 1024 });
+        ], { encoding: "buffer", maxBuffer: 5 * 1024 * 1024, timeout: ripleyRequestTimeoutMs + 1000 });
 
-        if (stdout && stdout.length > 0) {
+        const jpeg = stdout?.[0] === 0xff && stdout?.[1] === 0xd8 && stdout?.[2] === 0xff;
+        const png = stdout?.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+        const webp = stdout?.subarray(0, 4).toString() === "RIFF" && stdout?.subarray(8, 12).toString() === "WEBP";
+        if (jpeg || png || webp) {
           stdoutBuffer = stdout;
-          if (targetUrl.endsWith(".webp") || targetUrl.includes("full_image-")) {
-            contentType = "image/webp";
-          } else if (targetUrl.endsWith(".png")) {
-            contentType = "image/png";
-          }
+          contentType = webp ? "image/webp" : png ? "image/png" : "image/jpeg";
           break;
         }
       } catch {
         // Probar siguiente URL candidata
+      } finally {
+        activeDownloads -= 1;
       }
     }
 
@@ -84,4 +98,4 @@ async function ripleyImage(req, res, next) {
   }
 }
 
-module.exports = { ripleyImage };
+module.exports = { ripleyImage, safeImageUrl };

@@ -29,6 +29,8 @@ const loginLimiter = createRateLimiter({
   keyGenerator: authKey,
   message: "Demasiados intentos de inicio de sesión. Inténtalo nuevamente en 15 minutos.",
 });
+const loginIpLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+const googleLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
 const registrationLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -37,8 +39,8 @@ const registrationLimiter = createRateLimiter({
 const analyticsLimiter = createRateLimiter({ windowMs: 60 * 1000, max: 60 });
 
 app.use("/api", apiLimiter);
-app.use("/api/auth/login", loginLimiter);
-app.use("/api/auth/google", loginLimiter);
+app.use("/api/auth/login", loginIpLimiter, loginLimiter);
+app.use("/api/auth/google", googleLimiter);
 app.use("/api/auth/register", registrationLimiter);
 app.use("/api/analytics/page-view", analyticsLimiter);
 

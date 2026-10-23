@@ -6,5 +6,5 @@ import styles from "./shared.module.css";
 
 export function LogoutButton() {
   const router = useRouter();
-  return <button className={styles.iconAction} aria-label="Cerrar sesión" onClick={() => { session.clear(); router.push("/login"); }}><Icon name="logout" /></button>;
+  return <button className={styles.iconAction} aria-label="Cerrar sesión" onClick={async () => { await session.clear(); router.push("/login"); }}><Icon name="logout" /></button>;
 }

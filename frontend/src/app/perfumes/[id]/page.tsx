@@ -9,6 +9,7 @@ import { ProductDetail } from "@/features/catalog/components/ProductDetail";
 import { MIN_INDEXED_STORES } from "@/features/catalog/domain/indexing";
 import { api, ApiError, productImageUrl } from "@/shared/api/client";
 import type { ProductDetailResult } from "@/shared/api/types";
+import { safeReturnPath } from "@/shared/navigation/safeReturnPath";
 
 const SITE_URL = "https://fullfragance.cl";
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
@@ -132,7 +133,7 @@ export default async function PerfumePage({
     try {
       const decoded = decodeURIComponent(back);
       // Solo rutas relativas del propio sitio ("//otro.com" sería otro dominio)
-      if (decoded.startsWith("/") && !decoded.startsWith("//")) backHref = decoded;
+      backHref = safeReturnPath(decoded, "/dashboard");
     } catch {
       // Si el decode falla, usar el default
     }

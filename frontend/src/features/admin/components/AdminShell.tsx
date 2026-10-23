@@ -80,8 +80,8 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
     setMenuOpen(false);
   }
 
-  function logout() {
-    session.clear();
+  async function logout() {
+    await session.clear();
     router.push("/admin/login");
   }
 

@@ -32,7 +32,7 @@ export function AdminLogin() {
     try {
       const user = await api.login({ email: String(form.get("email")), password: String(form.get("password")) });
       if (user.role !== "admin") {
-        session.clear();
+        await session.clear();
         setError("Esta cuenta no tiene acceso al panel.");
         setLoading(false);
         return;

@@ -91,6 +91,31 @@ En el servicio → **Environment**:
 
 `backend/.env.production.example` tiene la lista completa.
 
+### Actualización de seguridad de sesiones
+
+Despliega primero el backend y después el frontend. Los JWT anteriores se invalidan
+y todos los usuarios deben iniciar sesión nuevamente. El navegador guarda ahora la
+sesión en una cookie `HttpOnly`, `Secure` en producción y `SameSite=Lax`; las
+operaciones autenticadas pasan por `/session-api` en el mismo dominio, con control
+de origen y cabecera CSRF. El catálogo público sigue consultando directamente la API.
+
+El servidor de Next usa `API_INTERNAL_URL` (opcional, URL completa terminada en
+`/api`) o `NEXT_PUBLIC_API_URL` para conectar con el backend. En producción esa URL
+debe ser absoluta. No configures `DEV_API_PROXY_TARGET` en producción: el proxy de
+desarrollo queda desactivado aunque exista esa variable.
+
+El registro público siempre crea clientes y rechaza correos reservados en
+`ADMIN_EMAILS`. Las cuentas nuevas de Google verificadas pueden recibir el rol
+administrador. Las cuentas existentes conservan su método de acceso: no se vinculan
+por coincidencia de correo. Comprueba los administradores existentes antes de
+desplegar; este cambio no determina si una cuenta creada anteriormente era legítima.
+
+El cierre de sesión revoca todas las sesiones del usuario. El limitador del backend
+sigue siendo por IP y en memoria: las peticiones autenticadas intermediadas por
+Next pueden compartir cupo. Si crece el tráfico, usa un almacenamiento compartido
+y un canal de proxy autenticado para distinguir IP de clientes sin confiar en
+cabeceras enviadas por cualquier visitante.
+
 ### 2.3 Sincronización de precios
 
 En el plan gratuito, Render duerme el servicio tras unos minutos sin tráfico, así que un cron interno no es confiable. Hoy la sincronización se ejecuta **una vez al día** a mano desde `https://fullfragance.cl/admin/sincronizacion`.

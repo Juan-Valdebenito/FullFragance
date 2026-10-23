@@ -10,6 +10,7 @@
 const FORWARDED_HEADERS = ["authorization", "content-type"];
 
 async function proxy(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
+  if (process.env.NODE_ENV === "production") return new Response(null, { status: 404 });
   const target = process.env.DEV_API_PROXY_TARGET?.replace(/\/$/, "");
   if (!target) return new Response(null, { status: 404 });
 

@@ -46,8 +46,8 @@ export function SessionProvider({ initialUser, children }: { initialUser: User |
     }
   }, []);
 
-  const logout = useCallback(() => {
-    session.clear();
+  const logout = useCallback(async () => {
+    await session.clear();
     setUser(null);
   }, []);
 

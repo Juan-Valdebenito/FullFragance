@@ -16,6 +16,9 @@ async function register(req, res, next) {
     if (!name || !email || !validPassword(password)) {
       return res.status(400).json({ error: "Indica nombre, correo válido y una contraseña de 10 a 128 caracteres que incluya letras y números." });
     }
+    if (userRepository.roleForEmail(email) === "admin") {
+      return res.status(403).json({ error: "Este correo requiere acceso administrativo verificado." });
+    }
     if (await userRepository.findByEmail(email)) return res.status(409).json({ error: "Ya existe una cuenta con ese correo." });
 
     const user = await userRepository.create({ name, email, passwordHash: await bcrypt.hash(password, 12) });
@@ -74,4 +77,11 @@ async function googleAuth(req, res, next) {
   }
 }
 
-module.exports = { register, login, me, googleAuth };
+async function logout(req, res, next) {
+  try {
+    await userRepository.invalidateSessions(req.userId);
+    res.status(204).send();
+  } catch (err) { next(err); }
+}
+
+module.exports = { register, login, me, googleAuth, logout };

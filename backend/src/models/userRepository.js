@@ -1,4 +1,4 @@
-const { v4: uuid } = require("uuid");
+const { randomUUID: uuid } = require("node:crypto");
 const { query } = require("../data/pgDatabase");
 const { adminEmails } = require("../config/env");
 
@@ -17,7 +17,7 @@ function rowToUser(row) {
     passwordHash: row.password_hash || null,
     googleId: row.google_id || null,
     picture: row.picture || null,
-    role: row.role || roleForEmail(row.email),
+    role: row.role || "customer",
     sessionVersion: Number(row.session_version || 0),
     favorites: typeof row.favorites === "string" ? JSON.parse(row.favorites) : (row.favorites || []),
     scentPreferences: typeof row.scent_preferences === "string" ? JSON.parse(row.scent_preferences) : (row.scent_preferences || null),
@@ -43,7 +43,7 @@ async function create({ name, email, passwordHash }) {
     name,
     email,
     passwordHash: passwordHash || null,
-    role: roleForEmail(email),
+    role: "customer",
     sessionVersion: 0,
     favorites: [],
     scentPreferences: null,
@@ -134,6 +134,13 @@ async function findOrCreateGoogleUser({ name, email, googleId, picture }) {
   let user = await findByEmail(email);
 
   if (user) {
+    // Email alone is not proof that an existing password account belongs to
+    // this Google identity. Linking requires a separate authenticated flow.
+    if (!user.googleId || user.googleId !== googleId) {
+      const error = new Error("Ya existe una cuenta con este correo. Inicia sesión con su método original.");
+      error.status = 409;
+      throw error;
+    }
     let updated = false;
     if (googleId && !user.googleId) { user.googleId = googleId; updated = true; }
     if (picture && !user.picture) { user.picture = picture; updated = true; }

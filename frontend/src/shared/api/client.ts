@@ -17,18 +17,31 @@ function apiUrl() {
 const TOKEN_KEY = "fullfragrance_token";
 type RequestOptions = RequestInit & { authenticated?: boolean };
 export class ApiError extends Error { constructor(message: string, public status: number) { super(message); } }
-function token() { return typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY); }
+function hasSession() {
+  if (typeof window === "undefined") return false;
+  localStorage.removeItem(TOKEN_KEY);
+  return document.cookie.split("; ").includes("fullfragance_session_present=1");
+}
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers); headers.set("Content-Type", "application/json");
-  if (options.authenticated !== false && token()) headers.set("Authorization", `Bearer ${token()}`);
+  const privateEndpoint = /^\/(auth|users|scrapers)\//.test(path) ||
+    /^\/analytics\/(metrics|ad-revenue)/.test(path) || path === "/prices?q=";
+  const browserSession = typeof window !== "undefined" && options.authenticated !== false && privateEndpoint;
+  if (browserSession) headers.set("x-fullfragance-request", "1");
   let response: Response;
-  try { response = await fetch(`${apiUrl()}${path}`, { ...options, headers }); } catch { throw new ApiError("No se pudo conectar con el servidor. Comprueba que el backend esté iniciado.", 0); }
+  try { response = await fetch(`${browserSession ? "/session-api" : apiUrl()}${path}`, { ...options, headers }); } catch { throw new ApiError("No se pudo conectar con el servidor. Comprueba que el backend esté iniciado.", 0); }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(data.error ?? "Ocurrió un error inesperado.", response.status);
   return data as T;
 }
-function saveSession(data: { token: string; user: User }) { localStorage.setItem(TOKEN_KEY, data.token); return data.user; }
-export const session = { hasToken: () => Boolean(token()), clear: () => localStorage.removeItem(TOKEN_KEY) };
+function saveSession(data: { user: User }) { localStorage.removeItem(TOKEN_KEY); return data.user; }
+export const session = {
+  hasToken: hasSession,
+  clear: async () => {
+    localStorage.removeItem(TOKEN_KEY);
+    await request<void>("/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
+  },
+};
 export function productImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return imageUrl;
   if (/https:\/\/(?:rimage|home)\.ripley\.cl\//i.test(imageUrl)) {
@@ -42,12 +55,12 @@ export function productImageCandidates(product: { imageUrl?: string | null; imag
     .filter((imageUrl): imageUrl is string => Boolean(imageUrl)))];
 }
 export const api = {
-  login: (body: { email: string; password: string }) => request<{ token: string; user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
-  register: (body: { name: string; email: string; password: string }) => request<{ token: string; user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body), authenticated: false }).then(saveSession),
-  loginWithGoogle: (payload: { credential: string }) => request<{ token: string; user: User }>("/auth/google", { method: "POST", body: JSON.stringify(payload), authenticated: false }).then(saveSession),
+  login: (body: { email: string; password: string }) => request<{ user: User }>("/auth/login", { method: "POST", body: JSON.stringify(body) }).then(saveSession),
+  register: (body: { name: string; email: string; password: string }) => request<{ user: User }>("/auth/register", { method: "POST", body: JSON.stringify(body) }).then(saveSession),
+  loginWithGoogle: (payload: { credential: string }) => request<{ user: User }>("/auth/google", { method: "POST", body: JSON.stringify(payload) }).then(saveSession),
   me: () => request<{ user: User }>("/auth/me").then(data => data.user),
   updateProfile: (body: { name: string }) => request<{ user: User }>("/users/me/profile", { method: "PUT", body: JSON.stringify(body) }).then(data => data.user),
-  changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string; token: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }).then(data => { localStorage.setItem(TOKEN_KEY, data.token); return { message: data.message }; }),
+  changePassword: (body: { currentPassword: string; newPassword: string }) => request<{ message: string }>("/users/me/password", { method: "PUT", body: JSON.stringify(body) }),
   deleteAccount: (confirmation: string) => request<void>("/users/me", { method: "DELETE", body: JSON.stringify({ confirmation }) }),
   // Catálogo completo: sólo para el panel admin (el backend exige rol admin).
   comparisons: (query = "") => request<{ comparison: Comparison[] }>(`/prices?q=${encodeURIComponent(query)}`).then(data => data.comparison),
