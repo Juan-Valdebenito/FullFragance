@@ -786,6 +786,10 @@ const openapi = {
             type: "array",
             items: { $ref: "#/components/schemas/PriceHistoryPoint" },
           },
+          storeHistory: {
+            type: "array",
+            items: { $ref: "#/components/schemas/StorePriceHistoryPoint" },
+          },
         },
       },
       ComparisonItem: {
@@ -816,6 +820,16 @@ const openapi = {
           date: { type: "string", format: "date" },
           minPrice: { type: "number" },
           maxPrice: { type: "number" },
+          storeName: { type: "string" },
+          available: { type: "boolean" },
+        },
+      },
+      StorePriceHistoryPoint: {
+        type: "object",
+        properties: {
+          date: { type: "string", format: "date" },
+          price: { type: "number" },
+          storeId: { type: "string" },
           storeName: { type: "string" },
           available: { type: "boolean" },
         },

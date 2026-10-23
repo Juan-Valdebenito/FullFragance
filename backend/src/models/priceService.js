@@ -105,7 +105,7 @@ function aggregatePriceHistory(records) {
   });
 }
 
-async function historyForProduct(product) {
+async function historyRecordsForProduct(product) {
   const offers = Array.isArray(product.offers)
     ? product.offers.filter((offer) => offer.source && offer.sku && !offer.priceIsMock)
     : [];
@@ -113,7 +113,26 @@ async function historyForProduct(product) {
   const observations = await Promise.all(
     offers.map((offer) => listPriceHistory(offer.source, offer.sku))
   );
-  return aggregatePriceHistory(observations.flat());
+  return observations.flat();
+}
+
+// El resumen diario sigue sirviendo para tarjetas y métricas, pero el gráfico
+// comparativo necesita conservar cada observación con su tienda. No se rellena
+// días sin sincronización: inventar precios entre dos mediciones sería engañoso.
+function storeHistoryForRecords(records) {
+  return records
+    .filter((record) => record.price > 0 && record.date)
+    .map((record) => {
+      const store = SOURCE_STORES[record.source];
+      return {
+        date: record.date,
+        price: record.price,
+        storeId: store?.storeId || `${record.source}-online`,
+        storeName: store?.storeName || record.source,
+        available: Boolean(record.available),
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date) || a.storeName.localeCompare(b.storeName));
 }
 
 // El listado sólo alimenta las tarjetas del catálogo. La descripción generada,
@@ -184,7 +203,9 @@ async function getComparisonForProduct(productId) {
   const range = priceRange(prices);
 
   const currentMinPrice = range.min || product.basePrice || 0;
-  const history = await historyForProduct(product);
+  const historyRecords = await historyRecordsForProduct(product);
+  const history = aggregatePriceHistory(historyRecords);
+  const storeHistory = storeHistoryForRecords(historyRecords);
 
   return {
     product,
@@ -192,6 +213,7 @@ async function getComparisonForProduct(productId) {
     minPrice: currentMinPrice,
     maxPrice: range.max || currentMinPrice,
     history,
+    storeHistory,
   };
 }
 

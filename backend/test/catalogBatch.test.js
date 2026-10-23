@@ -31,10 +31,12 @@ test('bulk replacement keeps every product and eligible price in one transaction
   await replaceProducts('silk-cl', products);
   const catalog = calls.filter(c => c.sql.includes('INSERT INTO scraped_products'));
   const history = calls.filter(c => c.sql.includes('INSERT INTO price_history'));
+  const observations = calls.filter(c => c.sql.includes('INSERT INTO price_observations'));
   assert.deepEqual(catalog.map(c => c.params.length / 13), [250, 250, 1]);
   assert.deepEqual(history.map(c => c.params.length / 7), [248, 250, 1]);
+  assert.deepEqual(observations.map(c => c.params.length / 7), [248, 250, 1]);
   assert.deepEqual(catalog.flatMap(c => c.params.filter((_, i) => i % 13 === 1)), products.map(p => p.sku));
-  for (const call of [...catalog, ...history]) {
+  for (const call of [...catalog, ...history, ...observations]) {
     const placeholders = [...call.sql.matchAll(/\$(\d+)/g)].map(m => Number(m[1]));
     assert.equal(Math.max(...placeholders), call.params.length);
     assert.equal(placeholders.length, call.params.length);

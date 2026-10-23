@@ -35,6 +35,7 @@ export type DealOfDay = {
 };
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
 export type PriceHistoryPoint = { date: string; minPrice: number; maxPrice: number; storeName: string; available: boolean };
+export type StorePriceHistoryPoint = { date: string; price: number; storeId: string; storeName: string; available: boolean };
 
 export type ProductDetailResult = {
   product: ApiProduct;
@@ -42,6 +43,8 @@ export type ProductDetailResult = {
   minPrice: number;
   maxPrice: number;
   history: PriceHistoryPoint[];
+  /** Observaciones diarias sin agregar, para comparar cada tienda en el gráfico. */
+  storeHistory?: StorePriceHistoryPoint[];
 };
 
 export type Comparison = {

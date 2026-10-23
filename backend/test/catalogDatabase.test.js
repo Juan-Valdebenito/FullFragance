@@ -19,12 +19,14 @@ function product(overrides = {}) {
   };
 }
 
-test("al guardar un producto registra una observación diaria de precio", async () => {
+test("al guardar un producto conserva el resumen diario y la observación de cada sincronización", async () => {
   const calls = [];
   await upsertProduct(product(), async (sql, params) => calls.push({ sql, params }));
 
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.match(calls[1].sql, /INSERT INTO price_history/);
+  assert.match(calls[2].sql, /INSERT INTO price_observations/);
+  assert.match(calls[2].sql, /ON CONFLICT \(source, sku, observed_at\) DO NOTHING/);
   assert.deepEqual(calls[1].params.slice(0, 2), ["paris-cl", "sku-1"]);
   assert.equal(calls[1].params[3], 59990);
   assert.equal(calls[1].params[5], true);

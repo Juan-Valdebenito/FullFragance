@@ -47,8 +47,8 @@ async function upsertProducts(products, run) {
     ])
   );
 
-  // Una observación por día mantiene el historial acotado. Si una fuente se
-  // sincroniza de nuevo el mismo día, prevalece el dato más reciente.
+  // El resumen diario se conserva para las vistas existentes, mientras que
+  // price_observations guarda cada sincronización para el historial completo.
   const priced = products.filter(product => product.price > 0 && !product.raw?.mockPrice);
   if (priced.length) {
     await run(
@@ -61,16 +61,22 @@ async function upsertProducts(products, run) {
          observed_at = EXCLUDED.observed_at`,
       priced.flatMap(product => [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now])
     );
+    await run(
+      `INSERT INTO price_observations (source, sku, observed_on, price, currency, available, observed_at)
+       VALUES ${placeholders(priced.length, 7)}
+       ON CONFLICT (source, sku, observed_at) DO NOTHING`,
+      priced.flatMap(product => [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now])
+    );
   }
 }
 
 async function listPriceHistory(source, sku, days = 180) {
   const result = await query(
-    `SELECT source, sku, observed_on::text AS date, price, currency, available,
+    `SELECT DISTINCT ON (observed_on) source, sku, observed_on::text AS date, price, currency, available,
       observed_at AS "observedAt"
-     FROM price_history WHERE source = $1 AND sku = $2
+     FROM price_observations WHERE source = $1 AND sku = $2
        AND observed_on >= CURRENT_DATE - $3::integer
-     ORDER BY observed_on ASC`,
+     ORDER BY observed_on ASC, observed_at DESC`,
     [source, sku, days]
   );
   return result.rows.map((row) => ({

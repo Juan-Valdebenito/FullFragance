@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageCandidates } from "@/shared/api/client";
-import type { ApiPrice, Comparison, PriceHistoryPoint, ProductDetailResult } from "@/shared/api/types";
+import type { ApiPrice, Comparison, PriceHistoryPoint, ProductDetailResult, StorePriceHistoryPoint } from "@/shared/api/types";
 import { BrandIcon } from "@/shared/components/BrandIcon";
 import { Icon } from "@/shared/components/Icon";
 import { useImageFallback } from "@/shared/hooks/useImageFallback";
@@ -73,10 +73,28 @@ function volumeInMl(unit: string, isSet = false) {
   return Number.isFinite(volume) && volume > 0 ? volume : null;
 }
 
-function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
-  const gradientId = useId();
+const chartColors = ["#3478db", "#ff544d", "#55c92d", "#b579ff", "#f2ad36", "#20b8aa"];
+
+type ChartPoint = StorePriceHistoryPoint & { isCurrent?: boolean };
+
+function PriceHistory({ history, storeHistory = [], prices = [] }: { history: PriceHistoryPoint[]; storeHistory?: StorePriceHistoryPoint[]; prices?: ApiPrice[] }) {
+  // Compatibilidad con historiales ya guardados antes de exponer cada tienda.
+  const historical = storeHistory.length
+    ? storeHistory
+    : history.map(point => ({ date: point.date, price: point.minPrice, storeId: point.storeName, storeName: point.storeName, available: point.available }));
+  // Una oferta vigente también se muestra aunque esa tienda todavía no tenga
+  // historial. Es un punto "actual", no una observación retroactiva.
+  const today = new Date().toISOString().slice(0, 10);
+  const currentPoints: ChartPoint[] = prices
+    .filter(price => price.price > 0)
+    .map(price => ({ date: today, price: price.price, storeId: price.storeId, storeName: price.storeName, available: price.available !== false, isCurrent: true }));
+  const observations: ChartPoint[] = [...historical, ...currentPoints.filter(current => !historical.some(point => point.storeId === current.storeId && point.date === current.date))];
+  const allDates = [...new Set(observations.map(point => point.date))].sort();
+  const [from, setFrom] = useState("");
+  const [until, setUntil] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  if (!history.length) {
+
+  if (!observations.length) {
     return (
       <section className={styles.historyPanel} aria-labelledby="history-title">
         <h2 id="history-title">Historial de precios</h2>
@@ -85,95 +103,89 @@ function PriceHistory({ history }: { history: PriceHistoryPoint[] }) {
     );
   }
 
-  const width = 520;
-  const height = 240;
-  const padding = { top: 22, right: 18, bottom: 34, left: 76 };
-  const prices = history.map(point => point.minPrice);
-  const rawMin = Math.min(...prices);
-  const rawMax = Math.max(...prices);
-  // Un margen mínimo evita exagerar visualmente variaciones pequeñas.
+  const earliest = allDates[0];
+  const latestDate = allDates.at(-1)!;
+  const visible = observations.filter(point => (!from || point.date >= from) && (!until || point.date <= until));
+  const dates = [...new Set(visible.map(point => point.date))].sort();
+  const width = 900;
+  const height = 300;
+  const padding = { top: 18, right: 24, bottom: 48, left: 82 };
+  const visiblePrices = visible.map(point => point.price);
+  if (!visiblePrices.length) {
+    return (
+      <section className={styles.historyPanel} aria-labelledby="history-title">
+        <div className={styles.historyHeading}><div><span className={styles.historyEyebrow}>EVOLUCIÓN DEL PRECIO</span><h2 id="history-title">Precio histórico por tienda</h2></div></div>
+        <p className={styles.historyEmpty}>No hay precios registrados dentro del período seleccionado.</p>
+      </section>
+    );
+  }
+  const rawMin = Math.min(...visiblePrices);
+  const rawMax = Math.max(...visiblePrices);
   const spread = Math.max(rawMax - rawMin, rawMin * .05, 1000);
   const min = Math.max(0, rawMin - spread * .12);
   const max = rawMax + spread * .12;
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-  const times = history.map(point => Date.parse(`${point.date}T00:00:00Z`));
-  const timeSpan = times[times.length - 1] - times[0];
-  const x = (index: number) => padding.left + (timeSpan === 0 ? chartWidth / 2 : (times[index] - times[0]) * chartWidth / timeSpan);
+  const times = dates.map(date => Date.parse(`${date}T00:00:00Z`));
+  const timeSpan = times.at(-1)! - times[0];
+  const x = (date: string) => padding.left + (timeSpan === 0 ? chartWidth / 2 : (Date.parse(`${date}T00:00:00Z`) - times[0]) * chartWidth / timeSpan);
   const y = (price: number) => padding.top + (max - price) * chartHeight / (max - min);
-  const line = history.map((point, index) => `${x(index)},${y(point.minPrice)}`).join(" ");
-  const latest = history[history.length - 1];
-  const lowest = history.reduce((best, point) => point.minPrice < best.minPrice ? point : best);
   const dateLabel = (date: string) => shortDate.format(new Date(`${date}T12:00:00`));
-  const selectedIndex = history.findIndex(point => point.date === selectedDate);
-  const activeIndex = selectedIndex < 0 ? history.length - 1 : selectedIndex;
-  const active = history[activeIndex];
-  const difference = latest.minPrice - history[0].minPrice;
-  const change = history[0].minPrice > 0 ? difference / history[0].minPrice * 100 : 0;
-  const ticks = Array.from({ length: 4 }, (_, index) => min + (max - min) * index / 3);
+  const activeDate = dates.includes(selectedDate ?? "") ? selectedDate! : dates.at(-1)!;
+  const active = visible.filter(point => point.date === activeDate);
+  const stores = [...new Map([...prices.map(price => [price.storeId, price.storeName] as const), ...observations.map(point => [point.storeId, point.storeName] as const)]).entries()]
+    .map(([id, name], index) => ({ id, name, color: chartColors[index % chartColors.length] }));
+  const ticks = Array.from({ length: 5 }, (_, index) => min + (max - min) * index / 4);
   const baseline = height - padding.bottom;
+  const labelEvery = Math.max(1, Math.ceil(dates.length / 12));
 
   return (
     <section className={styles.historyPanel} aria-labelledby="history-title">
       <div className={styles.historyHeading}>
         <div>
           <span className={styles.historyEyebrow}>EVOLUCIÓN DEL PRECIO</span>
-          <h2 id="history-title">¿Es un buen momento?</h2>
-          <p>Historial del mejor precio diario · hasta 180 días</p>
+          <h2 id="history-title">Precio histórico por tienda</h2>
+          <p>Compara el precio de oferta que registramos en cada tienda.</p>
+        </div>
+        <div className={styles.historyFilters}>
+          <label>Desde<input type="date" min={earliest} max={until || latestDate} value={from} onChange={event => setFrom(event.target.value)} /></label>
+          <label>Hasta<input type="date" min={from || earliest} max={latestDate} value={until} onChange={event => setUntil(event.target.value)} /></label>
+          <label>Ver por<select aria-label="Ver por"><option>Precio oferta</option></select></label>
         </div>
       </div>
-      <div className={styles.historySummary}>
-        <div><span className={styles.historyCaption}>Último precio registrado</span><strong className={styles.historyLatest}>{money.format(latest.minPrice)}</strong></div>
-        {history.length > 1 && <span className={styles.historyChange} data-direction={difference < 0 ? "down" : difference > 0 ? "up" : "flat"}>
-          {difference === 0 ? "Sin cambios" : `${difference < 0 ? "↓" : "↑"} ${Math.abs(change).toLocaleString("es-CL", { maximumFractionDigits: 2 })}%`}
-          <small>desde el {dateLabel(history[0].date)}</small>
-        </span>}
-      </div>
-      <dl className={styles.historyStats}>
-        <div><dt>Mínimo registrado</dt><dd>{money.format(lowest.minPrice)}</dd></div>
-        <div><dt>Máximo registrado</dt><dd>{money.format(rawMax)}</dd></div>
-      </dl>
       <div className={styles.chartScroller} onPointerMove={event => {
         const bounds = event.currentTarget.getBoundingClientRect();
         const position = (event.clientX - bounds.left) / bounds.width * width;
-        const closest = history.reduce((best, _, index) => Math.abs(x(index) - position) < Math.abs(x(best) - position) ? index : best, 0);
-        setSelectedDate(history[closest].date);
+        const closest = dates.reduce((best, date) => Math.abs(x(date) - position) < Math.abs(x(best) - position) ? date : best, dates[0]);
+        setSelectedDate(closest);
       }}>
-        <svg className={styles.historyChart} viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="history-chart-title history-chart-desc">
-          <title id="history-chart-title">Evolución del mejor precio</title>
-          <desc id="history-chart-desc">Desde {money.format(history[0].minPrice)} el {dateLabel(history[0].date)} hasta {money.format(latest.minPrice)} el {dateLabel(latest.date)}.</desc>
-          <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity=".26" /><stop offset="100%" stopColor="var(--gold)" stopOpacity=".015" /></linearGradient></defs>
+        <svg className={styles.historyChart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Precios de oferta por tienda entre ${dateLabel(dates[0])} y ${dateLabel(dates.at(-1)!)}`}>
           {ticks.map(price => (
             <g key={price}>
               <line className={styles.chartGrid} x1={padding.left} x2={width - padding.right} y1={y(price)} y2={y(price)} />
               <text className={styles.chartPriceLabel} x={padding.left - 10} y={y(price) + 4}>{money.format(price)}</text>
             </g>
           ))}
-          {history.length > 1 && <>
-            <polygon points={`${x(0)},${baseline} ${line} ${x(history.length - 1)},${baseline}`} fill={`url(#${gradientId})`} />
-            <polyline className={styles.chartLine} points={line} />
-          </>}
-          <line className={styles.chartCursor} x1={x(activeIndex)} x2={x(activeIndex)} y1={padding.top} y2={baseline} />
-          {history.map((point, index) => (
-            <circle key={point.date} className={styles.chartPoint} cx={x(index)} cy={y(point.minPrice)} r={history.length > 30 ? 0 : 3}>
-              <title>{dateLabel(point.date)}: {money.format(point.minPrice)} en {point.storeName}</title>
-            </circle>
-          ))}
-          <circle cx={x(activeIndex)} cy={y(active.minPrice)} r="10" fill="var(--gold)" opacity=".17" />
-          <circle className={styles.chartPoint} cx={x(activeIndex)} cy={y(active.minPrice)} r="5" />
-          <text className={styles.chartDateLabel} x={padding.left} y={height - 8}>{dateLabel(history[0].date)}</text>
-          {history.length > 1 && <text className={styles.chartDateLabel} x={width - padding.right} y={height - 8} textAnchor="end">{dateLabel(latest.date)}</text>}
+          {stores.map(store => {
+            const points = visible.filter(point => point.storeId === store.id);
+            const recorded = points.filter(point => !point.isCurrent);
+            return <g key={store.id}>{recorded.length > 1 && <polyline className={styles.chartLine} style={{ stroke: store.color }} points={recorded.map(point => `${x(point.date)},${y(point.price)}`).join(" ")} />}{points.map(point => <circle key={`${point.storeId}-${point.date}-${point.isCurrent ? "current" : "history"}`} className={styles.chartPoint} style={{ fill: point.isCurrent ? "var(--surface-lowest)" : store.color, stroke: store.color }} cx={x(point.date)} cy={y(point.price)} r={point.isCurrent ? "5" : "4"} />)}</g>;
+          })}
+          <line className={styles.chartCursor} x1={x(activeDate)} x2={x(activeDate)} y1={padding.top} y2={baseline} />
+          {dates.map((date, index) => (index % labelEvery === 0 || index === dates.length - 1) && <text key={date} className={styles.chartDateLabel} x={x(date)} y={height - 16} textAnchor="middle">{dateLabel(date)}</text>)}
+          <text className={styles.chartAxisTitle} x="20" y={height / 2} transform={`rotate(-90 20 ${height / 2})`}>Precio</text>
         </svg>
       </div>
-      <div className={styles.historyReadout}>
-        <div><span>{dateLabel(active.date)}</span><strong>{active.storeName}</strong></div>
-        <strong>{money.format(active.minPrice)}</strong>
+      <div className={styles.historyLegend} aria-label="Tiendas">
+        {stores.map(store => {
+          const records = visible.filter(point => point.storeId === store.id && !point.isCurrent).length;
+          return <span key={store.id}><i style={{ backgroundColor: store.color }} />{store.name} <small>{records ? `(${records} ${records === 1 ? "registro" : "registros"})` : "(precio actual)"}</small></span>;
+        })}
       </div>
-      {history.length > 1 && <label className={styles.historyControl}>
-        <span>Explora los precios por fecha <small>{history.length} registros</small></span>
-        <input type="range" min="0" max={history.length - 1} value={activeIndex} onChange={event => setSelectedDate(history[Number(event.target.value)].date)} aria-valuetext={`${dateLabel(active.date)}: ${money.format(active.minPrice)} en ${active.storeName}`} />
-      </label>}
-      {history.length === 1 && <p className={styles.historyHint}>Hay una observación registrada. La tendencia aparecerá tras nuevas sincronizaciones.</p>}
+      <div className={styles.historyReadout}>
+        <div><span>{dateLabel(activeDate)}</span><strong>{active.length} tienda{active.length === 1 ? "" : "s"} registrada{active.length === 1 ? "" : "s"}</strong></div>
+        <ul className={styles.historyValues}>{active.map(point => <li key={point.storeId}><span>{point.storeName}{point.isCurrent ? " · actual" : ""}</span><strong>{money.format(point.price)}</strong></li>)}</ul>
+      </div>
     </section>
   );
 }
@@ -420,7 +432,7 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
             </>
           )}
         </div>
-        <PriceHistory history={result?.history ?? []} />
+        <PriceHistory history={result?.history ?? []} storeHistory={result?.storeHistory} prices={result?.prices ?? []} />
       </section>
     </main>
   );
