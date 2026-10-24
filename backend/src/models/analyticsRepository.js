@@ -18,10 +18,12 @@ async function getDashboardMetrics() {
   const weekAgo = new Date(now);
   weekAgo.setUTCDate(weekAgo.getUTCDate() - 6);
   weekAgo.setUTCHours(0, 0, 0, 0);
+  const previousWeekStart = new Date(weekAgo);
+  previousWeekStart.setUTCDate(previousWeekStart.getUTCDate() - 7);
 
   const [userResult, eventResult, revenueResult, monthlyResult] = await Promise.all([
     query("SELECT created_at FROM users"),
-    query("SELECT page, occurred_at FROM analytics_events WHERE occurred_at >= $1 ORDER BY occurred_at ASC", [weekAgo.toISOString()]),
+    query("SELECT page, occurred_at FROM analytics_events WHERE occurred_at >= $1 ORDER BY occurred_at ASC", [previousWeekStart.toISOString()]),
     query("SELECT value FROM app_metadata WHERE key = $1", [`ad_revenue:${monthKey(now)}`]),
     query(
       `SELECT to_char(occurred_at, 'YYYY-MM') AS month, COUNT(*)::int AS views
@@ -41,11 +43,14 @@ async function getDashboardMetrics() {
   });
   const viewsByDay = new Map(dayKeys.map(day => [day, 0]));
   const pages = new Map();
+  let previous7Days = 0;
 
   for (const event of events) {
     const day = dateKey(event.occurred_at);
-    viewsByDay.set(day, (viewsByDay.get(day) || 0) + 1);
-    pages.set(event.page, (pages.get(event.page) || 0) + 1);
+    if (viewsByDay.has(day)) {
+      viewsByDay.set(day, (viewsByDay.get(day) || 0) + 1);
+      pages.set(event.page, (pages.get(event.page) || 0) + 1);
+    } else previous7Days += 1;
   }
 
   const revenue = Math.max(0, Number(revenueResult.rows?.[0]?.value || 0));
@@ -59,7 +64,9 @@ async function getDashboardMetrics() {
     },
     views: {
       today: viewsByDay.get(today) || 0,
-      last7Days: events.length,
+      last7Days: [...viewsByDay.values()].reduce((sum, value) => sum + value, 0),
+      previous7Days,
+      uniquePages: pages.size,
       allTime,
       series: dayKeys.map(day => ({ date: day, views: viewsByDay.get(day) || 0 })),
       monthly,

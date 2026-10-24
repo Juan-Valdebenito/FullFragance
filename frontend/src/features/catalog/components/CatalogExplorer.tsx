@@ -24,9 +24,9 @@ export function toProduct(item: Comparison): Product {
     .filter((price, priceIndex, prices) =>
       prices.findIndex(candidate => candidate.storeName === price.storeName) === priceIndex
     );
-  // El card muestra cinco precios para mantener una altura legible. Conservamos
-  // el conteo restante para no dar la impresión de que el distintivo es erróneo.
-  const cheapestByChain = pricesByChain.slice(0, 5);
+  // Dos ofertas bastan para decidir si vale la pena abrir el detalle; el resto
+  // queda resumido para que la grilla permita comparar más perfumes por vista.
+  const cheapestByChain = pricesByChain.slice(0, 2);
   // La etiqueta dice si el perfume se puede comparar. Antes un perfume de una
   // sola tienda mostraba sólo el nombre de la tienda y parecía una comparación.
   const storeCount = item.product.matchedStores ?? pricesByChain.length;
@@ -207,6 +207,16 @@ export function CatalogExplorer({
   const unfilteredTotal = result?.unfilteredTotal ?? 0;
   const filterCount  = [brand, category, gender, minPriceParam, maxPriceParam, store, presentation, comparison !== defaultComparison, segment].filter(Boolean).length;
   const activeSegment = perfumeSegments.find(option => option.value === segment) ?? perfumeSegments[0];
+  const activeFilters = [
+    brand && { label: `Marca: ${brand}`, clear: () => setFilter("brand", "") },
+    store && { label: `Tienda: ${store}`, clear: () => setFilter("store", "") },
+    gender && { label: `Género: ${gender}`, clear: () => setFilter("gender", "") },
+    minPriceParam && { label: `Desde ${money.format(Number(minPriceParam))}`, clear: () => setFilter("minPrice", "") },
+    maxPriceParam && { label: `Hasta ${money.format(Number(maxPriceParam))}`, clear: () => setFilter("maxPrice", "") },
+    presentation && { label: presentation === "set" ? "Set o kit" : "Perfume individual", clear: () => setFilter("presentation", "") },
+    segment && { label: activeSegment.label, clear: () => setFilter("segment", "") },
+    comparison !== defaultComparison && { label: comparison === "all" ? "Todos los perfumes" : "Solo comparables", clear: () => setComparison(defaultComparison) },
+  ].filter(Boolean) as { label: string; clear: () => void }[];
 
   const pageNumbers = useMemo(() => {
     const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
@@ -282,6 +292,14 @@ export function CatalogExplorer({
           </button>
         ))}
       </div>
+
+      {activeFilters.length > 0 && (
+        <div className={styles.activeFilters} aria-label="Filtros activos">
+          <span>Filtros activos</span>
+          {activeFilters.map(filter => <button key={filter.label} type="button" onClick={filter.clear} aria-label={`Quitar filtro ${filter.label}`}>{filter.label}</button>)}
+          <button type="button" className={styles.clearActiveFilters} onClick={resetFilters}>Limpiar todo</button>
+        </div>
+      )}
 
       {/* La búsqueda vive en el header (SmartSearch). Aquí solo se avisa si se
           corrigió un error de tipeo, y en móvil se abren los filtros. */}

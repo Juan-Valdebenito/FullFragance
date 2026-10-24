@@ -14,7 +14,7 @@ import styles from "./admin.module.css";
 const BRANDS_PER_PAGE = 8;
 
 export function OverviewSection() {
-  const { items, loadingCatalog, activity, anySyncRunning } = useAdmin();
+  const { items, loadingCatalog, activity, anySyncRunning, syncState } = useAdmin();
   const user = useOptionalSession()?.user;
   const firstName = (user?.name?.trim() || "").split(" ")[0] || "admin";
   const date = new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
@@ -53,6 +53,8 @@ export function OverviewSection() {
   const page = Math.min(brandPage, brandPages - 1);
   const visibleBrands = stats.brands.slice(page * BRANDS_PER_PAGE, (page + 1) * BRANDS_PER_PAGE);
   const maxBrand = stats.brands[0]?.[1] ?? 1;
+  const failedStores = ADMIN_STORES.filter((store) => syncState[store.source]?.failed);
+  const emptyStores = stats.stores.filter((store) => store.count === 0);
 
   return (
     <>
@@ -82,6 +84,21 @@ export function OverviewSection() {
         <StatCard icon="activity" label="Con precio activo" value={`${percent(stats.withPrice, total)}%`} hint={`${stats.withPrice.toLocaleString("es-CL")} perfumes`} progress={percent(stats.withPrice, total)} loading={loadingCatalog} />
         <StatCard icon="stores" label="Tiendas con productos" value={`${stats.activeStores} / ${ADMIN_STORES.length}`} hint={<Link href="/admin/sincronizacion">Ver sincronización</Link>} progress={percent(stats.activeStores, ADMIN_STORES.length)} loading={loadingCatalog} />
       </div>
+
+      {(failedStores.length > 0 || emptyStores.length > 0 || anySyncRunning) && (
+        <section className={styles.alertPanel} aria-labelledby="alerts-title">
+          <div>
+            <h2 id="alerts-title">Requiere atención</h2>
+            <p>Revisa las fuentes antes de la próxima actualización del catálogo.</p>
+          </div>
+          <ul>
+            {anySyncRunning && <li className={styles.alertInfo}>Hay una sincronización en curso.</li>}
+            {failedStores.map((store) => <li key={`failed-${store.source}`} className={styles.alertError}>{store.name}: la última sincronización de esta sesión falló.</li>)}
+            {emptyStores.map((store) => <li key={`empty-${store.source}`} className={styles.alertWarning}>{store.name}: no hay productos cargados.</li>)}
+          </ul>
+          <Link href="/admin/sincronizacion">Revisar sincronización <AdminIcon name="chevronRight" size={16} /></Link>
+        </section>
+      )}
 
       <div className={styles.split}>
         <Panel title="Perfumes por tienda" meta={`${ADMIN_STORES.length} fuentes`}>

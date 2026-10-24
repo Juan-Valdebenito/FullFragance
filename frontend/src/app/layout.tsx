@@ -4,6 +4,7 @@ import { OptionalSessionProvider } from "@/shared/auth/OptionalSessionProvider";
 import { ThemeProvider } from "@/shared/theme/ThemeContext";
 import { GoogleAdsense } from "@/shared/components/GoogleAdsense";
 import { PageViewTracker } from "@/shared/analytics/PageViewTracker";
+import { SkipToContent } from "@/shared/components/SkipToContent";
 import "./globals.css";
 
 // Fuentes servidas desde el propio dominio por next/font: no dependen de
@@ -107,6 +108,7 @@ export default function RootLayout({
         <GoogleAdsense />
       </head>
       <body>
+        <SkipToContent />
         <ThemeProvider>
           <OptionalSessionProvider>{children}</OptionalSessionProvider>
           <PageViewTracker />

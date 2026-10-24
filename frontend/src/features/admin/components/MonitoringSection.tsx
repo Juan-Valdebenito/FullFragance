@@ -57,27 +57,52 @@ export function MonitoringSection() {
   const visibleMonthly = (metrics?.views.monthly ?? []).slice(-monthsRange);
   const monthlySeries = visibleMonthly.map((point) => ({ label: monthLabel(point.month), value: point.views }));
   const monthlyTotal = visibleMonthly.reduce((sum, point) => sum + point.views, 0);
+  const weekViews = metrics?.views.last7Days ?? 0;
+  const previousWeekViews = metrics?.views.previous7Days ?? 0;
+  const weeklyChange = previousWeekViews ? Math.round((weekViews - previousWeekViews) / previousWeekViews * 100) : null;
+  const peak = [...series].sort((a, b) => b.value - a.value)[0];
+  const topPage = metrics?.views.topPages[0];
 
   return (
     <>
       <SectionHeader
         title="Monitoreo"
         description="Usuarios, visitas e ingresos. Las visitas se cuentan de forma agregada y respetan Do Not Track."
-      />
+      >
+        <label className={styles.monitoringPeriod}>
+          <span>Período</span>
+          <select
+            value={monthsRange}
+            onChange={(event) => setMonthsRange(Number(event.target.value))}
+            aria-label="Meses a mostrar"
+          >
+            {MONTH_RANGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+      </SectionHeader>
 
-      <div className={styles.statGrid}>
+      <div className={`${styles.statGrid} ${styles.monitoringStats}`}>
         <StatCard icon="users" label="Usuarios registrados" value={count(metrics?.users.total)} hint={`${count(metrics?.users.newLast7Days)} nuevos en 7 días`} loading={loadingMetrics} />
         <StatCard icon="users" label="Cuentas nuevas hoy" value={count(metrics?.users.newToday)} loading={loadingMetrics} />
-        <StatCard icon="eye" label="Vistas hoy" value={count(metrics?.views.today)} hint={`${count(metrics?.views.last7Days)} en 7 días`} loading={loadingMetrics} />
+        <StatCard icon="eye" label="Vistas hoy" value={count(metrics?.views.today)} hint={`${count(weekViews)} en 7 días${weeklyChange === null ? "" : ` · ${weeklyChange >= 0 ? "+" : ""}${weeklyChange}% vs. semana previa`}`} loading={loadingMetrics} />
         <StatCard icon="money" label="Ingresos por anuncios" value={money.format(metrics?.ads.revenueCLP ?? 0)} hint={metrics?.ads.currentMonth ?? "Mes actual"} loading={loadingMetrics} />
       </div>
 
-      <div className={styles.split}>
-        <Panel title="Vistas por día" meta="Últimos 7 días">
+      {!loadingMetrics && <section className={styles.trafficBrief} aria-label="Lectura rápida del tráfico">
+        <div><h2>Lectura rápida</h2><p>El tráfico se calcula con vistas agregadas, sin identificar a las personas.</p></div>
+        <ul>
+          <li><span>Pico de la semana</span><strong>{peak ? `${peak.label} · ${count(peak.value)} vistas` : "Sin datos"}</strong></li>
+          <li><span>Página principal</span><strong>{topPage ? `${topPage.page} · ${count(topPage.views)} vistas` : "Sin datos"}</strong></li>
+          <li><span>Alcance del contenido</span><strong>{count(metrics?.views.uniquePages)} páginas vistas</strong></li>
+        </ul>
+      </section>}
+
+      <div className={`${styles.split} ${styles.monitoringPrimary}`}>
+        <Panel title="Actividad diaria" meta="Últimos 7 días" className={styles.monitoringChartPanel}>
           {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={series} unit="vistas" />}
         </Panel>
 
-        <Panel title="Páginas más vistas" meta="Últimos 7 días">
+        <Panel title="Páginas más consultadas" meta="Últimos 7 días" className={styles.monitoringListPanel}>
           {metrics?.views.topPages.length ? (
             <ol className={styles.rankList}>
               {metrics.views.topPages.map((page) => (
@@ -93,27 +118,12 @@ export function MonitoringSection() {
         </Panel>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <label className={styles.panelMeta} htmlFor="months-range">Período</label>
-        <select
-          id="months-range"
-          className={styles.select}
-          value={monthsRange}
-          onChange={(event) => setMonthsRange(Number(event.target.value))}
-          aria-label="Meses a mostrar"
-        >
-          {MONTH_RANGE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className={styles.split}>
-        <Panel title="Vistas por mes" meta={`${count(monthlyTotal)} vistas en el período`}>
-          {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" />}
+      <div className={`${styles.split} ${styles.monitoringSecondary}`}>
+        <Panel title="Tendencia mensual" meta={`${count(monthlyTotal)} vistas en el período`} className={styles.monitoringChartPanel}>
+          {loadingMetrics ? <div className={styles.skeletonBlock} /> : <AreaChart points={monthlySeries} unit="vistas" periodLabel="por mes" variant="bar" />}
         </Panel>
 
-        <Panel title="Detalle por mes" meta="Vistas acumuladas">
+        <Panel title="Desglose del período" meta="Vistas acumuladas" className={styles.monitoringListPanel}>
           {visibleMonthly.length ? (
             <ol className={styles.rankList}>
               {[...visibleMonthly].reverse().map((point) => (
@@ -129,7 +139,7 @@ export function MonitoringSection() {
         </Panel>
       </div>
 
-      <Panel title="Ingreso publicitario del mes" meta="Registro manual">
+      <Panel title="Ingreso publicitario del mes" meta="Registro manual" className={styles.revenuePanel}>
         <form className={styles.inlineForm} onSubmit={submit}>
           <p>No hay un proveedor de anuncios conectado. Ingresa el total del reporte mensual para seguirlo aquí.</p>
           <label>

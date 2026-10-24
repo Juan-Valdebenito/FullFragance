@@ -135,7 +135,7 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
         </nav>
       </aside>
 
-      {menuOpen && <div className={styles.scrim} onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+      {menuOpen && <button type="button" className={styles.scrim} onClick={() => setMenuOpen(false)} aria-label="Cerrar menú" />}
 
       <div className={styles.main}>
         <header className={styles.topbar}>
@@ -146,10 +146,12 @@ function AdminFrame({ user, children }: { user: User; children: React.ReactNode 
           <form className={styles.search} onSubmit={search} role="search">
             <AdminIcon name="search" />
             <input
+              name="admin-catalog-search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar en el catálogo…"
               aria-label="Buscar en el catálogo"
+              autoComplete="off"
             />
           </form>
 

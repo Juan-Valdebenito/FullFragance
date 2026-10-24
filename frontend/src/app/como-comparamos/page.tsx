@@ -49,7 +49,7 @@ export default async function MethodologyPage() {
 
         <article className={styles.section}>
           <h2>2. Cómo obtenemos los precios</h2>
-          <p>Una vez al día actualizamos el catálogo leyendo las páginas públicas de perfumería de cada tienda: nombre, marca, tamaño, precio, disponibilidad y enlace del producto. No usamos precios inventados ni estimados: si una tienda no publica precio, el producto no aparece con precio.</p>
+          <p>Actualizamos el catálogo leyendo las páginas públicas de perfumería de cada tienda: nombre, marca, tamaño, precio, disponibilidad y enlace del producto. Conservamos las observaciones para mostrar cómo cambia el precio; si una tienda no publica precio, el producto no aparece con precio.</p>
           <p>Entre una actualización y la siguiente la tienda puede cambiar un precio. Por eso el precio final siempre es el que muestra la tienda al momento de comprar.</p>
         </article>
 
@@ -76,7 +76,7 @@ export default async function MethodologyPage() {
           <ul>
             <li>Costos de despacho, cupones personales o descuentos con tarjetas específicas, porque dependen de cada comprador.</li>
             <li>Ventas de particulares o marketplaces sin tienda identificable.</li>
-            <li>Historial de precios: por ahora mostramos sólo el precio vigente.</li>
+            <li>Precios que una tienda no publica, ni cambios entre una revisión y la siguiente. El historial muestra sólo las observaciones que hemos registrado.</li>
           </ul>
         </article>
 

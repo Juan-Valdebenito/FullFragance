@@ -19,7 +19,17 @@ export function CatalogSection({ initialQuery = "" }: { initialQuery?: string })
   const { items, loadingCatalog } = useAdmin();
   const [query, setQuery] = useState(initialQuery);
   const [storeFilter, setStoreFilter] = useState("all");
+  const [qualityFilter, setQualityFilter] = useState("all");
   const [page, setPage] = useState(0);
+
+  const duplicateKeys = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of items) {
+      const key = normalize(`${item.product.brand} ${item.product.name} ${item.product.unit}`);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [items]);
 
   const filtered = useMemo(() => {
     const q = normalize(query);
@@ -28,9 +38,16 @@ export function CatalogSection({ initialQuery = "" }: { initialQuery?: string })
       const matchesText = !q || normalize(`${item.product.brand} ${item.product.name} ${item.product.id}`).includes(q);
       const matchesStore = storeFilter === "all"
         || (storeFilter === "multi" ? (item.product.matchedStores ?? 0) > 1 : item.prices.some((price) => price.storeName === store?.name));
-      return matchesText && matchesStore;
+      const key = normalize(`${item.product.brand} ${item.product.name} ${item.product.unit}`);
+      const matchesQuality = qualityFilter === "all"
+        || (qualityFilter === "single" && (item.product.matchedStores ?? 0) <= 1)
+        || (qualityFilter === "no-image" && !item.product.imageUrl)
+        || (qualityFilter === "no-brand" && (!item.product.brand || item.product.brand === "Sin marca"))
+        || (qualityFilter === "duplicates" && (duplicateKeys.get(key) ?? 0) > 1)
+        || (qualityFilter === "no-price" && !((item.minPrice ?? 0) > 0));
+      return matchesText && matchesStore && matchesQuality;
     });
-  }, [items, query, storeFilter]);
+  }, [items, query, storeFilter, qualityFilter, duplicateKeys]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, pages - 1);
@@ -60,6 +77,19 @@ export function CatalogSection({ initialQuery = "" }: { initialQuery?: string })
             <option value="all">Todas las tiendas</option>
             <option value="multi">En 2 o más tiendas</option>
             {ADMIN_STORES.map((store) => <option key={store.source} value={store.source}>{store.name}</option>)}
+          </select>
+          <select
+            className={styles.select}
+            value={qualityFilter}
+            onChange={(event) => { setQualityFilter(event.target.value); setPage(0); }}
+            aria-label="Filtrar por calidad de datos"
+          >
+            <option value="all">Calidad: todos</option>
+            <option value="single">Solo 1 tienda</option>
+            <option value="no-image">Sin imagen</option>
+            <option value="no-brand">Sin marca</option>
+            <option value="duplicates">Duplicados probables</option>
+            <option value="no-price">Sin precio</option>
           </select>
           <span className={styles.panelMeta}>{filtered.length.toLocaleString("es-CL")} resultados</span>
         </div>

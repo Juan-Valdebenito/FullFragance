@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, productImageCandidates } from "@/shared/api/client";
@@ -73,7 +73,7 @@ function volumeInMl(unit: string, isSet = false) {
   return Number.isFinite(volume) && volume > 0 ? volume : null;
 }
 
-const chartColors = ["#3478db", "#ff544d", "#55c92d", "#b579ff", "#f2ad36", "#20b8aa"];
+const chartColors = ["var(--chart-series-1)", "var(--chart-series-2)", "var(--chart-series-3)", "var(--chart-series-4)", "var(--chart-series-5)", "var(--chart-series-6)"];
 
 type ChartPoint = StorePriceHistoryPoint & { isCurrent?: boolean };
 
@@ -135,6 +135,7 @@ function PriceHistory({ history, storeHistory = [], prices = [] }: { history: Pr
   const active = visible.filter(point => point.date === activeDate);
   const stores = [...new Map([...prices.map(price => [price.storeId, price.storeName] as const), ...observations.map(point => [point.storeId, point.storeName] as const)]).entries()]
     .map(([id, name], index) => ({ id, name, color: chartColors[index % chartColors.length] }));
+  const storesWithHistory = new Set(historical.map(point => point.storeId)).size;
   const ticks = Array.from({ length: 5 }, (_, index) => min + (max - min) * index / 4);
   const baseline = height - padding.bottom;
   const labelEvery = Math.max(1, Math.ceil(dates.length / 12));
@@ -143,14 +144,12 @@ function PriceHistory({ history, storeHistory = [], prices = [] }: { history: Pr
     <section className={styles.historyPanel} aria-labelledby="history-title">
       <div className={styles.historyHeading}>
         <div>
-          <span className={styles.historyEyebrow}>EVOLUCIÓN DEL PRECIO</span>
           <h2 id="history-title">Precio histórico por tienda</h2>
-          <p>Compara el precio de oferta que registramos en cada tienda.</p>
+          <p className={styles.historyCoverage}>{stores.length} ofertas vigentes · {storesWithHistory} con historial · los círculos vacíos muestran un precio actual sin historial.</p>
         </div>
         <div className={styles.historyFilters}>
           <label>Desde<input type="date" min={earliest} max={until || latestDate} value={from} onChange={event => setFrom(event.target.value)} /></label>
           <label>Hasta<input type="date" min={from || earliest} max={latestDate} value={until} onChange={event => setUntil(event.target.value)} /></label>
-          <label>Ver por<select aria-label="Ver por"><option>Precio oferta</option></select></label>
         </div>
       </div>
       <div className={styles.chartScroller} onPointerMove={event => {
@@ -186,6 +185,14 @@ function PriceHistory({ history, storeHistory = [], prices = [] }: { history: Pr
         <div><span>{dateLabel(activeDate)}</span><strong>{active.length} tienda{active.length === 1 ? "" : "s"} registrada{active.length === 1 ? "" : "s"}</strong></div>
         <ul className={styles.historyValues}>{active.map(point => <li key={point.storeId}><span>{point.storeName}{point.isCurrent ? " · actual" : ""}</span><strong>{money.format(point.price)}</strong></li>)}</ul>
       </div>
+      {dates.length > 1 && <label className={styles.historyControl}>
+        <span>Explorar fecha <small>{dateLabel(activeDate)}</small></span>
+        <input type="range" min="0" max={dates.length - 1} value={dates.indexOf(activeDate)} onChange={event => setSelectedDate(dates[Number(event.target.value)])} aria-valuetext={`${dateLabel(activeDate)}: ${active.map(point => `${point.storeName} ${money.format(point.price)}`).join(", ")}`} />
+      </label>}
+      <details className={styles.historyData}>
+        <summary>Ver datos del gráfico en tabla</summary>
+        <div><table><caption>Precios registrados por fecha y tienda</caption><thead><tr><th>Fecha</th><th>Tienda</th><th>Precio</th><th>Tipo</th></tr></thead><tbody>{visible.map(point => <tr key={`${point.storeId}-${point.date}-${point.isCurrent ? "current" : "history"}`}><td>{dateLabel(point.date)}</td><td>{point.storeName}</td><td>{money.format(point.price)}</td><td>{point.isCurrent ? "Precio actual" : "Historial"}</td></tr>)}</tbody></table></div>
+      </details>
     </section>
   );
 }
@@ -206,14 +213,19 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
   const [error, setError] = useState("");
   const [similar, setSimilar] = useState<Comparison[]>([]);
 
+  const loadProduct = useCallback(() => {
+    setError("");
+    return api.productPrices(productId)
+      .then(setResult)
+      .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el perfume."));
+  }, [productId]);
+
   // Respaldo: si el servidor no obtuvo los datos (backend en cold start), se
   // reintenta desde el navegador.
   useEffect(() => {
     if (initialResult) return;
-    api.productPrices(productId)
-      .then(setResult)
-      .catch(reason => setError(reason instanceof ApiError ? reason.message : "No se pudo cargar el perfume."));
-  }, [productId, initialResult]);
+    void loadProduct();
+  }, [initialResult, loadProduct]);
 
   const offers = useMemo(() => offersByStore(result?.prices ?? []), [result]);
   const buyable = offers.filter(isAvailable);
@@ -237,7 +249,7 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
         {error ? (
           <>
             <p>{error}</p>
-            <Link href={backHref}>Volver al catálogo</Link>
+            <div className={styles.stateActions}><button type="button" onClick={() => void loadProduct()}>Reintentar</button><Link href={backHref}>Volver al catálogo</Link></div>
           </>
         ) : (
           <p aria-busy="true">Cargando perfume…</p>
@@ -343,7 +355,7 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
 
         <section className={styles.offers} aria-labelledby="offers-title">
           <h2 id="offers-title">
-            {offers.length === 1 ? "Precio en 1 tienda" : `Precios en ${offers.length} tiendas`}
+            {offers.length === 1 ? "Oferta actual" : `Ofertas actuales en ${offers.length} tiendas`}
           </h2>
           {offers.length ? (
             <ol className={styles.offerList}>
@@ -394,7 +406,9 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
         </section>
       )}
 
-      {/* Abajo: ficha del perfume */}
+      <PriceHistory history={result?.history ?? []} storeHistory={result?.storeHistory} prices={result?.prices ?? []} />
+
+      {/* Información editorial del perfume, después de la decisión de compra. */}
       <section className={styles.details}>
         <div className={styles.about}>
           <h2>Acerca de este perfume</h2>
@@ -406,7 +420,6 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
           {description && <p>{description}</p>}
 
           <section className={styles.purchaseSummary} aria-labelledby="purchase-summary-title">
-            <span>DATOS DE LA COMPARACIÓN</span>
             <h3 id="purchase-summary-title">Resumen de compra</h3>
             <dl>
               {purchaseFacts.map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
@@ -432,7 +445,6 @@ export function ProductDetail({ productId, backHref = "/dashboard", initialResul
             </>
           )}
         </div>
-        <PriceHistory history={result?.history ?? []} storeHistory={result?.storeHistory} prices={result?.prices ?? []} />
       </section>
     </main>
   );

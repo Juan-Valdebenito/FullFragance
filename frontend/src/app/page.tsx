@@ -20,14 +20,15 @@ const thousands = new Intl.NumberFormat("es-CL");
 
 // Cifras leídas del catálogo vigente; si el backend no responde (cold start),
 // la home sale con textos sin números en vez de cifras inventadas.
-async function homeFeatures() {
+async function homeData() {
   const stats = await api.catalogStats().catch(() => null);
   const products = stats ? Math.floor(stats.products / 100) * 100 : 0;
-  return [
+  const features = [
     { icon: "history" as const, title: "Precios actualizados", text: products ? `Más de ${thousands.format(products)} perfumes` : "Miles de perfumes originales" },
     { icon: "swap" as const, title: stats?.stores.length ? `Compara ${stats.stores.length} tiendas` : "Compara tiendas", text: "Elige la más barata para ti" },
     { icon: "chart" as const, title: "Sin intermediarios", text: "Compras directo en la tienda" },
   ];
+  return { features, stores: stats?.stores ?? [] };
 }
 
 const categories = [
@@ -39,8 +40,15 @@ const categories = [
   { label: "Unisex", text: "Ámbar y aromáticos", href: "/dashboard?gender=Unisex", icon: "heart" as const },
 ];
 
+const popularSearches = [
+  { label: "Lattafa", href: "/dashboard?q=Lattafa", icon: "flower" as const },
+  { label: "Dior", href: "/dashboard?q=Dior", icon: "compass" as const },
+  { label: "Perfume hombre bajo 50 mil", href: "/dashboard?q=perfume%20hombre%20bajo%2050%20mil", icon: "leaf" as const },
+  { label: "Perfumes de nicho", href: "/dashboard?q=perfume%20de%20nicho", icon: "tree" as const },
+];
+
 export default async function HomePage() {
-  const features = await homeFeatures();
+  const { features, stores } = await homeData();
   return (
     <>
       <Header />
@@ -62,6 +70,14 @@ export default async function HomePage() {
 
         <DealOfDay />
 
+        <section className={`container ${styles.searches}`} aria-labelledby="popular-searches-title">
+          <h2 id="popular-searches-title">Empieza por una búsqueda</h2>
+          <p>Explora el catálogo con una marca, una familia o el presupuesto que tienes en mente.</p>
+          <ul>
+            {popularSearches.map(search => <li key={search.label}><Link href={search.href}><span><Icon name={search.icon} size={19} /></span>{search.label}<Icon name="arrow" size={16} /></Link></li>)}
+          </ul>
+        </section>
+
         <section className={`container ${styles.section}`} aria-labelledby="categories-title">
           <div className={styles.sectionHead}>
             <h2 id="categories-title">Explora por categoría</h2>
@@ -80,6 +96,23 @@ export default async function HomePage() {
         </section>
 
         <LandingFeatured />
+
+        <section className={`container ${styles.storeBand}`} aria-labelledby="stores-title">
+          <div>
+            <h2 id="stores-title">Tiendas que monitoreamos</h2>
+            <p>Revisamos sus publicaciones para comparar precio, disponibilidad y presentación del mismo perfume.</p>
+          </div>
+          {stores.length > 0 && <ul aria-label="Tiendas monitoreadas">{stores.slice(0, 10).map(store => <li key={store}>{store}</li>)}</ul>}
+          <Link href="/como-comparamos">Conoce cómo verificamos las comparaciones <Icon name="arrow" size={17} /></Link>
+        </section>
+
+        <section className={`container ${styles.closing}`} aria-labelledby="closing-title">
+          <div>
+            <h2 id="closing-title">Compara antes de comprar.</h2>
+            <p>Ve las ofertas reunidas en un solo lugar y elige la que te conviene.</p>
+          </div>
+          <Link href="/dashboard">Ir al catálogo completo <Icon name="arrow" size={18} /></Link>
+        </section>
       </main>
       <Footer />
     </>

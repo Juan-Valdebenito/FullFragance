@@ -14,6 +14,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 18px;
 }
 
 .catalogHead h1 {
@@ -152,7 +154,7 @@
   grid-template-columns: 240px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
-  margin-top: 28px;
+  margin-top: 20px;
 }
 
 .filterRail {
@@ -230,8 +232,33 @@
 .sort select {
   width: auto;
   border-radius: 999px;
+  min-height: 44px;
   padding-inline: 16px;
 }
+
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.activeFilters > span { color: var(--on-surface-muted); font-size: .82rem; font-weight: 600; }
+
+.activeFilters button {
+  border: 1px solid var(--border-gold);
+  border-radius: 999px;
+  background: var(--gold-light);
+  color: var(--gold-dark);
+  padding: 6px 11px;
+  font-size: .82rem;
+  font-weight: 700;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.activeFilters button:hover { border-color: var(--gold); background: var(--cream); }
+.activeFilters .clearActiveFilters { border-color: transparent; background: transparent; color: var(--on-surface-muted); text-decoration: underline; text-underline-offset: 3px; }
 
 .filters select:focus,
 .filters input:focus,
@@ -299,7 +326,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
 }
 
@@ -343,7 +370,7 @@
 
 .imageWrap {
   position: relative;
-  aspect-ratio: 1.15;
+  aspect-ratio: 1.38;
   overflow: hidden;
   background: var(--tile);
 }
@@ -444,7 +471,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 14px 14px 16px;
+  padding: 12px 13px 14px;
 }
 
 .cardHeader {
@@ -459,7 +486,7 @@
 
 .card h3 {
   display: -webkit-box;
-  min-height: 2.6em;
+  min-height: 2.5em;
   overflow: hidden;
   font-size: 1rem;
   font-weight: 600;
@@ -483,7 +510,7 @@
   display: grid;
   gap: 2px;
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 10px;
 }
 
 .priceRow {
@@ -493,7 +520,7 @@
   justify-content: space-between;
   gap: 8px;
   border-radius: var(--radius-sm);
-  padding: 5px 8px;
+  padding: 4px 8px;
   margin-inline: -8px;
   font-variant-numeric: tabular-nums;
 }
@@ -541,11 +568,11 @@
 
 .storeButton {
   display: flex;
-  min-height: 42px;
+  min-height: 38px;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 10px;
   border: 1px solid var(--outline-variant);
   border-radius: 999px;
   color: var(--on-surface);

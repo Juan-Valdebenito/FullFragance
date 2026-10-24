@@ -16,7 +16,7 @@ function niceMax(value: number) {
 }
 
 // Gráfico de área en SVG puro: una serie, ejes mínimos y un punto por día.
-export function AreaChart({ points, unit, periodLabel = "por día" }: { points: Point[]; unit: string; periodLabel?: string }) {
+export function AreaChart({ points, unit, periodLabel = "por día", variant = "line" }: { points: Point[]; unit: string; periodLabel?: string; variant?: "line" | "bar" }) {
   const gradientId = useId();
   if (!points.length) return <p className={styles.empty}>Aún no hay datos para graficar.</p>;
 
@@ -24,10 +24,14 @@ export function AreaChart({ points, unit, periodLabel = "por día" }: { points: 
   const innerW = WIDTH - PAD.left - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
   const x = (index: number) => PAD.left + (points.length === 1 ? innerW / 2 : (index / (points.length - 1)) * innerW);
+  const barX = (index: number) => PAD.left + ((index + 0.5) / points.length) * innerW;
   const y = (value: number) => PAD.top + innerH - (value / max) * innerH;
   const line = points.map((point, index) => `${index ? "L" : "M"}${x(index)},${y(point.value)}`).join(" ");
   const area = `${line} L${x(points.length - 1)},${PAD.top + innerH} L${x(0)},${PAD.top + innerH} Z`;
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => Math.round(max * fraction));
+  const peakIndex = points.reduce((best, point, index) => point.value > points[best].value ? index : best, 0);
+  const peak = points[peakIndex];
+  const barWidth = Math.min(76, innerW / points.length * .56);
 
   return (
     <svg className={styles.chart} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Gráfico de ${unit} ${periodLabel}`}>
@@ -43,14 +47,22 @@ export function AreaChart({ points, unit, periodLabel = "por día" }: { points: 
           <text x={PAD.left - 8} y={y(tick)} className={styles.chartAxis} textAnchor="end" dominantBaseline="middle">{tick}</text>
         </g>
       ))}
-      <path d={area} fill={`url(#${gradientId})`} />
-      <path d={line} className={styles.chartLine} />
+      {variant === "bar" ? points.map((point, index) => (
+        <rect key={point.label} className={styles.chartBar} x={barX(index) - barWidth / 2} y={y(point.value)} width={barWidth} height={PAD.top + innerH - y(point.value)} rx="5">
+          <title>{`${point.label}: ${point.value} ${unit}`}</title>
+        </rect>
+      )) : <>
+        <path d={area} fill={`url(#${gradientId})`} />
+        <path d={line} className={styles.chartLine} />
+        {points.length > 2 && <g className={styles.chartPeak}>
+          <circle cx={x(peakIndex)} cy={y(peak.value)} r="5" />
+          <text x={x(peakIndex)} y={Math.max(PAD.top + 10, y(peak.value) - 10)} textAnchor="middle">Pico: {peak.value}</text>
+        </g>}
+      </>}
       {points.map((point, index) => (
         <g key={point.label}>
-          <circle cx={x(index)} cy={y(point.value)} r="3.5" className={styles.chartDot}>
-            <title>{`${point.label}: ${point.value} ${unit}`}</title>
-          </circle>
-          <text x={x(index)} y={HEIGHT - 8} className={styles.chartAxis} textAnchor="middle">{point.label}</text>
+          {variant === "line" && <circle cx={x(index)} cy={y(point.value)} r="3.5" className={styles.chartDot}><title>{`${point.label}: ${point.value} ${unit}`}</title></circle>}
+          <text x={variant === "bar" ? barX(index) : x(index)} y={HEIGHT - 8} className={styles.chartAxis} textAnchor="middle">{point.label}</text>
         </g>
       ))}
     </svg>

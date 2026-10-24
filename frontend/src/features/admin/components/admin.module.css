@@ -336,6 +336,33 @@
 
 .sectionActions { display: flex; gap: 8px; }
 
+.monitoringPeriod {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--admin-line);
+  border-radius: 999px;
+  background: var(--admin-panel);
+  padding: 5px 6px 5px 14px;
+  color: var(--on-surface-muted);
+  font-size: .8rem;
+  font-weight: 600;
+}
+
+.monitoringPeriod select {
+  min-height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--on-surface);
+  padding: 0 10px;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.monitoringPeriod select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
 /* ─── Stats ─── */
 
 .statGrid {
@@ -379,6 +406,52 @@
 
 .statHint a { color: var(--gold-dark); text-decoration: none; }
 .statHint a:hover { text-decoration: underline; }
+
+.monitoringStats .stat:first-child { background: var(--surface-inverse); color: var(--on-surface-inverse); }
+.monitoringStats .stat:first-child .statLabel,
+.monitoringStats .stat:first-child .statHint { color: rgb(247 241 232 / 70%); }
+.monitoringStats .stat:first-child .statIcon { background: rgb(var(--gold-rgb) / .24); color: var(--gold); }
+
+.monitoringPrimary .monitoringChartPanel { background: var(--surface-lowest); }
+.monitoringPrimary .monitoringListPanel { background: var(--cream); }
+.monitoringSecondary { border-top: 1px solid var(--admin-line); padding-top: 24px; }
+.revenuePanel { background: var(--surface-low); border-color: var(--border-gold); }
+
+.trafficBrief {
+  display: grid;
+  grid-template-columns: minmax(190px, .75fr) minmax(0, 1.25fr);
+  gap: 20px 32px;
+  border-top: 1px solid var(--admin-line);
+  border-bottom: 1px solid var(--admin-line);
+  padding-block: 20px;
+}
+.trafficBrief h2 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; }
+.trafficBrief p { margin-top: 5px; color: var(--on-surface-muted); font-size: .82rem; line-height: 1.45; }
+.trafficBrief ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; list-style: none; }
+.trafficBrief li { display: grid; gap: 5px; min-width: 0; }
+.trafficBrief li span { color: var(--on-surface-muted); font-size: .74rem; }
+.trafficBrief li strong { overflow: hidden; font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.alertPanel {
+  display: grid;
+  grid-template-columns: minmax(190px, .75fr) minmax(0, 1.25fr) auto;
+  align-items: center;
+  gap: 18px 28px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+  padding: 18px 20px;
+}
+
+.alertPanel h2 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
+.alertPanel p { margin-top: 4px; color: var(--on-surface-muted); font-size: .82rem; line-height: 1.45; }
+.alertPanel ul { display: grid; gap: 6px; list-style: none; }
+.alertPanel li { font-size: .84rem; font-weight: 600; }
+.alertInfo { color: var(--gold-dark); }
+.alertWarning { color: var(--gold-dark); }
+.alertError { color: var(--error); }
+.alertPanel > a { display: inline-flex; align-items: center; gap: 5px; color: var(--gold-dark); font-size: .85rem; font-weight: 700; white-space: nowrap; }
+.alertPanel > a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ─── Panels ─── */
 
@@ -530,6 +603,10 @@
 .chartAxis { fill: var(--on-surface-muted); font-size: 11px; }
 .chartLine { fill: none; stroke: var(--gold); stroke-width: 2; stroke-linejoin: round; }
 .chartDot { fill: var(--admin-panel); stroke: var(--gold); stroke-width: 2; }
+.chartBar { fill: var(--gold); opacity: .82; transition: opacity 160ms ease; }
+.chartBar:hover { opacity: 1; }
+.chartPeak circle { fill: var(--gold); stroke: var(--admin-panel); stroke-width: 2; }
+.chartPeak text { fill: var(--gold-dark); font-size: 11px; font-weight: 700; }
 
 .rankList {
   display: flex;
@@ -1181,6 +1258,8 @@
 }
 
 @media (max-width: 860px) {
+  .alertPanel { grid-template-columns: 1fr; gap: 12px; }
+  .trafficBrief { grid-template-columns: 1fr; }
   .shell { grid-template-columns: minmax(0, 1fr); }
 
   .sidebar {
