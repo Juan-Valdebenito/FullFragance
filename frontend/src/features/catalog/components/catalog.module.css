@@ -373,6 +373,10 @@
   aspect-ratio: 1.38;
   overflow: hidden;
   background: var(--tile);
+  /* La foto necesita un fondo claro (mix-blend-mode: multiply le quita el
+     blanco de origen); este borde interior evita que ese bloque claro se
+     vea como un recorte brusco sobre fondos oscuros. */
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
 }
 
 .imageWrap > a {

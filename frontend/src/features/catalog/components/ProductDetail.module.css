@@ -77,6 +77,10 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   background: var(--tile);
+  /* Igual que en las tarjetas del catálogo: suaviza el salto de brillo entre
+     el fondo claro de la foto (necesario para mix-blend-mode: multiply) y
+     un tema oscuro. */
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
 }
 
 .visual img {

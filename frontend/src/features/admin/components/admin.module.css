@@ -674,6 +674,49 @@
 
 /* ─── Sync ─── */
 
+.statusFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--admin-line);
+  border-radius: 99px;
+  background: var(--admin-panel);
+  color: var(--on-surface-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.filterPill:hover { border-color: var(--outline); color: var(--on-surface); }
+
+.filterPill span {
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--surface-container);
+  color: inherit;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.filterPillActive {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.filterPillActive span { background: rgb(255 255 255 / 20%); }
+
 .storeGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
