@@ -1,0 +1,3 @@
+# Prototipo local del panel admin separado: vive en la rama Admin,
+# no debe aparecer como cambios pendientes en esta rama.
+/admin-panel/
