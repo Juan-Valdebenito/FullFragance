@@ -1,10 +1,9 @@
+import { ACCOUNTS_ENABLED } from "@/shared/auth/accounts";
 import type { Metadata } from "next";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { AuthDisabled } from "@/features/auth/components/AuthDisabled";
 
 export const metadata: Metadata = { title: "Crear cuenta" };
-
-const ACCOUNTS_ENABLED = process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED !== "false";
 
 export default function RegisterPage() {
   if (!ACCOUNTS_ENABLED) return <AuthDisabled />;

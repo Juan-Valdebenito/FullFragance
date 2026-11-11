@@ -1,0 +1,248 @@
+/* Mismo lenguaje que el banner de la home: bloque oscuro con brillos bronce,
+   barra dorada, título display, CTA en píldora y una franja de tarjetas
+   claras montada encima del borde inferior. */
+.wrap {
+  margin-top: var(--space-section);
+}
+
+.promo {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  align-items: center;
+  gap: 32px;
+  padding: clamp(28px, 5vw, 60px) clamp(24px, 5vw, 64px) clamp(76px, 8vw, 96px);
+  overflow: hidden;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 78% 44%, rgb(184 59 50 / .32), transparent 40%),
+    radial-gradient(circle at 76% 46%, rgb(var(--gold-rgb) / .3), transparent 46%),
+    radial-gradient(circle at 0% 100%, rgb(var(--gold-rgb) / .14), transparent 38%),
+    linear-gradient(120deg, #1f1a15 0%, var(--surface-inverse) 55%, #221b13 100%);
+  color: rgb(247 241 232 / 76%);
+}
+
+.bar {
+  display: block;
+  width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--gold);
+}
+
+.eyebrow {
+  display: block;
+  margin-top: 18px;
+  color: var(--gold);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.copy h2 {
+  margin-top: 8px;
+  color: #f7f1e8;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.04;
+}
+
+.copy p {
+  max-width: 44ch;
+  margin-top: 14px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.primary {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+.primary:hover {
+  background: #f7f1e8;
+  transform: translateY(-1px);
+}
+
+.secondary {
+  border: 1px solid rgb(247 241 232 / 28%);
+  background: rgb(0 0 0 / 20%);
+  color: #f7f1e8;
+}
+
+.secondary:hover {
+  border-color: var(--gold);
+  background: rgb(var(--gold-rgb) / 25%);
+}
+
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* Cuenta regresiva: tres tarjetas crema como las fotos del banner */
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 380px;
+  justify-self: center;
+  width: 100%;
+}
+
+.countdown div {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 6px;
+  padding: clamp(16px, 2.4vw, 24px) 8px;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 50% 0%, #fffaf2 0%, #f1e9de 80%);
+  color: #6b5a44;
+  box-shadow: 0 24px 48px rgb(0 0 0 / 45%);
+}
+
+.countdown div:nth-child(2) { translate: 0 -12px; }
+
+.countdown dd {
+  color: #151412;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.countdown dt {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* Durante el evento: emblema circular en lugar del contador */
+.liveBadge {
+  display: grid;
+  width: min(100%, 240px);
+  aspect-ratio: 1;
+  justify-self: center;
+  place-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f7f1e8 0%, #f1e9de 70%);
+  color: #151412;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 40%);
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.liveBadge span { font-size: 1.4rem; letter-spacing: .2em; text-transform: uppercase; }
+.liveBadge strong { font-size: 2.6rem; color: var(--gold-dark); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .countdown div,
+  .liveBadge {
+    animation: rise .8s cubic-bezier(.2, .7, .2, 1) both;
+  }
+  .countdown div:nth-child(2) { animation-delay: .08s; }
+  .countdown div:nth-child(3) { animation-delay: .16s; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Franja de tarjetas montada sobre el borde inferior, como la de beneficios */
+.cards {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 960px;
+  margin: -44px auto 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-lowest);
+  box-shadow: var(--shadow-md);
+  list-style: none;
+}
+
+.cards li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  color: var(--on-surface-muted);
+  font-size: .85rem;
+  line-height: 1.35;
+}
+
+.cards li + li {
+  border-left: 1px solid var(--border-subtle);
+}
+
+.cards strong {
+  display: block;
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cardIcon {
+  display: grid;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold-light);
+  color: var(--gold);
+}
+
+/* La primera tarjeta destaca el dato del Cyber anterior */
+.cardHighlight {
+  background: linear-gradient(135deg, var(--gold-light), transparent 70%);
+}
+
+.cardHighlight strong {
+  color: var(--gold-dark);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.cardHighlight .cardIcon {
+  background: var(--gold);
+  color: var(--on-gold);
+}
+
+@media (max-width: 860px) {
+  .promo { grid-template-columns: 1fr; }
+  .countdown { justify-self: start; }
+  .cards { grid-template-columns: 1fr; margin: -32px 12px 0; }
+  .cards li + li { border-left: 0; border-top: 1px solid var(--border-subtle); }
+}

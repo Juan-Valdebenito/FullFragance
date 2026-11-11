@@ -513,6 +513,20 @@
   font-size: .85rem;
 }
 
+.footerSocial,
+.footerCredits a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--transition);
+}
+
+.footerSocial:hover,
+.footerCredits a:hover { color: var(--gold); }
+
+.footerCredits a { gap: 4px; color: var(--gold); }
+.footerCredits a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+
 .footerCredits strong {
   color: var(--gold);
   font-weight: 600;

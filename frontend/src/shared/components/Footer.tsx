@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Brand } from "./Brand";
 import { FooterPlatformLinks } from "./FooterPlatformLinks";
 import { AdBanner } from "./AdBanner";
+import { Icon } from "./Icon";
 import styles from "./shared.module.css";
 
 const EXPLORE_LINKS = [
@@ -11,7 +12,12 @@ const EXPLORE_LINKS = [
   { href: "/dashboard?segment=arabic", label: "Árabes" },
 ];
 
-const AUTHORS = ["Benjamin Cantero", "Juan Valdebenito"];
+const SITE_INSTAGRAM = { handle: "fullfragance67", href: "https://www.instagram.com/fullfragance67/" };
+
+const AUTHORS = [
+  { name: "Benjamin Cantero", href: "https://www.instagram.com/0benjx_/" },
+  { name: "Juan Valdebenito", href: "https://www.instagram.com/jotape_j_p/" },
+];
 
 // Bloque oscuro como el banner de la home y el menú del admin: cierra la
 // página con la misma identidad con la que abre.
@@ -33,6 +39,12 @@ export function Footer({ compact = false }: { compact?: boolean }) {
           <ul className={styles.footerContact}>
             <li><a href="mailto:fullfragance67@gmail.com">fullfragance67@gmail.com</a></li>
             <li><a href="tel:+56984616551">+56 9 8461 6551</a></li>
+            <li>
+              <a className={styles.footerSocial} href={SITE_INSTAGRAM.href} target="_blank" rel="noopener noreferrer" aria-label={`Instagram de FullFragance (@${SITE_INSTAGRAM.handle})`}>
+                <Icon name="instagram" size={18} />
+                <span>@{SITE_INSTAGRAM.handle}</span>
+              </a>
+            </li>
             <li>Temuco, Chile</li>
           </ul>
         </section>
@@ -59,7 +71,16 @@ export function Footer({ compact = false }: { compact?: boolean }) {
         <div className="container">
           <p>© {year} FullFragance. Precios informados por cada tienda.</p>
           <p className={styles.footerCredits}>
-            Creado y desarrollado por <strong>{AUTHORS[0]}</strong> y <strong>{AUTHORS[1]}</strong>
+            Creado y desarrollado por{" "}
+            {AUTHORS.map((author, i) => (
+              <span key={author.href}>
+                {i > 0 && " y "}
+                <a href={author.href} target="_blank" rel="noopener noreferrer" aria-label={`Instagram de ${author.name}`}>
+                  <Icon name="instagram" size={14} />
+                  <strong>{author.name}</strong>
+                </a>
+              </span>
+            ))}
           </p>
         </div>
       </div>

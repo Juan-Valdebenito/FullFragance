@@ -6,6 +6,7 @@ import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
 import { HeroBanner } from "@/features/catalog/components/HeroBanner";
+import { BlackFridayPromo } from "@/features/promo/components/BlackFridayPromo";
 import { api } from "@/shared/api/client";
 import styles from "./home.module.css";
 
@@ -67,6 +68,8 @@ export default async function HomePage() {
             ))}
           </ul>
         </div>
+
+        <BlackFridayPromo />
 
         <DealOfDay />
 
