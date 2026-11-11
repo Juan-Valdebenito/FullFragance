@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/shared/components/Icon";
 import styles from "./promo.module.css";
@@ -20,11 +20,23 @@ const CARDS = [
 ];
 
 type Phase = "upcoming" | "live" | "over";
+// A medida que se acerca la fecha, el contador pasa de dorado (calm) a
+// ámbar (soon, últimos 3 días) y a rojo con pulso (urgent, últimas 24 h).
+type Urgency = "calm" | "soon" | "urgent";
+const SOON_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000;
+const URGENT_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
 function phaseAt(now: number): Phase {
   if (now >= ENDS_AT) return "over";
   if (now >= STARTS_AT) return "live";
   return "upcoming";
+}
+
+function urgencyAt(now: number): Urgency {
+  const msLeft = STARTS_AT - now;
+  if (msLeft <= URGENT_THRESHOLD_MS) return "urgent";
+  if (msLeft <= SOON_THRESHOLD_MS) return "soon";
+  return "calm";
 }
 
 function remaining(now: number) {
@@ -45,13 +57,32 @@ function useNow() {
   return now;
 }
 
+// Marca "recién llegó" por unos segundos justo cuando pasa de upcoming a
+// live, para disparar la animación de entrada una sola vez.
+function useJustWentLive(phase: Phase) {
+  const [justWentLive, setJustWentLive] = useState(false);
+  const wasLive = useRef(false);
+  useEffect(() => {
+    if (phase === "live" && !wasLive.current) {
+      wasLive.current = true;
+      setJustWentLive(true);
+      const timer = window.setTimeout(() => setJustWentLive(false), 1500);
+      return () => window.clearTimeout(timer);
+    }
+    if (phase !== "live") wasLive.current = false;
+  }, [phase]);
+  return justWentLive;
+}
+
 export function BlackFridayPromo() {
   const now = useNow();
   const phase = now === null ? "upcoming" : phaseAt(now);
+  const justWentLive = useJustWentLive(phase);
   if (phase === "over") return null;
 
   const live = phase === "live";
   const time = now === null ? null : remaining(now);
+  const urgency = now === null ? "calm" : urgencyAt(now);
 
   return (
     <section className={`container ${styles.wrap}`} aria-labelledby="black-friday-title">
@@ -76,12 +107,22 @@ export function BlackFridayPromo() {
         </div>
 
         {live ? (
-          <div className={styles.liveBadge} aria-hidden="true">
+          <div className={`${styles.liveBadge} ${justWentLive ? styles.liveBurst : ""}`} aria-hidden="true">
+            {justWentLive && (
+              <>
+                <span className={styles.liveFlash} />
+                <span className={styles.shards}>
+                  {Array.from({ length: 8 }, (_, i) => (
+                    <i key={i} style={{ transform: `rotate(${i * 45}deg)` }}><b /></i>
+                  ))}
+                </span>
+              </>
+            )}
             <span>Black</span>
             <strong>Friday</strong>
           </div>
         ) : (
-          <dl className={styles.countdown} aria-label="Tiempo que falta para el Black Friday">
+          <dl className={styles.countdown} data-urgency={urgency} aria-label="Tiempo que falta para el Black Friday">
             <Unit value={time?.days} label="días" />
             <Unit value={time?.hours} label="horas" />
             <Unit value={time?.minutes} label="min" />

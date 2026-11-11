@@ -143,8 +143,26 @@
   text-transform: uppercase;
 }
 
+/* Mientras más cerca el Black Friday, más urgente el color del número:
+   dorado de lejos, ámbar en los últimos 3 días, rojo con pulso en las
+   últimas 24 horas. */
+.countdown[data-urgency="soon"] dd { color: #a85a1f; }
+.countdown[data-urgency="urgent"] dd { color: #b83b32; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .countdown[data-urgency="urgent"] dd {
+    animation: urgentGlow 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes urgentGlow {
+  0%, 100% { text-shadow: 0 0 0 rgb(184 59 50 / 0%); }
+  50% { text-shadow: 0 0 16px rgb(184 59 50 / 55%); }
+}
+
 /* Durante el evento: emblema circular en lugar del contador */
 .liveBadge {
+  position: relative;
   display: grid;
   width: min(100%, 240px);
   aspect-ratio: 1;
@@ -162,6 +180,38 @@
 .liveBadge span { font-size: 1.4rem; letter-spacing: .2em; text-transform: uppercase; }
 .liveBadge strong { font-size: 2.6rem; color: var(--gold-dark); }
 
+/* Destello y esquirlas que "revientan" hacia afuera justo cuando empieza
+   el evento; duran poco y no vuelven a aparecer. */
+.liveFlash {
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--gold-rgb) / .6), transparent 70%);
+}
+
+.shards {
+  position: absolute;
+  inset: 0;
+}
+
+.shards i {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.shards b {
+  display: block;
+  width: 4px;
+  height: 30%;
+  margin-top: -4px;
+  border-radius: 2px;
+  background: linear-gradient(var(--gold), transparent);
+  transform-origin: center top;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .countdown div,
   .liveBadge {
@@ -169,11 +219,31 @@
   }
   .countdown div:nth-child(2) { animation-delay: .08s; }
   .countdown div:nth-child(3) { animation-delay: .16s; }
+
+  .liveBurst { animation: liveSlam .6s cubic-bezier(.17, .89, .32, 1.4) both; }
+  .liveFlash { animation: flashPulse .7s ease-out both; }
+  .shards b { animation: shardFly .8s ease-out both; }
 }
 
 @keyframes rise {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes liveSlam {
+  0% { transform: scale(.4) rotate(-10deg); filter: brightness(2.4); }
+  60% { transform: scale(1.08) rotate(2deg); filter: brightness(1.1); }
+  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+@keyframes flashPulse {
+  0% { opacity: 1; transform: scale(.3); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes shardFly {
+  0% { transform: translateY(0) scaleY(1); opacity: 1; }
+  100% { transform: translateY(-70px) scaleY(.3); opacity: 0; }
 }
 
 /* Franja de tarjetas montada sobre el borde inferior, como la de beneficios */
