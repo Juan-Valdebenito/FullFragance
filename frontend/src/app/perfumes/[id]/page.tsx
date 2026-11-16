@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { Header } from "@/shared/components/Header";
 import { Footer } from "@/shared/components/Footer";
 import { AdBanner } from "@/shared/components/AdBanner";
@@ -15,6 +16,12 @@ const SITE_URL = "https://fullfragance.cl";
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 type ProductLoad = { data: ProductDetailResult | null; status: number };
+
+const CRAWLER_UA = /bot|crawl|spider|slurp|mediapartners|google-inspectiontool|lighthouse/i;
+
+async function isCrawler() {
+  return CRAWLER_UA.test((await headers()).get("user-agent") ?? "");
+}
 
 function productStoreCount(data: ProductDetailResult) {
   return data.product.matchedStores ?? new Set(data.prices.map(price => price.storeName)).size;
@@ -36,10 +43,18 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const { data } = await loadProduct(id);
+  const { data, status } = await loadProduct(id);
 
-  // Producto inexistente o backend despertando (cold start): sin indexar, para
-  // que Google no guarde una ficha vacía.
+  // Backend despertando (cold start): a un buscador le respondemos con error
+  // 5xx para que vuelva más tarde. Un noindex le haría sacar la ficha del
+  // índice. Para los buscadores la metadata bloquea la respuesta, así que este
+  // throw sí cambia el código HTTP.
+  if (!data && status !== 404 && await isCrawler()) {
+    throw new Error(`Backend no disponible al renderizar /perfumes/${id} (status ${status})`);
+  }
+
+  // Producto inexistente, o una persona con el backend despertando: la ficha
+  // reintenta en el navegador y no se indexa.
   if (!data) return { title: "Detalle de perfume", robots: { index: false } };
 
   const { product, minPrice } = data;
@@ -126,6 +141,9 @@ export default async function PerfumePage({
   const monetizable = Boolean(data && productStoreCount(data) >= MIN_INDEXED_STORES);
 
   if (status === 404) notFound();
+  if (!data && await isCrawler()) {
+    throw new Error(`Backend no disponible al renderizar /perfumes/${id} (status ${status})`);
+  }
 
   // Validar que backHref apunte al mismo dominio (evitar open redirect)
   let backHref = "/dashboard";

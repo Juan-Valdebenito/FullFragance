@@ -68,7 +68,10 @@ export const api = {
   similarProducts: (productId: string) => request<{ items: Comparison[] }>(`/catalog/similar/${encodeURIComponent(productId)}`).then(data => data.items),
   suggest: (query: string, signal?: AbortSignal) => request<import("./types").SuggestResult>(`/catalog/suggest?q=${encodeURIComponent(query)}`, { signal, authenticated: false }),
   searchCatalog: (params: URLSearchParams, init?: RequestOptions) => request<import("./types").CatalogSearchResult>(`/catalog/search?${params.toString()}`, init),
-  productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`),
+  // En el servidor la ficha se guarda una hora en la caché de datos de Next:
+  // Google recibe el HTML aunque el backend de Render esté dormido. Los precios
+  // cambian una vez al día, así que una hora de desfase no se nota.
+  productPrices: (productId: string) => request<import("./types").ProductDetailResult>(`/prices/${productId}`, { next: { revalidate: 3600 } }),
   notes: () => request<{ notes: ApiNote[] }>("/catalog/notes").then(data => data.notes),
   // Las páginas de servidor que muestran cifras del catálogo se regeneran cada hora.
   catalogStats: () => request<CatalogStats>("/catalog/stats", { authenticated: false, next: { revalidate: 3600 } }),

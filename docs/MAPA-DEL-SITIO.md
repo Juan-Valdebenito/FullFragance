@@ -16,7 +16,7 @@ Rutas de https://fullfragance.cl, para qué sirven y cómo las trata Google. Si 
 | `/politica-de-datos` | Privacidad y cookies publicitarias (AdSense) | Sí | — |
 | `/politica-de-uso` | Condiciones de uso | Sí | — |
 
-Las fichas con menos de cuatro tiendas responden con `noindex, follow`: siguen enlazadas y funcionan normalmente, pero el índice público se concentra en comparaciones sustanciales. Esas páginas tampoco muestran anuncios. Un id que ya no existe responde 404.
+Las fichas con menos de tres tiendas responden con `noindex, follow`: siguen enlazadas y funcionan normalmente, pero el índice público se concentra en comparaciones sustanciales. Esas páginas tampoco muestran anuncios. Un id que ya no existe responde 404.
 
 ## Páginas de cuenta (no se indexan)
 
