@@ -17,6 +17,8 @@ export type RailItem = {
   oldPrice?: number;
   savingsPct?: number;
   stores?: number;
+  /** Línea destacada bajo el precio; reemplaza al conteo de tiendas */
+  note?: string;
 };
 
 /**
@@ -91,7 +93,7 @@ export function ProductRail({
 }
 
 function RailCard({ item }: { item: RailItem }) {
-  const { product, price, oldPrice, savingsPct, stores } = item;
+  const { product, price, oldPrice, savingsPct, stores, note } = item;
   const candidates = useMemo(() => productImageCandidates(product), [product]);
   const { image, markFailed } = useImageFallback(candidates);
 
@@ -118,7 +120,9 @@ function RailCard({ item }: { item: RailItem }) {
             <strong>{money.format(price)}</strong>
             {oldPrice && oldPrice > price ? <s>{money.format(oldPrice)}</s> : null}
           </span>
-          {stores && stores > 1 ? <small className={styles.cardStores}>Comparado en {stores} tiendas</small> : null}
+          {note
+            ? <small className={styles.cardNote}>{note}</small>
+            : stores && stores > 1 ? <small className={styles.cardStores}>Comparado en {stores} tiendas</small> : null}
         </span>
       </Link>
     </li>

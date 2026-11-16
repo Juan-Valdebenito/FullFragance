@@ -77,6 +77,7 @@ export const api = {
   setAdRevenue: (revenue: number) => request<{ metrics: import("./types").AdminMetrics }>("/analytics/ad-revenue", { method: "PUT", body: JSON.stringify({ revenue }) }).then(data => data.metrics),
   featuredProducts: () => request<{ products: import("./types").ApiProduct[] }>("/catalog/featured").then(data => data.products),
   dealsOfDay: () => request<{ deals: import("./types").DealOfDay[] }>("/catalog/deals-of-day").then(data => data.deals),
+  priceDrops: () => request<{ drops: import("./types").PriceDrop[] }>("/catalog/price-drops").then(data => data.drops),
   dealOfDay: () => request<{ deal: import("./types").ApiProduct; minPrice: number; maxPrice: number; savings: number; savingsPct: number }>("/catalog/deal-of-day"),
   syncFalabellaPerfumes: () => request<{ job: SyncJob }>("/scrapers/falabella/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),
   syncRipleyPerfumes: () => request<{ job: SyncJob }>("/scrapers/ripley/sync-perfumes", { method: "POST", body: JSON.stringify({ fullCatalog: true }) }),

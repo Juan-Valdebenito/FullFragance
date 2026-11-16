@@ -21,6 +21,8 @@ export const loadFeatured = () => once("featured", () => api.featuredProducts())
 
 export const loadDeals = () => once("deals", () => api.dealsOfDay());
 
+export const loadPriceDrops = () => once("price-drops", () => api.priceDrops());
+
 export function loadSegment(segment: PerfumeSegment, pageSize = 6): Promise<ApiProduct[]> {
   return once(`segment:${segment}:${pageSize}`, () =>
     api.searchCatalog(new URLSearchParams({ segment, pageSize: String(pageSize) }))

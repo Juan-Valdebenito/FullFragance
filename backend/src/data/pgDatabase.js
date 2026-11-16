@@ -552,6 +552,40 @@ function memoryQuery(text, params = []) {
         .sort((a, b) => a.observed_on.localeCompare(b.observed_on)),
     };
   }
+  if (sql.includes("PERCENTILE_CONT") && sql.includes("FROM price_observations")) {
+    const [days, excludeRecentDays, minDays, maxPrice] = params.map(Number);
+    const dayStart = (offset) => {
+      const date = new Date();
+      date.setUTCHours(0, 0, 0, 0);
+      date.setUTCDate(date.getUTCDate() - offset);
+      return date;
+    };
+    const from = dayStart(days);
+    const until = dayStart(excludeRecentDays);
+    const latestByDay = new Map();
+    for (const entry of [...memoryStore.priceHistory.values(), ...memoryStore.priceObservations.values()]) {
+      const day = new Date(entry.observed_on);
+      if (day < from || day >= until || !(entry.price < maxPrice)) continue;
+      const key = `${entry.source}\u0000${entry.sku}\u0000${entry.observed_on}`;
+      const current = latestByDay.get(key);
+      if (!current || new Date(entry.observed_at) > new Date(current.observed_at)) latestByDay.set(key, entry);
+    }
+    const pricesByOffer = new Map();
+    for (const entry of latestByDay.values()) {
+      const key = `${entry.source}\u0000${entry.sku}`;
+      if (!pricesByOffer.has(key)) pricesByOffer.set(key, { source: entry.source, sku: entry.sku, prices: [] });
+      pricesByOffer.get(key).prices.push(Number(entry.price));
+    }
+    const rows = [];
+    for (const { source, sku, prices } of pricesByOffer.values()) {
+      if (prices.length < minDays) continue;
+      const sorted = prices.sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      const refPrice = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+      rows.push({ source, sku, refPrice, minPrice: sorted[0], days: sorted.length });
+    }
+    return { rows };
+  }
   if (sql.includes("INSERT INTO price_history")) {
     const rows = [];
     for (let offset = 0; offset < params.length; offset += 7) {

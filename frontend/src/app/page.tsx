@@ -5,8 +5,8 @@ import { Header } from "@/shared/components/Header";
 import { Icon } from "@/shared/components/Icon";
 import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
+import { PriceDrops } from "@/features/catalog/components/PriceDrops";
 import { HeroBanner } from "@/features/catalog/components/HeroBanner";
-import { BlackFridayPromo } from "@/features/promo/components/BlackFridayPromo";
 import { api } from "@/shared/api/client";
 import styles from "./home.module.css";
 
@@ -69,9 +69,9 @@ export default async function HomePage() {
           </ul>
         </div>
 
-        <BlackFridayPromo />
-
         <DealOfDay />
+
+        <PriceDrops />
 
         <section className={`container ${styles.searches}`} aria-labelledby="popular-searches-title">
           <h2 id="popular-searches-title">Empieza por una búsqueda</h2>

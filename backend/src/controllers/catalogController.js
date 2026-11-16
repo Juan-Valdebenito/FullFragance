@@ -1,5 +1,6 @@
 const catalogRepository = require("../models/catalogRepository");
 const catalogSearch = require("../models/catalogSearch");
+const { getPriceDrops } = require("../models/priceDrops");
 
 // El catálogo se refresca por cron cada varias horas, así que el navegador y el
 // CDN pueden servirlo sin volver a golpear el backend durante la navegación.
@@ -76,6 +77,17 @@ async function dealsOfDay(_req, res, next) {
         savingsPct,
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Perfumes cuyo precio actual está más bajo que su precio habitual histórico.
+async function priceDrops(_req, res, next) {
+  try {
+    const drops = await getPriceDrops();
+    catalogCacheHeader(res);
+    res.json({ drops });
   } catch (err) {
     next(err);
   }
@@ -196,4 +208,4 @@ async function stats(_req, res, next) {
   }
 }
 
-module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, searchProducts, suggest, productIds, stats, similarProducts, catalogCacheHeader };
+module.exports = { listNotes, listProducts, featuredProducts, dealOfDay, dealsOfDay, priceDrops, searchProducts, suggest, productIds, stats, similarProducts, catalogCacheHeader };

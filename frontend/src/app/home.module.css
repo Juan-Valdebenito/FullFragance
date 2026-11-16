@@ -40,6 +40,16 @@
   background: radial-gradient(circle at 83% 34%, rgb(var(--gold-rgb) / .18), transparent 28%);
 }
 
+.slide[data-slide="black-friday"] {
+  background:
+    radial-gradient(circle at 78% 44%, rgb(184 59 50 / .32), transparent 40%),
+    radial-gradient(circle at 76% 46%, rgb(var(--gold-rgb) / .3), transparent 46%);
+}
+
+.slide[data-slide="black-friday"] h2 {
+  margin-top: 8px;
+}
+
 .slide[data-slide="deals"] {
   background: radial-gradient(circle at 78% 48%, rgb(184 59 50 / .35), transparent 42%), linear-gradient(115deg, transparent 50%, rgb(184 59 50 / .08));
 }
@@ -456,6 +466,12 @@
 .cardStores {
   color: var(--on-surface-muted);
   font-size: .78rem;
+}
+
+.cardNote {
+  color: var(--gold-dark);
+  font-size: .78rem;
+  font-weight: 600;
 }
 
 .railEmpty {

@@ -12,13 +12,6 @@ const ENDS_AT = Date.parse("2026-11-30T00:00:00-03:00");
 
 const INSTAGRAM_URL = "https://www.instagram.com/fullfragance67/";
 
-// La primera tarjeta es el dato del Cyber anterior: cerca de 6.000 visitas.
-const CARDS = [
-  { icon: "trend" as const, title: "Casi 6.000 visitas", text: "en el último Cyber. ¡Gracias por comparar con nosotros!" },
-  { icon: "swap" as const, title: "Todas las tiendas", text: "Comparamos cada oferta para que veas el descuento real" },
-  { icon: "history" as const, title: "Precio histórico", text: "Revisa si el precio de verdad bajó antes de comprar" },
-];
-
 type Phase = "upcoming" | "live" | "over";
 // A medida que se acerca la fecha, el contador pasa de dorado (calm) a
 // ámbar (soon, últimos 3 días) y a rojo con pulso (urgent, últimas 24 h).
@@ -74,74 +67,79 @@ function useJustWentLive(phase: Phase) {
   return justWentLive;
 }
 
-export function BlackFridayPromo() {
+export type BlackFridayState = {
+  phase: Phase;
+  time: ReturnType<typeof remaining> | null;
+  urgency: Urgency;
+  justWentLive: boolean;
+};
+
+// Estado de la campaña para la diapositiva del banner. Después del evento la
+// fase pasa a "over" y el banner deja de mostrarla.
+export function useBlackFriday(): BlackFridayState {
   const now = useNow();
   const phase = now === null ? "upcoming" : phaseAt(now);
   const justWentLive = useJustWentLive(phase);
-  if (phase === "over") return null;
+  return {
+    phase,
+    time: now === null ? null : remaining(now),
+    urgency: now === null ? "calm" : urgencyAt(now),
+    justWentLive,
+  };
+}
 
-  const live = phase === "live";
-  const time = now === null ? null : remaining(now);
-  const urgency = now === null ? "calm" : urgencyAt(now);
+export const BLACK_FRIDAY_TITLE = "Black Friday 2026";
 
+export function BlackFridayCopy({ state }: { state: BlackFridayState }) {
+  const live = state.phase === "live";
   return (
-    <section className={`container ${styles.wrap}`} aria-labelledby="black-friday-title">
-      <div className={styles.promo}>
-        <div className={styles.copy}>
-          <span className={styles.bar} aria-hidden="true" />
-          <span className={styles.eyebrow}>{live ? "Es hoy" : "Viernes 27 de noviembre"}</span>
-          <h2 id="black-friday-title">Black Friday 2026</h2>
-          <p>
-            {live
-              ? "Ya están las ofertas del Black Friday. Compara antes de comprar y revisa qué descuento es real en cada tienda."
-              : "Nos estamos preparando con todo para el cyber: vamos a comparar las ofertas de todas las tiendas para que sepas qué descuento es real y dónde está más barato."}
-          </p>
-          <div className={styles.actions}>
-            <Link className={styles.primary} href="/dashboard?sort=savings">
-              {live ? "Ver ofertas Black Friday" : "Ver ofertas de hoy"} <Icon name="arrow" size={18} />
-            </Link>
-            <a className={styles.secondary} href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
-              <Icon name="instagram" size={18} /> Síguenos para las alertas
-            </a>
-          </div>
-        </div>
-
-        {live ? (
-          <div className={`${styles.liveBadge} ${justWentLive ? styles.liveBurst : ""}`} aria-hidden="true">
-            {justWentLive && (
-              <>
-                <span className={styles.liveFlash} />
-                <span className={styles.shards}>
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <i key={i} style={{ transform: `rotate(${i * 45}deg)` }}><b /></i>
-                  ))}
-                </span>
-              </>
-            )}
-            <span>Black</span>
-            <strong>Friday</strong>
-          </div>
-        ) : (
-          <dl className={styles.countdown} data-urgency={urgency} aria-label="Tiempo que falta para el Black Friday">
-            <Unit value={time?.days} label="días" />
-            <Unit value={time?.hours} label="horas" />
-            <Unit value={time?.minutes} label="min" />
-          </dl>
-        )}
+    <>
+      <span className={styles.eyebrow}>{live ? "Es hoy" : "Viernes 27 de noviembre"}</span>
+      <h2>{BLACK_FRIDAY_TITLE}</h2>
+      <p>
+        {live
+          ? "Ya están las ofertas del Black Friday. Compara antes de comprar y revisa qué descuento es real en cada tienda."
+          : "Nos estamos preparando con todo para el cyber: vamos a comparar las ofertas de todas las tiendas para que sepas qué descuento es real y dónde está más barato."}
+      </p>
+      <div className={styles.actions}>
+        <Link className={styles.primary} href="/dashboard?sort=savings">
+          {live ? "Ver ofertas Black Friday" : "Ver ofertas de hoy"} <Icon name="arrow" size={18} />
+        </Link>
+        <a className={styles.secondary} href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
+          <Icon name="instagram" size={18} /> Síguenos para las alertas
+        </a>
       </div>
+    </>
+  );
+}
 
-      <ul className={styles.cards} aria-label="FullFragance en el Cyber">
-        {CARDS.map((card, index) => (
-          <li key={card.title} className={index === 0 ? styles.cardHighlight : undefined}>
-            <span className={styles.cardIcon}><Icon name={card.icon} size={22} /></span>
-            <span>
-              <strong>{card.title}</strong>
-              {card.text}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+export function BlackFridayVisual({ state }: { state: BlackFridayState }) {
+  const { phase, time, urgency, justWentLive } = state;
+  return (
+    <div className={styles.visual}>
+      {phase === "live" ? (
+        <div className={`${styles.liveBadge} ${justWentLive ? styles.liveBurst : ""}`} aria-hidden="true">
+          {justWentLive && (
+            <>
+              <span className={styles.liveFlash} />
+              <span className={styles.shards}>
+                {Array.from({ length: 8 }, (_, i) => (
+                  <i key={i} style={{ transform: `rotate(${i * 45}deg)` }}><b /></i>
+                ))}
+              </span>
+            </>
+          )}
+          <span>Black</span>
+          <strong>Friday</strong>
+        </div>
+      ) : (
+        <dl className={styles.countdown} data-urgency={urgency} aria-label="Tiempo que falta para el Black Friday">
+          <Unit value={time?.days} label="días" />
+          <Unit value={time?.hours} label="horas" />
+          <Unit value={time?.minutes} label="min" />
+        </dl>
+      )}
+    </div>
   );
 }
 

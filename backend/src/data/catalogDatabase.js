@@ -87,6 +87,37 @@ async function listPriceHistory(source, sku, days = 180) {
   }));
 }
 
+// Precio de referencia por oferta para detectar bajas históricas: mediana y
+// mínimo del último precio de cada día, excluyendo los días más recientes para
+// que la propia rebaja no contamine la referencia.
+async function listPriceStats({ days = 90, excludeRecentDays = 3, minDays = 7, maxPrice = 3000000 } = {}) {
+  const result = await query(
+    `WITH daily AS (
+       SELECT DISTINCT ON (source, sku, observed_on) source, sku, observed_on, price
+       FROM price_observations
+       WHERE observed_on >= CURRENT_DATE - $1::integer
+         AND observed_on < CURRENT_DATE - $2::integer
+         AND price < $4::integer
+       ORDER BY source, sku, observed_on, observed_at DESC
+     )
+     SELECT source, sku,
+       PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS "refPrice",
+       MIN(price) AS "minPrice",
+       COUNT(*)::integer AS days
+     FROM daily
+     GROUP BY source, sku
+     HAVING COUNT(*) >= $3::integer`,
+    [days, excludeRecentDays, minDays, maxPrice]
+  );
+  return result.rows.map((row) => ({
+    source: row.source,
+    sku: row.sku,
+    refPrice: Math.round(Number(row.refPrice)),
+    minPrice: Number(row.minPrice),
+    days: Number(row.days),
+  }));
+}
+
 async function listProducts(source, limit = 10000) {
   const result = await query(
     `SELECT source, sku, brand, name, price, currency, presentation,
@@ -121,4 +152,4 @@ async function replaceProducts(source, products) {
   });
 }
 
-module.exports = { upsertProduct, listProducts, replaceProducts, listPriceHistory };
+module.exports = { upsertProduct, listProducts, replaceProducts, listPriceHistory, listPriceStats };

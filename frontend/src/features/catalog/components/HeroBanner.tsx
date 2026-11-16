@@ -7,12 +7,17 @@ import { productImageCandidates } from "@/shared/api/client";
 import type { ApiProduct } from "@/shared/api/types";
 import { BrandIcon } from "@/shared/components/BrandIcon";
 import { Icon } from "@/shared/components/Icon";
+import { BLACK_FRIDAY_TITLE, BlackFridayCopy, BlackFridayVisual, useBlackFriday } from "@/features/promo/components/BlackFridayPromo";
 import { loadDeals, loadSegment } from "../domain/homeData";
 import styles from "@/app/home.module.css";
 
 const ROTATION_MS = 6500;
 
 type Slide = { id: string; title: string; text: string; cta: string; href: string };
+
+// La campaña de Black Friday ocupa la primera diapositiva mientras dura y se
+// retira sola cuando termina el evento.
+const BLACK_FRIDAY_SLIDE: Slide = { id: "black-friday", title: BLACK_FRIDAY_TITLE, text: "", cta: "", href: "/dashboard?sort=savings" };
 
 const SLIDES: Slide[] = [
   { id: "brand", title: "Compara perfumes originales en las tiendas de Chile", text: "El mismo perfume, ordenado de más barato a más caro.", cta: "Abrir comparador", href: "/dashboard" },
@@ -39,11 +44,16 @@ function useSlidePhotos() {
 }
 
 export function HeroBanner() {
-  const [active, setActive] = useState(0);
+  const [selected, setSelected] = useState(0);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const photos = useSlidePhotos();
-  const total = SLIDES.length;
+  const blackFriday = useBlackFriday();
+  const slides = blackFriday.phase === "over" ? SLIDES : [BLACK_FRIDAY_SLIDE, ...SLIDES];
+  const total = slides.length;
+
+  // Si la campaña termina con el banner abierto, la lista se acorta.
+  const active = selected < total ? selected : 0;
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -55,24 +65,33 @@ export function HeroBanner() {
 
   useEffect(() => {
     if (paused || reducedMotion) return;
-    const timer = window.setInterval(() => setActive(current => (current + 1) % total), ROTATION_MS);
+    const timer = window.setInterval(() => setSelected(current => (current + 1) % total), ROTATION_MS);
     return () => window.clearInterval(timer);
   }, [paused, reducedMotion, total]);
 
-  const go = (index: number) => setActive((index + total) % total);
+  const go = (index: number) => setSelected((index + total) % total);
 
   return (
     <section className={styles.banner} aria-roledescription="carrusel" aria-label="Destacados de FullFragance" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
       <div className={styles.bannerTrack}>
-        {SLIDES.map((slide, index) => (
+        {slides.map((slide, index) => (
           <article key={slide.id} data-slide={slide.id} className={`${styles.slide} ${index === active ? styles.slideActive : ""}`} aria-roledescription="diapositiva" aria-label={`${index + 1} de ${total}: ${slide.title}`} aria-hidden={index !== active} inert={index !== active}>
             <div className={styles.slideCopy}>
               <span className={styles.slideBar} aria-hidden="true" />
-              {index === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
-              <p>{slide.text}</p>
-              <Link className={styles.slideCta} href={slide.href}>{slide.cta} <Icon name="arrow" size={18} /></Link>
+              {slide.id === BLACK_FRIDAY_SLIDE.id ? (
+                <BlackFridayCopy state={blackFriday} />
+              ) : (
+                <>
+                  {/* El h1 de la página sigue siendo el mensaje principal, aunque no sea la primera diapositiva */}
+                  {slide.id === "brand" ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
+                  <p>{slide.text}</p>
+                  <Link className={styles.slideCta} href={slide.href}>{slide.cta} <Icon name="arrow" size={18} /></Link>
+                </>
+              )}
             </div>
-            <SlideVisual products={photos[slide.id] ?? []} eager={index === 0} />
+            {slide.id === BLACK_FRIDAY_SLIDE.id
+              ? <BlackFridayVisual state={blackFriday} />
+              : <SlideVisual products={photos[slide.id] ?? []} eager={index === 0} />}
           </article>
         ))}
       </div>
@@ -80,7 +99,7 @@ export function HeroBanner() {
       <div className={styles.bannerControls}>
         <button type="button" className={styles.bannerArrow} onClick={() => go(active - 1)} aria-label="Destacado anterior"><Icon name="arrow" size={18} /></button>
         <div className={styles.bannerDots}>
-          {SLIDES.map((slide, index) => <button key={slide.id} type="button" className={index === active ? styles.dotActive : undefined} onClick={() => go(index)} aria-label={`Ver destacado ${index + 1}: ${slide.title}`} aria-current={index === active ? "true" : undefined} />)}
+          {slides.map((slide, index) => <button key={slide.id} type="button" className={index === active ? styles.dotActive : undefined} onClick={() => go(index)} aria-label={`Ver destacado ${index + 1}: ${slide.title}`} aria-current={index === active ? "true" : undefined} />)}
         </div>
         <button type="button" className={styles.bannerArrow} onClick={() => go(active + 1)} aria-label="Destacado siguiente"><Icon name="arrow" size={18} /></button>
       </div>

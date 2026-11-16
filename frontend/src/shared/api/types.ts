@@ -33,6 +33,19 @@ export type DealOfDay = {
   savings: number;
   savingsPct: number;
 };
+export type PriceDrop = {
+  deal: ApiProduct;
+  /** Precio actual en la tienda con la mayor baja */
+  price: number;
+  /** Precio habitual: mediana de los últimos 90 días */
+  refPrice: number;
+  savings: number;
+  dropPct: number;
+  /** El precio actual iguala o mejora el mínimo de los últimos 90 días */
+  isLowest: boolean;
+  source: string;
+  historyDays: number;
+};
 export type ApiPrice = { storeId: string; storeName: string; price: number; available?: boolean; productUrl?: string };
 export type PriceHistoryPoint = { date: string; minPrice: number; maxPrice: number; storeName: string; available: boolean };
 export type StorePriceHistoryPoint = { date: string; price: number; storeId: string; storeName: string; available: boolean };
