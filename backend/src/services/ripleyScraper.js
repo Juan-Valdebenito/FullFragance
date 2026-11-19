@@ -1,4 +1,5 @@
 const fs = require("fs/promises");
+const { existsSync } = require("fs");
 const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
@@ -8,6 +9,9 @@ const {
   ripleyMaxDelayMs,
   ripleyRequestTimeoutMs,
   ripleyCurlFallback,
+  ripleyScrapling,
+  ripleyScraplingMode,
+  ripleyScraplingPython,
   ripleyFixtureDir,
   ripleyPerfumesUrl,
   scraperMockPrices,
@@ -52,6 +56,41 @@ function ripleyProductIdFromUrl(value) {
   return match ? match[1].toUpperCase() : null;
 }
 
+const SCRAPLING_SCRIPT = path.resolve(__dirname, "../../scripts/scrapling_fetch.py");
+
+function resolveScraplingPython() {
+  if (ripleyScraplingPython) return ripleyScraplingPython;
+  const venvPython = path.resolve(__dirname, "../../.venv/bin/python");
+  return existsSync(venvPython) ? venvPython : "python3";
+}
+
+async function fetchWithScrapling(url) {
+  const timeoutSeconds = Math.ceil(ripleyRequestTimeoutMs / 1000);
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(
+      resolveScraplingPython(),
+      ["-I", SCRAPLING_SCRIPT, url, "--timeout", String(timeoutSeconds), "--mode", ripleyScraplingMode],
+      // Margen extra sobre el timeout de la petición: Python tarda en arrancar.
+      { maxBuffer: 32 * 1024 * 1024, timeout: (timeoutSeconds + 30) * 1000 }
+    ));
+  } catch (error) {
+    // El script sale con código 1 e imprime {"error"} cuando falla la petición.
+    if (error?.code === "ENOENT") throw new Error("Python no está disponible para Scrapling en este servidor.");
+    stdout = error?.stdout;
+    if (!stdout) throw new Error(`Scrapling falló: ${error?.stderr || error?.message || "sin detalle"}`);
+  }
+  let result;
+  try {
+    result = JSON.parse(stdout);
+  } catch {
+    throw new Error("Scrapling devolvió una respuesta inválida.");
+  }
+  if (result.error) throw new Error(`Scrapling falló: ${result.error}`);
+  if (result.status !== 200) throw new Error(`Ripley respondió HTTP ${result.status} a Scrapling.`);
+  return { html: result.html, finalUrl: result.url || url };
+}
+
 async function fetchPage(url) {
   if (ripleyFixtureDir) {
     const productId = ripleyProductIdFromUrl(url);
@@ -61,6 +100,7 @@ async function fetchPage(url) {
 
   await waitForRateLimit();
   lastRequestAt = Date.now();
+  if (ripleyScrapling === "first") return fetchWithScrapling(url);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ripleyRequestTimeoutMs);
   let response;
@@ -88,8 +128,17 @@ async function fetchPage(url) {
     throw new Error("Ripley limitó temporalmente las solicitudes (HTTP 429).");
   }
   if (response.status === 403) {
+    let scraplingError = null;
+    if (ripleyScrapling !== "off") {
+      try {
+        return await fetchWithScrapling(url);
+      } catch (error) {
+        scraplingError = error;
+      }
+    }
     if (!ripleyCurlFallback) {
-      throw new Error("Ripley bloqueó la consulta automática (HTTP 403).");
+      const detail = scraplingError ? ` ${scraplingError.message}` : "";
+      throw new Error(`Ripley bloqueó la consulta automática (HTTP 403).${detail}`);
     }
     try {
       const { stdout } = await execFileAsync("curl", [

@@ -66,6 +66,12 @@ module.exports = {
   ripleyMaxDelayMs: Number(process.env.RIPLEY_MAX_DELAY_MS || 2500),
   ripleyRequestTimeoutMs: Number(process.env.RIPLEY_REQUEST_TIMEOUT_MS || 20000),
   ripleyCurlFallback: process.env.RIPLEY_CURL_FALLBACK !== "false",
+  // Scrapling (Python, TLS de Chrome via curl_cffi) para saltar el bloqueo de
+  // Cloudflare. "fallback": solo tras un 403; "first": no intenta fetch de
+  // Node (útil en Render, donde siempre da 403); "off": desactivado.
+  ripleyScrapling: (process.env.RIPLEY_SCRAPLING || "fallback").toLowerCase(),
+  ripleyScraplingMode: process.env.RIPLEY_SCRAPLING_MODE || "fetcher",
+  ripleyScraplingPython: process.env.RIPLEY_SCRAPLING_PYTHON || "",
   ripleyFixtureDir: process.env.RIPLEY_FIXTURE_DIR || "",
   ripleyPerfumesUrl:
     process.env.RIPLEY_PERFUMES_URL ||

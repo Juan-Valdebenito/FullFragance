@@ -68,7 +68,8 @@ Deberías ver algo así:
 2. Configura:
    - **Root Directory**: `backend`
    - **Runtime**: Node
-   - **Build Command**: `npm install`
+   - **Build Command**: `npm install && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
+     (instala Scrapling para el scraper de Ripley; ver 2.4)
    - **Start Command**: `npm start`
    - **Health Check Path**: `/`
 3. Render asigna una URL del tipo `https://<servicio>.onrender.com`. Pruébala: debe responder `{"name":"FullFragance API",...}`.
@@ -122,7 +123,18 @@ En el plan gratuito, Render duerme el servicio tras unos minutos sin tráfico, a
 
 Si el servicio pasa a un plan sin suspensión, se puede activar el scheduler interno con `SCRAPER_CRON_ENABLED=true` y `SCRAPER_CRON_SCHEDULE` (cron estándar, zona `America/Santiago`). Si cambia la frecuencia, actualiza también los textos de `/sobre-nosotros` y `/como-comparamos`, que dicen "una vez al día".
 
-### 2.4 Orden de despliegue
+### 2.4 Scraper de Ripley (Scrapling)
+
+Ripley está detrás de Cloudflare y bloquea con HTTP 403 el `fetch` de Node y `curl`
+desde IPs de Render. El backend usa [Scrapling](https://github.com/D4Vinci/Scrapling)
+(`scripts/scrapling_fetch.py`), que imita la huella TLS/HTTP2 de Chrome con curl_cffi.
+
+- El Build Command crea `backend/.venv`; el scraper lo detecta solo.
+- En Render define `RIPLEY_SCRAPLING=first` para no gastar una petición que siempre da 403.
+- Si Cloudflare sigue bloqueando, `RIPLEY_SCRAPLING_MODE=stealthy` usa un navegador real
+  (añade `&& .venv/bin/scrapling install` al build). Pide ~1 GB de RAM: no cabe en el plan gratuito.
+
+### 2.5 Orden de despliegue
 
 Cuando un cambio toca backend y frontend, despliega primero el backend: el frontend depende de endpoints como `/catalog/stats` y `/catalog/ids?minStores=2`.
 

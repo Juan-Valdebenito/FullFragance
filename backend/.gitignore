@@ -5,3 +5,5 @@ src/data/local-data.json
 src/data/*.sqlite
 src/data/*.sqlite-shm
 src/data/*.sqlite-wal
+.venv/
+__pycache__/

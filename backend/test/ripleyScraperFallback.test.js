@@ -5,6 +5,7 @@ process.env.RIPLEY_FIXTURE_DIR = "";
 process.env.RIPLEY_MIN_DELAY_MS = "0";
 process.env.RIPLEY_MAX_DELAY_MS = "0";
 process.env.RIPLEY_CURL_FALLBACK = "false";
+process.env.RIPLEY_SCRAPLING = "off";
 const { scrapePerfumeCatalog } = require("../src/services/ripleyScraper");
 
 test("no inventa productos ni precios cuando Ripley bloquea la búsqueda", async (t) => {
