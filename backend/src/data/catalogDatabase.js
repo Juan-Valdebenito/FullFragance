@@ -4,6 +4,12 @@ async function upsertProduct(product, run = query) {
   return upsertProducts([product], run);
 }
 
+// raw_json sólo guarda lo que el catálogo lee (mockPrice). Guardar el JSON
+// completo de cada tienda inflaba la base sin usarse en ninguna parte.
+function storedRaw(raw) {
+  return raw?.mockPrice ? { mockPrice: true } : {};
+}
+
 const BATCH_SIZE = 250;
 function placeholders(count, width) {
   return Array.from({ length: count }, (_, row) =>
@@ -41,14 +47,15 @@ async function upsertProducts(products, run) {
       product.imageUrl || null,
       Boolean(product.available),
       product.url,
-      JSON.stringify(product.raw || {}),
+      JSON.stringify(storedRaw(product.raw)),
       now,
       now,
     ])
   );
 
-  // El resumen diario se conserva para las vistas existentes, mientras que
-  // price_observations guarda cada sincronización para el historial completo.
+  // price_history guarda un precio por producto y día (el último de ese día).
+  // Antes también se guardaba cada sincronización en price_observations, pero
+  // ninguna vista usaba más de un precio diario y multiplicaba el tamaño.
   const priced = products.filter(product => product.price > 0 && !product.raw?.mockPrice);
   if (priced.length) {
     await run(
@@ -61,22 +68,16 @@ async function upsertProducts(products, run) {
          observed_at = EXCLUDED.observed_at`,
       priced.flatMap(product => [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now])
     );
-    await run(
-      `INSERT INTO price_observations (source, sku, observed_on, price, currency, available, observed_at)
-       VALUES ${placeholders(priced.length, 7)}
-       ON CONFLICT (source, sku, observed_at) DO NOTHING`,
-      priced.flatMap(product => [product.source, product.sku, now.slice(0, 10), product.price, product.currency || "CLP", Boolean(product.available), now])
-    );
   }
 }
 
 async function listPriceHistory(source, sku, days = 180) {
   const result = await query(
-    `SELECT DISTINCT ON (observed_on) source, sku, observed_on::text AS date, price, currency, available,
+    `SELECT source, sku, observed_on::text AS date, price, currency, available,
       observed_at AS "observedAt"
-     FROM price_observations WHERE source = $1 AND sku = $2
+     FROM price_history WHERE source = $1 AND sku = $2
        AND observed_on >= CURRENT_DATE - $3::integer
-     ORDER BY observed_on ASC, observed_at DESC`,
+     ORDER BY observed_on ASC`,
     [source, sku, days]
   );
   return result.rows.map((row) => ({
@@ -93,12 +94,11 @@ async function listPriceHistory(source, sku, days = 180) {
 async function listPriceStats({ days = 90, excludeRecentDays = 3, minDays = 7, maxPrice = 3000000 } = {}) {
   const result = await query(
     `WITH daily AS (
-       SELECT DISTINCT ON (source, sku, observed_on) source, sku, observed_on, price
-       FROM price_observations
+       SELECT source, sku, observed_on, price
+       FROM price_history
        WHERE observed_on >= CURRENT_DATE - $1::integer
          AND observed_on < CURRENT_DATE - $2::integer
          AND price < $4::integer
-       ORDER BY source, sku, observed_on, observed_at DESC
      )
      SELECT source, sku,
        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY price) AS "refPrice",

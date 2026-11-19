@@ -16,7 +16,6 @@ const memoryStore = {
   chains: [],
   scrapedProducts: new Map(), // key: `${source}:${sku}`
   priceHistory: new Map(), // key: `${source}:${sku}:${observed_on}`
-  priceObservations: new Map(), // key: `${source}:${sku}:${observed_at}`
   appMetadata: new Map(),
   analyticsEvents: [],
   reviews: [],
@@ -33,7 +32,6 @@ function loadPersistentFallback() {
     memoryStore.chains = saved.chains || [];
     memoryStore.scrapedProducts = new Map(saved.scrapedProducts || []);
     memoryStore.priceHistory = new Map(saved.priceHistory || []);
-    memoryStore.priceObservations = new Map(saved.priceObservations || []);
     memoryStore.appMetadata = new Map(saved.appMetadata || []);
     memoryStore.analyticsEvents = saved.analyticsEvents || [];
     memoryStore.reviews = saved.reviews || [];
@@ -52,7 +50,6 @@ function savePersistentFallback() {
     chains: memoryStore.chains,
     scrapedProducts: [...memoryStore.scrapedProducts.entries()],
     priceHistory: [...memoryStore.priceHistory.entries()],
-    priceObservations: [...memoryStore.priceObservations.entries()],
     appMetadata: [...memoryStore.appMetadata.entries()],
     analyticsEvents: memoryStore.analyticsEvents,
     reviews: memoryStore.reviews,
@@ -201,24 +198,10 @@ async function initDatabase() {
           PRIMARY KEY (source, sku, observed_on)
         );
 
-        CREATE INDEX IF NOT EXISTS idx_price_history_product_date
-          ON price_history(source, sku, observed_on DESC);
+        -- La clave primaria (source, sku, observed_on) ya cubre estas consultas;
+        -- el índice extra duplicaba espacio en disco.
+        DROP INDEX IF EXISTS idx_price_history_product_date;
 
-        -- price_history conserva el último precio de cada día para las vistas
-        -- existentes. Esta tabla guarda cada sincronización sin sobrescribirla.
-        CREATE TABLE IF NOT EXISTS price_observations (
-          source VARCHAR(100) NOT NULL,
-          sku VARCHAR(255) NOT NULL,
-          observed_on DATE NOT NULL,
-          price INTEGER NOT NULL CHECK (price > 0),
-          currency VARCHAR(10) NOT NULL DEFAULT 'CLP',
-          available BOOLEAN NOT NULL DEFAULT FALSE,
-          observed_at TIMESTAMPTZ NOT NULL,
-          PRIMARY KEY (source, sku, observed_at)
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_price_observations_product_time
-          ON price_observations(source, sku, observed_at DESC);
 
         CREATE TABLE IF NOT EXISTS app_metadata (
           key VARCHAR(100) PRIMARY KEY,
@@ -257,14 +240,6 @@ async function initDatabase() {
 
       // Compatible con instalaciones creadas antes de la revocación de sesiones.
       await p.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0");
-      // Expansión no destructiva: las observaciones diarias previas se copian
-      // una vez y el historial antiguo queda disponible para versiones previas.
-      await p.query(`
-        INSERT INTO price_observations (source, sku, observed_on, price, currency, available, observed_at)
-        SELECT source, sku, observed_on, price, currency, available, observed_at
-        FROM price_history
-        ON CONFLICT (source, sku, observed_at) DO NOTHING
-      `);
 
       // Migrar datos legados desde db.json y catalog.sqlite si existen y la BD está limpia
       await seedAndMigrateFromLegacy(p);
@@ -579,12 +554,12 @@ function memoryQuery(text, params = []) {
       .slice(0, limit);
     return { rows: list };
   }
-  if (sql.includes("FROM price_observations WHERE source = $1 AND sku = $2")) {
+  if (sql.includes("FROM price_history WHERE source = $1 AND sku = $2")) {
     const [source, sku, days] = params;
     const cutoff = new Date();
     cutoff.setUTCDate(cutoff.getUTCDate() - Number(days || 180));
     return {
-      rows: Array.from([...memoryStore.priceHistory.values(), ...memoryStore.priceObservations.values()]
+      rows: Array.from([...memoryStore.priceHistory.values()]
         .filter((entry) => entry.source === source && entry.sku === sku && new Date(entry.observed_on) >= cutoff)
         .reduce((latestByDay, entry) => {
           const current = latestByDay.get(entry.observed_on);
@@ -594,7 +569,7 @@ function memoryQuery(text, params = []) {
         .sort((a, b) => a.observed_on.localeCompare(b.observed_on)),
     };
   }
-  if (sql.includes("PERCENTILE_CONT") && sql.includes("FROM price_observations")) {
+  if (sql.includes("PERCENTILE_CONT") && sql.includes("FROM price_history")) {
     const [days, excludeRecentDays, minDays, maxPrice] = params.map(Number);
     const dayStart = (offset) => {
       const date = new Date();
@@ -605,7 +580,7 @@ function memoryQuery(text, params = []) {
     const from = dayStart(days);
     const until = dayStart(excludeRecentDays);
     const latestByDay = new Map();
-    for (const entry of [...memoryStore.priceHistory.values(), ...memoryStore.priceObservations.values()]) {
+    for (const entry of [...memoryStore.priceHistory.values()]) {
       const day = new Date(entry.observed_on);
       if (day < from || day >= until || !(entry.price < maxPrice)) continue;
       const key = `${entry.source}\u0000${entry.sku}\u0000${entry.observed_on}`;
@@ -642,20 +617,6 @@ function memoryQuery(text, params = []) {
         observed_at: values[6],
       };
       memoryStore.priceHistory.set(`${entry.source}:${entry.sku}:${entry.observed_on}`, entry);
-      rows.push(entry);
-    }
-    savePersistentFallback();
-    return { rows };
-  }
-  if (sql.includes("INSERT INTO price_observations")) {
-    const rows = [];
-    for (let offset = 0; offset < params.length; offset += 7) {
-      const values = params.slice(offset, offset + 7);
-      const entry = {
-        source: values[0], sku: values[1], observed_on: values[2], price: values[3],
-        currency: values[4], available: values[5], observed_at: values[6],
-      };
-      memoryStore.priceObservations.set(`${entry.source}:${entry.sku}:${entry.observed_at}`, entry);
       rows.push(entry);
     }
     savePersistentFallback();

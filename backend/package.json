@@ -14,6 +14,7 @@
     "seed:supabase": "node scripts/seed-supabase.js",
     "migrate:postgres": "node scripts/migrate-postgres.js",
     "sync:store": "node scripts/sync-store.js",
+    "db:optimize": "node scripts/optimize-db.js",
     "test": "node --test"
   },
   "dependencies": {

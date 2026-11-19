@@ -19,14 +19,12 @@ function product(overrides = {}) {
   };
 }
 
-test("al guardar un producto conserva el resumen diario y la observación de cada sincronización", async () => {
+test("al guardar un producto registra el precio del día en price_history", async () => {
   const calls = [];
   await upsertProduct(product(), async (sql, params) => calls.push({ sql, params }));
 
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 2);
   assert.match(calls[1].sql, /INSERT INTO price_history/);
-  assert.match(calls[2].sql, /INSERT INTO price_observations/);
-  assert.match(calls[2].sql, /ON CONFLICT \(source, sku, observed_at\) DO NOTHING/);
   assert.deepEqual(calls[1].params.slice(0, 2), ["paris-cl", "sku-1"]);
   assert.equal(calls[1].params[3], 59990);
   assert.equal(calls[1].params[5], true);
@@ -38,4 +36,13 @@ test("no registra precios simulados en el historial", async () => {
 
   assert.equal(calls.length, 1);
   assert.doesNotMatch(calls[0], /price_history/);
+});
+
+test("raw_json guarda sólo la marca de precio simulado, no el JSON de la tienda", async () => {
+  const calls = [];
+  await upsertProduct(product({ raw: { "@type": "Product", offers: { price: 1 } } }), async (sql, params) => calls.push({ sql, params }));
+  await upsertProduct(product({ raw: { mockPrice: true, fallback: true } }), async (sql, params) => calls.push({ sql, params }));
+  const rawOf = (call) => JSON.parse(call.params[10]);
+  assert.deepEqual(rawOf(calls[0]), {});
+  assert.deepEqual(rawOf(calls.at(-1)), { mockPrice: true });
 });
