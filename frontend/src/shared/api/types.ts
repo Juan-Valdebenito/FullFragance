@@ -115,3 +115,11 @@ export type AdminMetrics = {
   views: { today: number; last7Days: number; previous7Days: number; uniquePages: number; allTime: number; series: { date: string; views: number }[]; monthly: { month: string; views: number }[]; topPages: { page: string; views: number }[] };
   ads: { currentMonth: string; revenueCLP: number; source: "manual"; connected: boolean };
 };
+
+export interface Review {
+  id: string;
+  name: string;
+  body: string;
+  approved: boolean;
+  createdAt: string;
+}

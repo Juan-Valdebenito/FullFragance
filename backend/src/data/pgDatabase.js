@@ -19,6 +19,7 @@ const memoryStore = {
   priceObservations: new Map(), // key: `${source}:${sku}:${observed_at}`
   appMetadata: new Map(),
   analyticsEvents: [],
+  reviews: [],
 };
 const FALLBACK_DATA_PATH = path.join(__dirname, "local-data.json");
 
@@ -35,6 +36,7 @@ function loadPersistentFallback() {
     memoryStore.priceObservations = new Map(saved.priceObservations || []);
     memoryStore.appMetadata = new Map(saved.appMetadata || []);
     memoryStore.analyticsEvents = saved.analyticsEvents || [];
+    memoryStore.reviews = saved.reviews || [];
     return true;
   } catch (error) {
     console.warn("No se pudo leer el respaldo local; se reconstruirá:", error.message);
@@ -53,6 +55,7 @@ function savePersistentFallback() {
     priceObservations: [...memoryStore.priceObservations.entries()],
     appMetadata: [...memoryStore.appMetadata.entries()],
     analyticsEvents: memoryStore.analyticsEvents,
+    reviews: memoryStore.reviews,
   };
   fs.writeFileSync(FALLBACK_DATA_PATH, JSON.stringify(data, null, 2));
 }
@@ -231,6 +234,19 @@ async function initDatabase() {
 
         CREATE INDEX IF NOT EXISTS idx_analytics_events_occurred_at
           ON analytics_events(occurred_at DESC);
+
+        -- Reseñas públicas del sitio: nacen pendientes y sólo se muestran
+        -- cuando un administrador las aprueba.
+        CREATE TABLE IF NOT EXISTS reviews (
+          id BIGSERIAL PRIMARY KEY,
+          name VARCHAR(40) NOT NULL,
+          body VARCHAR(600) NOT NULL,
+          approved BOOLEAN NOT NULL DEFAULT false,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_reviews_approved_created
+          ON reviews(approved, created_at DESC);
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_id
           ON users(google_id) WHERE google_id IS NOT NULL;
@@ -450,6 +466,32 @@ function memoryQuery(text, params = []) {
   if (sql.includes("FROM analytics_events WHERE occurred_at")) {
     const since = new Date(params[0]).getTime();
     return { rows: memoryStore.analyticsEvents.filter(event => new Date(event.occurred_at).getTime() >= since) };
+  }
+  if (sql.includes("INSERT INTO reviews")) {
+    const nextId = memoryStore.reviews.reduce((max, review) => Math.max(max, Number(review.id)), 0) + 1;
+    const review = { id: String(nextId), name: params[0], body: params[1], approved: false, created_at: new Date().toISOString() };
+    memoryStore.reviews.push(review);
+    savePersistentFallback();
+    return { rows: [review] };
+  }
+  if (sql.includes("FROM reviews WHERE approved = ")) {
+    const approved = sql.includes("approved = true");
+    const rows = memoryStore.reviews
+      .filter(review => review.approved === approved)
+      .sort((a, b) => (approved ? b.created_at.localeCompare(a.created_at) : a.created_at.localeCompare(b.created_at)));
+    return { rows: params[0] ? rows.slice(0, params[0]) : rows };
+  }
+  if (sql.includes("UPDATE reviews SET approved = true WHERE id = $1")) {
+    const review = memoryStore.reviews.find(item => item.id === String(params[0]));
+    if (review) review.approved = true;
+    savePersistentFallback();
+    return { rows: review ? [review] : [], rowCount: review ? 1 : 0 };
+  }
+  if (sql.includes("DELETE FROM reviews WHERE id = $1")) {
+    const before = memoryStore.reviews.length;
+    memoryStore.reviews = memoryStore.reviews.filter(item => item.id !== String(params[0]));
+    savePersistentFallback();
+    return { rows: [], rowCount: before - memoryStore.reviews.length };
   }
   if (sql.includes("FROM app_metadata WHERE key = $1")) {
     const value = memoryStore.appMetadata.get(params[0]);

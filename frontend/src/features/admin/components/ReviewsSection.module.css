@@ -1,0 +1,51 @@
+.list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--admin-line, var(--outline-variant));
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.meta strong { font-size: .92rem; }
+
+.meta time {
+  color: var(--on-surface-muted);
+  font-size: .75rem;
+}
+
+.body {
+  font-size: .88rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.danger {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.error {
+  color: var(--error);
+  font-size: .85rem;
+}

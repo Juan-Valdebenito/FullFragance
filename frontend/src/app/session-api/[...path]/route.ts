@@ -12,7 +12,7 @@ function clearCookies(response: NextResponse) {
 async function proxy(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   if (!path.length || path.some(part => !/^[a-zA-Z0-9_-]+$/.test(part)) ||
-      !["auth", "users", "scrapers", "analytics", "catalog", "prices", "products"].includes(path[0])) {
+      !["auth", "users", "scrapers", "analytics", "catalog", "prices", "products", "reviews"].includes(path[0])) {
     return NextResponse.json({ error: "Ruta inválida." }, { status: 404 });
   }
   const endpoint = path.join("/");

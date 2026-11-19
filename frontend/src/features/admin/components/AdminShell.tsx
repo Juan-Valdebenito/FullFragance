@@ -64,6 +64,7 @@ const NAV = [
   { href: "/admin/monitoreo", label: "Monitoreo", icon: "activity" },
   { href: "/admin/sincronizacion", label: "Sincronización", icon: "sync" },
   { href: "/admin/catalogo", label: "Catálogo", icon: "catalog" },
+  { href: "/admin/resenas", label: "Reseñas", icon: "reviews" },
 ] as const;
 
 function AdminFrame({ user, children }: { user: User; children: React.ReactNode }) {

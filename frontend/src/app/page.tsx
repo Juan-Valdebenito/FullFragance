@@ -7,6 +7,7 @@ import { LandingFeatured } from "@/features/catalog/components/LandingFeatured";
 import { DealOfDay } from "@/features/catalog/components/DealOfDay";
 import { PriceDrops } from "@/features/catalog/components/PriceDrops";
 import { HeroBanner } from "@/features/catalog/components/HeroBanner";
+import { Reviews } from "@/features/reviews/components/Reviews";
 import { api } from "@/shared/api/client";
 import styles from "./home.module.css";
 
@@ -108,6 +109,8 @@ export default async function HomePage() {
           {stores.length > 0 && <ul aria-label="Tiendas monitoreadas">{stores.slice(0, 10).map(store => <li key={store}>{store}</li>)}</ul>}
           <Link href="/como-comparamos">Conoce cómo verificamos las comparaciones <Icon name="arrow" size={17} /></Link>
         </section>
+
+        <Reviews />
 
         <section className={`container ${styles.closing}`} aria-labelledby="closing-title">
           <div>

@@ -25,7 +25,7 @@ function hasSession() {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers); headers.set("Content-Type", "application/json");
   const privateEndpoint = /^\/(auth|users|scrapers)\//.test(path) ||
-    /^\/analytics\/(metrics|ad-revenue)/.test(path) || path === "/prices?q=";
+    /^\/analytics\/(metrics|ad-revenue)/.test(path) || /^\/reviews\/admin/.test(path) || path === "/prices?q=";
   const browserSession = typeof window !== "undefined" && options.authenticated !== false && privateEndpoint;
   if (browserSession) headers.set("x-fullfragance-request", "1");
   let response: Response;
@@ -97,5 +97,10 @@ export const api = {
   syncJob: (jobId: string) => request<{ job: SyncJob }>(`/scrapers/sync-jobs/${jobId}`).then(data => data.job),
   saveQuiz: (scores: Record<string, number>) => request<{ recommendations: Recommendation[] }>("/users/me/scent-quiz", { method: "POST", body: JSON.stringify({ scores }) }),
   recommendations: () => request<{ source: string; recommendations: Recommendation[] }>("/users/me/recommendations"),
+  reviews: () => request<{ reviews: import("./types").Review[] }>("/reviews", { authenticated: false, cache: "no-store" }).then(data => data.reviews),
+  submitReview: (body: { name: string; body: string; website: string }) => request<{ message: string }>("/reviews", { method: "POST", body: JSON.stringify(body), authenticated: false }),
+  adminReviews: () => request<{ pending: import("./types").Review[]; approved: import("./types").Review[] }>("/reviews/admin"),
+  approveReview: (id: string) => request<{ review: import("./types").Review }>(`/reviews/admin/${encodeURIComponent(id)}/approve`, { method: "POST", body: "{}" }),
+  deleteReview: (id: string) => request<void>(`/reviews/admin/${encodeURIComponent(id)}`, { method: "DELETE", body: "{}" }),
   toggleFavorite: (productId: string) => request<{ favorites: string[] }>(`/users/me/favorites/${productId}`, { method: "POST" }),
 };
