@@ -13,6 +13,7 @@
     "seed": "node src/data/seed.js",
     "seed:supabase": "node scripts/seed-supabase.js",
     "migrate:postgres": "node scripts/migrate-postgres.js",
+    "sync:store": "node scripts/sync-store.js",
     "test": "node --test"
   },
   "dependencies": {

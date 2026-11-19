@@ -134,6 +134,20 @@ desde IPs de Render. El backend usa [Scrapling](https://github.com/D4Vinci/Scrap
 - Si Cloudflare sigue bloqueando, `RIPLEY_SCRAPLING_MODE=stealthy` usa un navegador real
   (añade `&& .venv/bin/scrapling install` al build). Pide ~1 GB de RAM: no cabe en el plan gratuito.
 
+**Si Render sigue recibiendo 403 con Scrapling**, Cloudflare está bloqueando la IP de
+Render (datacenter), no la huella del cliente. El error incluye `cf-mitigated` y el
+título de la página: `cf-mitigated=challenge` es un desafío (lo podría resolver el modo
+`stealthy`); sin ese valor es un bloqueo duro por IP. Dos salidas:
+
+1. **Proxy residencial**: define `RIPLEY_PROXY=http://usuario:clave@host:puerto` en Render.
+2. **Sincronizar desde un PC con conexión de casa** (gratis), escribiendo directo en Supabase:
+   ```bash
+   cd backend
+   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # solo la primera vez
+   DATABASE_URL="postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres" \
+     npm run sync:store -- ripley-cl
+   ```
+
 ### 2.5 Orden de despliegue
 
 Cuando un cambio toca backend y frontend, despliega primero el backend: el frontend depende de endpoints como `/catalog/stats` y `/catalog/ids?minStores=2`.

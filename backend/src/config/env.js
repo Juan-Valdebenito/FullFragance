@@ -72,6 +72,8 @@ module.exports = {
   ripleyScrapling: (process.env.RIPLEY_SCRAPLING || "fallback").toLowerCase(),
   ripleyScraplingMode: process.env.RIPLEY_SCRAPLING_MODE || "fetcher",
   ripleyScraplingPython: process.env.RIPLEY_SCRAPLING_PYTHON || "",
+  // Proxy (idealmente residencial) para Scrapling: http://user:pass@host:port
+  ripleyProxy: process.env.RIPLEY_PROXY || "",
   ripleyFixtureDir: process.env.RIPLEY_FIXTURE_DIR || "",
   ripleyPerfumesUrl:
     process.env.RIPLEY_PERFUMES_URL ||

@@ -12,6 +12,7 @@ const {
   ripleyScrapling,
   ripleyScraplingMode,
   ripleyScraplingPython,
+  ripleyProxy,
   ripleyFixtureDir,
   ripleyPerfumesUrl,
   scraperMockPrices,
@@ -68,9 +69,11 @@ async function fetchWithScrapling(url) {
   const timeoutSeconds = Math.ceil(ripleyRequestTimeoutMs / 1000);
   let stdout;
   try {
+    const args = ["-I", SCRAPLING_SCRIPT, url, "--timeout", String(timeoutSeconds), "--mode", ripleyScraplingMode];
+    if (ripleyProxy) args.push("--proxy", ripleyProxy);
     ({ stdout } = await execFileAsync(
       resolveScraplingPython(),
-      ["-I", SCRAPLING_SCRIPT, url, "--timeout", String(timeoutSeconds), "--mode", ripleyScraplingMode],
+      args,
       // Margen extra sobre el timeout de la petición: Python tarda en arrancar.
       { maxBuffer: 32 * 1024 * 1024, timeout: (timeoutSeconds + 30) * 1000 }
     ));
@@ -87,7 +90,10 @@ async function fetchWithScrapling(url) {
     throw new Error("Scrapling devolvió una respuesta inválida.");
   }
   if (result.error) throw new Error(`Scrapling falló: ${result.error}`);
-  if (result.status !== 200) throw new Error(`Ripley respondió HTTP ${result.status} a Scrapling.`);
+  if (result.status !== 200) {
+    const detail = result.diagnostic ? ` (${result.diagnostic})` : "";
+    throw new Error(`Ripley respondió HTTP ${result.status} a Scrapling${detail}.`);
+  }
   return { html: result.html, finalUrl: result.url || url };
 }
 
