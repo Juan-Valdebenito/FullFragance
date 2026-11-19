@@ -30,7 +30,7 @@ async function homeData() {
     { icon: "swap" as const, title: stats?.stores.length ? `Compara ${stats.stores.length} tiendas` : "Compara tiendas", text: "Elige la más barata para ti" },
     { icon: "chart" as const, title: "Sin intermediarios", text: "Compras directo en la tienda" },
   ];
-  return { features, stores: stats?.stores ?? [] };
+  return { features };
 }
 
 const categories = [
@@ -50,7 +50,7 @@ const popularSearches = [
 ];
 
 export default async function HomePage() {
-  const { features, stores } = await homeData();
+  const { features } = await homeData();
   return (
     <>
       <Header />
@@ -101,24 +101,8 @@ export default async function HomePage() {
 
         <LandingFeatured />
 
-        <section className={`container ${styles.storeBand}`} aria-labelledby="stores-title">
-          <div>
-            <h2 id="stores-title">Tiendas que monitoreamos</h2>
-            <p>Revisamos sus publicaciones para comparar precio, disponibilidad y presentación del mismo perfume.</p>
-          </div>
-          {stores.length > 0 && <ul aria-label="Tiendas monitoreadas">{stores.slice(0, 10).map(store => <li key={store}>{store}</li>)}</ul>}
-          <Link href="/como-comparamos">Conoce cómo verificamos las comparaciones <Icon name="arrow" size={17} /></Link>
-        </section>
-
         <Reviews />
 
-        <section className={`container ${styles.closing}`} aria-labelledby="closing-title">
-          <div>
-            <h2 id="closing-title">Compara antes de comprar.</h2>
-            <p>Ve las ofertas reunidas en un solo lugar y elige la que te conviene.</p>
-          </div>
-          <Link href="/dashboard">Ir al catálogo completo <Icon name="arrow" size={18} /></Link>
-        </section>
       </main>
       <Footer />
     </>

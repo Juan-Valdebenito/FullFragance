@@ -49,11 +49,11 @@ export function Reviews() {
         <form className={styles.form} onSubmit={submit}>
           <label>
             <span>Tu nombre</span>
-            <input value={name} onChange={event => setName(event.target.value)} required minLength={2} maxLength={NAME_MAX} autoComplete="given-name" />
+            <input value={name} onChange={event => setName(event.target.value)} required minLength={2} maxLength={NAME_MAX} autoComplete="given-name" placeholder="Cómo quieres firmar" />
           </label>
           <label>
             <span>Tu reseña</span>
-            <textarea value={body} onChange={event => setBody(event.target.value)} required minLength={BODY_MIN} maxLength={BODY_MAX} rows={4} />
+            <textarea value={body} onChange={event => setBody(event.target.value)} required minLength={BODY_MIN} maxLength={BODY_MAX} rows={4} placeholder="Qué perfume buscabas y cómo te fue" />
             <small>{body.length}/{BODY_MAX}</small>
           </label>
           {/* Campo trampa para bots: oculto a personas y lectores de pantalla. */}
@@ -72,19 +72,30 @@ export function Reviews() {
       {reviews === null ? (
         <p className={styles.empty} role="status">Cargando reseñas…</p>
       ) : reviews.length ? (
+        // Cada reseña es una mouillette: la tira de papel con que se prueba un perfume.
         <ul className={styles.list}>
           {reviews.map(review => (
-            <li key={review.id}>
+            <li key={review.id} className={styles.strip}>
               <blockquote>{review.body}</blockquote>
               <footer>
-                <strong>{review.name}</strong>
-                <time dateTime={review.createdAt}>{dateFormat.format(new Date(review.createdAt))}</time>
+                <span className={styles.monogram} aria-hidden="true">{review.name.trim().charAt(0).toUpperCase()}</span>
+                <span>
+                  <strong>{review.name}</strong>
+                  <time dateTime={review.createdAt}>{dateFormat.format(new Date(review.createdAt))}</time>
+                </span>
               </footer>
             </li>
           ))}
         </ul>
       ) : (
-        <p className={styles.empty}>Todavía no hay reseñas publicadas. ¡Sé la primera persona en dejar una!</p>
+        <div className={styles.empty}>
+          <div className={styles.fan} aria-hidden="true">
+            <span className={styles.strip} />
+            <span className={styles.strip}>Tu reseña</span>
+            <span className={styles.strip} />
+          </div>
+          <p>Todavía no hay reseñas publicadas. Deja la primera con el formulario.</p>
+        </div>
       )}
     </section>
   );
