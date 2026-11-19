@@ -13,6 +13,7 @@ export const storeLabels: Record<string, string> = {
   "lodoro-cl": "L'Odoro",
   "leparis-cl": "Le Paris Parfums",
   "dreams-cl": "Dreams Parfums",
+  "hites-cl": "Hites",
 };
 
 export function storeLabel(source: string) {

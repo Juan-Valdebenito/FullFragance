@@ -191,6 +191,16 @@ module.exports = {
   lodoroUcpAgentProfile:
     process.env.LODORO_UCP_AGENT_PROFILE ||
     "https://shopify.dev/ucp/agent-profiles/2026-04-08/valid-with-capabilities.json",
+  hitesUserAgent:
+    process.env.HITES_USER_AGENT ||
+    "FullFragranceCatalogBot/1.0 (+catalog comparison; contact: admin@fullfragrance.local)",
+  hitesMinDelayMs: Number(process.env.HITES_MIN_DELAY_MS || 1000),
+  hitesMaxDelayMs: Number(process.env.HITES_MAX_DELAY_MS || 2000),
+  hitesRequestTimeoutMs: Number(process.env.HITES_REQUEST_TIMEOUT_MS || 30000),
+  hitesFixtureDir: process.env.HITES_FIXTURE_DIR || "",
+  hitesPerfumesUrl:
+    process.env.HITES_PERFUMES_URL ||
+    "https://www.hites.com/belleza/perfumes/",
   scraperMockPrices: process.env.SCRAPER_MOCK_PRICES !== "false" && process.env.NODE_ENV !== "production",
 
   // ── Scheduler de scraping (cron) ─────────────────────────────────

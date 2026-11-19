@@ -42,6 +42,7 @@ const {
 const {
   scrapePerfumeCatalog: scrapeLodoroPerfumeCatalog,
 } = require("../services/lodoroScraper");
+const { scrapePerfumeCatalog: scrapeHitesPerfumeCatalog } = require("../services/hitesScraper");
 
 async function syncFalabella(req, res, next) {
   try {
@@ -544,6 +545,36 @@ function listLodoro(_req, res) {
   res.json({ products: listProducts("lodoro-cl") });
 }
 
+async function syncHites(req, res, next) {
+  try {
+    const maxProducts = Number(req.body?.maxProducts || 12);
+    if (!Number.isInteger(maxProducts) || maxProducts < 1 || maxProducts > 48) {
+      return res.status(400).json({ error: "maxProducts debe ser un entero entre 1 y 48." });
+    }
+    const results = await scrapeHitesPerfumeCatalog(maxProducts);
+    results.filter((result) => result.ok).forEach((result) => upsertProduct(result.product));
+    if (results.some((result) => result.ok)) invalidateCatalogCache();
+    res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function syncHitesPerfumeCatalog(req, res, next) {
+  try {
+    if (req.body?.fullCatalog) {
+      return res.status(202).json({ job: startCatalogSync("hites-cl") });
+    }
+    return syncHites(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+}
+
+function listHites(_req, res) {
+  res.json({ products: listProducts("hites-cl") });
+}
+
 module.exports = {
   syncFalabella,
   syncPerfumeCatalog,
@@ -581,5 +612,8 @@ module.exports = {
   syncLodoro,
   syncLodoroPerfumeCatalog,
   listLodoro,
+  syncHites,
+  syncHitesPerfumeCatalog,
+  listHites,
   getSyncJob,
 };

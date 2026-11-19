@@ -13,6 +13,7 @@ const { scrapeDirectCatalogPage: scrapeParisPage } = require("./parisScraper");
 const { scrapeDirectCatalogPage: scrapeAbcPage } = require("./abcScraper");
 const { scrapeDirectCatalogPage: scrapePreunicPage } = require("./preunicScraper");
 const { scrapeDirectCatalogPage: scrapeLodoroPage } = require("./lodoroScraper");
+const { scrapeDirectCatalogPage: scrapeHitesPage } = require("./hitesScraper");
 
 const jobs = new Map();
 const activeBySource = new Map();
@@ -43,6 +44,7 @@ const scrapers = {
   "abc-cl": scrapeAbcPage,
   "preunic-cl": scrapePreunicPage,
   "lodoro-cl": scrapeLodoroPage,
+  "hites-cl": scrapeHitesPage,
 };
 
 function publicJob(job) {

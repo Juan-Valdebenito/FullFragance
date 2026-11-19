@@ -15,6 +15,7 @@ const SOURCE_STORES = {
   "lodoro-cl": { storeId: "lodoro-online", storeName: "L'Odoro" },
   "leparis-cl": { storeId: "leparis-online", storeName: "Le Paris Parfums" },
   "dreams-cl": { storeId: "dreams-online", storeName: "Dreams Parfums" },
+  "hites-cl": { storeId: "hites-online", storeName: "Hites" },
 };
 
 function matchesProduct(product, productFilter) {

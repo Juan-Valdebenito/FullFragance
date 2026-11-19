@@ -39,6 +39,9 @@ router.post("/preunic/sync-perfumes", requireAdmin, scraperController.syncPreuni
 router.get("/lodoro/products", requireAdmin, scraperController.listLodoro);
 router.post("/lodoro/sync", requireAdmin, scraperController.syncLodoro);
 router.post("/lodoro/sync-perfumes", requireAdmin, scraperController.syncLodoroPerfumeCatalog);
+router.get("/hites/products", requireAdmin, scraperController.listHites);
+router.post("/hites/sync", requireAdmin, scraperController.syncHites);
+router.post("/hites/sync-perfumes", requireAdmin, scraperController.syncHitesPerfumeCatalog);
 router.get("/sync-jobs/:jobId", requireAdmin, scraperController.getSyncJob);
 
 module.exports = router;

@@ -23,6 +23,7 @@ export const ADMIN_STORES: AdminStore[] = [
   store("ripley-cl", "ripley.cl", "REST", "#6d5bd0", api.syncRipleyPerfumes),
   store("paris-cl", "paris.cl", "Catálogo SSR", "#c2415d", api.syncParisPerfumes),
   store("abc-cl", "abc.cl", "Catálogo SSR", "#2f5d9e", api.syncAbcPerfumes),
+  store("hites-cl", "hites.com", "Catálogo SSR", "#e2231a", api.syncHitesPerfumes),
   store("preunic-cl", "preunic.cl", "API", "#d4577a", api.syncPreunicPerfumes),
   store("alisha-cl", "alisha.cl", "Shopify", "#c76aa3", api.syncAlishaPerfumes),
   store("silk-cl", "silkperfumes.cl", "Shopify", "#4a78c2", api.syncSilkPerfumes),
