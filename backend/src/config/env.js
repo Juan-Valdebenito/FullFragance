@@ -185,6 +185,14 @@ module.exports = {
   lodoroMinDelayMs: Number(process.env.LODORO_MIN_DELAY_MS || 500),
   lodoroMaxDelayMs: Number(process.env.LODORO_MAX_DELAY_MS || 1000),
   lodoroRequestTimeoutMs: Number(process.env.LODORO_REQUEST_TIMEOUT_MS || 20000),
+  // The public products.json listing is rate limited much harder than UCP,
+  // so full catalog pages are spaced out on their own delay.
+  lodoroCollectionUrl:
+    process.env.LODORO_COLLECTION_URL ||
+    "https://www.lodoro.cl/collections/perfumes/products.json",
+  lodoroCatalogMinDelayMs: Number(process.env.LODORO_CATALOG_MIN_DELAY_MS || 12000),
+  lodoroCatalogMaxDelayMs: Number(process.env.LODORO_CATALOG_MAX_DELAY_MS || 15000),
+  lodoroCatalogMaxRetries: Number(process.env.LODORO_CATALOG_MAX_RETRIES || 5),
   lodoroUcpEndpoint:
     process.env.LODORO_UCP_ENDPOINT ||
     "https://lodoro.myshopify.com/api/ucp/mcp",
