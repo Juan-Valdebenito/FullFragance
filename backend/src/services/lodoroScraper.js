@@ -1,3 +1,4 @@
+const { stripHtml } = require("../utils/text");
 const {
   lodoroUserAgent,
   lodoroMinDelayMs,
@@ -170,6 +171,7 @@ function normalizeProduct(product) {
     imageUrl,
     available: Boolean(variant?.availability?.available && price !== null),
     url: assertLodoroUrl(product.url),
+    description: stripHtml(product.description?.html || product.description?.text || product.description),
     raw: {
       ucpProductId: String(product.id),
       ucpVariantId: variant?.id ? String(variant.id) : null,
@@ -253,6 +255,7 @@ function normalizeShopifyProduct(product) {
     imageUrl: product.images?.[0]?.src || variant?.featured_image?.src || null,
     available: Boolean(variant?.available && price !== null),
     url: assertLodoroUrl(`https://www.lodoro.cl/products/${encodeURIComponent(product.handle)}`),
+    description: stripHtml(product.body_html),
     raw: {
       shopifyProductId: String(product.id),
       shopifyVariantId: variant?.id ? String(variant.id) : null,

@@ -42,6 +42,7 @@ test("normaliza un producto de catálogo UCP de Cosmetic", () => {
   assert.equal(product.raw.compareAtPrice, 39990);
   assert.equal(product.raw.catalogProtocol, "UCP/MCP 2026-04-08");
   assert.equal(product.raw.brandSource, "description");
+  assert.equal(product.description, "Liquid Brun de French Avenue es una fragancia amaderada para Hombres.");
   assert.equal(samePerfume(product, {
     source: "abc-cl",
     brand: "French Avenue",

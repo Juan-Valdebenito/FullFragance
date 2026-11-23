@@ -1,5 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { stripHtml } = require("../utils/text");
 const {
   falabellaUserAgent,
   falabellaMinDelayMs,
@@ -444,6 +445,7 @@ function normalizeProduct(jsonLd, url, html = "") {
     imageUrl: extractImage(jsonLd.image, url, sku) || extractImageFromHtml(html, sku),
     available: /instock|in stock|limitedavailability/.test(availability),
     url,
+    description: stripHtml(jsonLd.description),
     raw: jsonLd,
   };
 }

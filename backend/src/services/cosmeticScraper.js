@@ -225,6 +225,7 @@ function normalizeProduct(product) {
     imageUrl,
     available,
     url: productUrl,
+    description: stripHtml(product.description?.html || product.description?.text || product.description),
     raw: {
       ucpProductId: String(product.id),
       ucpVariantId: variant?.id ? String(variant.id) : null,

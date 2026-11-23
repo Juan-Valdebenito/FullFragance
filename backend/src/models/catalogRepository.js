@@ -161,6 +161,47 @@ function resolveOlfactoryNotes(noteIds, allNotes = getDbData().olfactoryNotes) {
   return (noteIds || []).map((id) => allNotes.find((n) => n.id === id)).filter(Boolean);
 }
 
+// A diferencia de NOTE_PATTERNS (que mezcla la nota con pistas de marca o
+// línea para adivinar un perfil cuando no hay nada más), esta lista sólo
+// busca el nombre real de la nota. Se usa exclusivamente sobre la
+// descripción que la propia tienda escribió del producto: si el texto la
+// nombra, es un dato real, no una suposición.
+const DESCRIPTION_NOTE_PATTERNS = [
+  { id: "n1", regex: /bergamota/i },
+  { id: "n2", regex: /lim[oó]n(?!cillo)/i },
+  { id: "n3", regex: /naranja|mandarina/i },
+  { id: "n4", regex: /\brosas?\b|flor(?:es)? blanc/i },
+  { id: "n5", regex: /jazm[ií]n/i },
+  { id: "n6", regex: /lavanda/i },
+  { id: "n7", regex: /\biris\b/i },
+  { id: "n8", regex: /cedro/i },
+  { id: "n9", regex: /s[aá]ndalo/i },
+  { id: "n10", regex: /vetiver/i },
+  { id: "n11", regex: /vainilla/i },
+  { id: "n12", regex: /\bcaf[eé]\b/i },
+  { id: "n13", regex: /cacao|chocolate/i },
+  { id: "n14", regex: /[aá]mbar/i },
+  { id: "n15", regex: /incienso/i },
+  { id: "n16", regex: /pimienta/i },
+  { id: "n17", regex: /canela/i },
+  { id: "n18", regex: /acu[aá]tic[oa]|marin[oa]/i },
+  { id: "n19", regex: /\bmenta\b/i },
+  { id: "n20", regex: /manzana/i },
+  { id: "n21", regex: /\bperas?\b/i },
+  { id: "n22", regex: /pi[ñn]a(?!ta)/i },
+];
+
+// Al menos 2 notas nombradas explícitamente para considerarlo una pirámide
+// real y no una mención suelta ("con un toque cítrico") sin mayor detalle.
+const MIN_DESCRIPTION_NOTES = 2;
+
+function notesFromDescription(description) {
+  if (typeof description !== "string" || !description.trim()) return null;
+  const text = description.toLowerCase();
+  const matched = DESCRIPTION_NOTE_PATTERNS.filter((item) => item.regex.test(text)).map((item) => item.id);
+  return matched.length >= MIN_DESCRIPTION_NOTES ? matched.slice(0, 6) : null;
+}
+
 function inferOlfactoryNotes(product, gender) {
   const text = `${product.name || ""} ${product.brand || ""} ${product.category || ""}`.toLowerCase();
   const matched = NOTE_PATTERNS.filter((item) => item.regex.test(text)).map((item) => item.id);
@@ -197,11 +238,15 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
   const profile = scentProfileFor(enrichedProduct, profiles);
   const gender = inferGender(enrichedProduct.name, enrichedProduct.source);
   const profileNotes = profile?.notes && profile.notes.length ? profile.notes : null;
-  // Las notas deducidas del nombre sirven para recomendar, pero no se muestran
-  // como dato de la fragancia (notesInferred).
-  const rawNotes = profileNotes || inferOlfactoryNotes(enrichedProduct, gender);
-  const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
   const description = realDescription(profile) || realDescription(enrichedProduct);
+  // Si la tienda nombra las notas en su propia descripción, es un dato real
+  // (igual que el perfil curado). Sólo si no hay ninguna de las dos se cae a
+  // la adivinanza por nombre, que sirve para recomendar pero no se muestra
+  // como dato de la fragancia (notesInferred).
+  const descriptionNotes = profileNotes ? null : notesFromDescription(description);
+  const curatedNotes = profileNotes || descriptionNotes;
+  const rawNotes = curatedNotes || inferOlfactoryNotes(enrichedProduct, gender);
+  const olfactoryNotes = resolveOlfactoryNotes(rawNotes, allNotes);
 
   return {
     id: `${enrichedProduct.source.replace(/-cl$/, "")}-${enrichedProduct.sku.toLowerCase()}`,
@@ -212,7 +257,7 @@ function toCatalogProduct(product, profiles = getDbData().products, allNotes = g
     category: "Perfumes",
     gender,
     notes: rawNotes,
-    notesInferred: !profileNotes,
+    notesInferred: !curatedNotes,
     olfactoryNotes,
     description,
     source: enrichedProduct.source,
@@ -470,4 +515,5 @@ module.exports = {
   getNoteById,
   mergeScrapedProducts,
   invalidateCatalogCache,
+  notesFromDescription,
 };

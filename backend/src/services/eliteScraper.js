@@ -1,3 +1,4 @@
+const { stripHtml } = require("../utils/text");
 const {
   eliteUserAgent,
   eliteMinDelayMs,
@@ -108,6 +109,7 @@ function normalizeProduct(product) {
     imageUrl: product.images?.[0]?.src || variant?.featured_image?.src || null,
     available: Boolean(variant?.available && price !== null),
     url: `https://www.eliteperfumes.cl/products/${encodeURIComponent(product.handle)}`,
+    description: stripHtml(product.body_html),
     raw: {
       shopifyProductId: String(product.id),
       shopifyVariantId: variant?.id ? String(variant.id) : null,

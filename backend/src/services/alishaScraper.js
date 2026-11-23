@@ -1,5 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { stripHtml } = require("../utils/text");
 const {
   alishaUserAgent,
   alishaMinDelayMs,
@@ -112,6 +113,7 @@ function normalizeProduct(product) {
     imageUrl: product.images?.[0]?.src || variant?.featured_image?.src || null,
     available: Boolean(variant?.available && price !== null),
     url: `https://alishaperfumes.cl/products/${encodeURIComponent(product.handle)}`,
+    description: stripHtml(product.body_html),
     raw: {
       shopifyProductId: String(product.id),
       shopifyVariantId: variant?.id ? String(variant.id) : null,

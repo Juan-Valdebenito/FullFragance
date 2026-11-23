@@ -98,10 +98,12 @@ test("conserva la imagen y URL comercial del producto para el frontend", () => {
     brand: { name: "Marca" },
     image: ["https://falabella.scene7.com/is/image/Falabella/sku-1"],
     offers: { price: 49990, priceCurrency: "CLP", availability: "https://schema.org/InStock" },
+    description: "<p>Notas de <b>bergamota</b> y <b>sándalo</b> en un acorde fresco.</p>",
   }, "https://www.falabella.com/falabella-cl/product/123/perfume");
 
   assert.equal(product.imageUrl, "https://falabella.scene7.com/is/image/Falabella/sku-1");
   assert.equal(product.url, "https://www.falabella.com/falabella-cl/product/123/perfume");
+  assert.equal(product.description, "Notas de bergamota y sándalo en un acorde fresco.");
 });
 
 test("genera imagen fallback desde el SKU cuando Falabella bloquea el detalle", () => {

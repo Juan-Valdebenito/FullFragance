@@ -178,6 +178,7 @@ async function initDatabase() {
           image_url TEXT,
           available BOOLEAN NOT NULL DEFAULT FALSE,
           product_url TEXT NOT NULL,
+          description TEXT,
           raw_json JSONB,
           first_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
           last_seen_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -240,6 +241,8 @@ async function initDatabase() {
 
       // Compatible con instalaciones creadas antes de la revocación de sesiones.
       await p.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0");
+      // Compatible con instalaciones creadas antes de guardar la descripción de la tienda.
+      await p.query("ALTER TABLE scraped_products ADD COLUMN IF NOT EXISTS description TEXT");
 
       // Migrar datos legados desde db.json y catalog.sqlite si existen y la BD está limpia
       await seedAndMigrateFromLegacy(p);
@@ -624,8 +627,8 @@ function memoryQuery(text, params = []) {
   }
   if (sql.includes("INSERT INTO scraped_products")) {
     const rows = [];
-    for (let offset = 0; offset < params.length; offset += 13) {
-      const values = params.slice(offset, offset + 13);
+    for (let offset = 0; offset < params.length; offset += 14) {
+      const values = params.slice(offset, offset + 14);
       const key = `${values[0]}:${values[1]}`;
       const prod = {
         source: values[0],
@@ -638,9 +641,10 @@ function memoryQuery(text, params = []) {
         image_url: values[7],
         available: values[8],
         product_url: values[9],
-        raw_json: values[10] ? JSON.parse(values[10]) : {},
-        first_seen_at: values[11],
-        last_seen_at: values[12],
+        description: values[10] || null,
+        raw_json: values[11] ? JSON.parse(values[11]) : {},
+        first_seen_at: values[12],
+        last_seen_at: values[13],
       };
       memoryStore.scrapedProducts.set(key, prod);
       rows.push(prod);

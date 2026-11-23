@@ -42,7 +42,23 @@ test("raw_json guarda sólo la marca de precio simulado, no el JSON de la tienda
   const calls = [];
   await upsertProduct(product({ raw: { "@type": "Product", offers: { price: 1 } } }), async (sql, params) => calls.push({ sql, params }));
   await upsertProduct(product({ raw: { mockPrice: true, fallback: true } }), async (sql, params) => calls.push({ sql, params }));
-  const rawOf = (call) => JSON.parse(call.params[10]);
+  const rawOf = (call) => JSON.parse(call.params[11]);
   assert.deepEqual(rawOf(calls[0]), {});
   assert.deepEqual(rawOf(calls.at(-1)), { mockPrice: true });
+});
+
+test("guarda la descripción de la tienda, acotada y sin espacios de sobra", async () => {
+  const calls = [];
+  await upsertProduct(product({ description: "  Con notas de bergamota y jazmín.  " }), async (sql, params) => calls.push({ sql, params }));
+  assert.equal(calls[0].params[10], "Con notas de bergamota y jazmín.");
+
+  calls.length = 0;
+  const long = "a".repeat(700);
+  await upsertProduct(product({ description: long }), async (sql, params) => calls.push({ sql, params }));
+  assert.equal(calls[0].params[10].length, 601); // 600 + "…"
+  assert.ok(calls[0].params[10].endsWith("…"));
+
+  calls.length = 0;
+  await upsertProduct(product({ description: null }), async (sql, params) => calls.push({ sql, params }));
+  assert.equal(calls[0].params[10], null);
 });

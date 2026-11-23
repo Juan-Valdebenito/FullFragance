@@ -3,6 +3,7 @@ const { existsSync } = require("fs");
 const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
+const { stripHtml } = require("../utils/text");
 const {
   ripleyUserAgent,
   ripleyMinDelayMs,
@@ -431,6 +432,7 @@ function normalizeProduct(jsonLd, url, html = "") {
     imageUrl: extractImage(jsonLd.image) || extractImageFromHtml(html, sku),
     available: availability ? /instock|in stock|limitedavailability/.test(availability) : price !== null,
     url,
+    description: stripHtml(jsonLd.description),
     raw: jsonLd,
   };
 }

@@ -16,6 +16,7 @@ const shopifyProduct = {
   product_type: "Perfumes",
   tags: ["Arabes", "Perfumes"],
   updated_at: "2026-07-27T23:21:12-04:00",
+  body_html: "<p>Fragancia con notas de <b>vainilla</b> y <b>cacao</b> sobre un fondo de galleta.</p>",
   variants: [{
     id: 50714749272346,
     sku: "5055810039158",
@@ -36,6 +37,7 @@ test("normaliza un producto Shopify de Alisha", () => {
   assert.equal(product.presentation, "50ML");
   assert.equal(product.available, true);
   assert.equal(product.imageUrl, "https://cdn.shopify.com/product.jpg");
+  assert.equal(product.description, "Fragancia con notas de vainilla y cacao sobre un fondo de galleta.");
   assert.equal(product.raw.compareAtPrice, 18990);
   assert.equal(
     product.url,

@@ -10,6 +10,15 @@ function storedRaw(raw) {
   return raw?.mockPrice ? { mockPrice: true } : {};
 }
 
+// Se guarda acotada: alcanza para mostrarla y para buscar notas mencionadas
+// por la propia tienda, sin inflar la base con HTML completo de cada ficha.
+const MAX_DESCRIPTION_LENGTH = 600;
+function storedDescription(description) {
+  const text = typeof description === "string" ? description.trim() : "";
+  if (!text) return null;
+  return text.length > MAX_DESCRIPTION_LENGTH ? `${text.slice(0, MAX_DESCRIPTION_LENGTH).trimEnd()}…` : text;
+}
+
 const BATCH_SIZE = 250;
 function placeholders(count, width) {
   return Array.from({ length: count }, (_, row) =>
@@ -23,8 +32,8 @@ async function upsertProducts(products, run) {
   await run(
     `INSERT INTO scraped_products (
       source, sku, brand, name, price, currency, presentation, image_url,
-      available, product_url, raw_json, first_seen_at, last_seen_at
-    ) VALUES ${placeholders(products.length, 13)}
+      available, product_url, description, raw_json, first_seen_at, last_seen_at
+    ) VALUES ${placeholders(products.length, 14)}
     ON CONFLICT (source, sku) DO UPDATE SET
       brand = EXCLUDED.brand,
       name = EXCLUDED.name,
@@ -34,6 +43,7 @@ async function upsertProducts(products, run) {
       image_url = EXCLUDED.image_url,
       available = EXCLUDED.available,
       product_url = EXCLUDED.product_url,
+      description = EXCLUDED.description,
       raw_json = EXCLUDED.raw_json,
       last_seen_at = EXCLUDED.last_seen_at`,
     products.flatMap(product => [
@@ -47,6 +57,7 @@ async function upsertProducts(products, run) {
       product.imageUrl || null,
       Boolean(product.available),
       product.url,
+      storedDescription(product.description),
       JSON.stringify(storedRaw(product.raw)),
       now,
       now,
@@ -122,7 +133,7 @@ async function listProducts(source, limit = 10000) {
   const result = await query(
     `SELECT source, sku, brand, name, price, currency, presentation,
       image_url AS "imageUrl",
-      available, product_url AS url, raw_json AS "rawJson", first_seen_at AS "firstSeenAt",
+      available, product_url AS url, description, raw_json AS "rawJson", first_seen_at AS "firstSeenAt",
       last_seen_at AS "lastSeenAt"
       FROM scraped_products WHERE source = $1 ORDER BY last_seen_at DESC LIMIT $2`,
     [source, limit]
